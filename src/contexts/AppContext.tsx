@@ -593,7 +593,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const totalTasks = dbUser.total_tasks || 45; // Default to 45 for training, database should provide this
     const taskNumber = dbUser.task_number || 1;
 
-    console.log('[loadUserData] Null checks applied - vipLevel:', vipLevel, 'currentTaskSet:', currentTaskSet, 'totalTasks:', totalTasks, 'taskNumber': taskNumber);
+    console.log('[loadUserData] Null checks applied - vipLevel:', vipLevel, 'currentTaskSet:', currentTaskSet, 'totalTasks:', totalTasks, 'taskNumber:', taskNumber);
 
     // Set accountType from the fetched user
     const actualAccountType = dbUser.account_type as 'training' | 'personal' | 'admin';

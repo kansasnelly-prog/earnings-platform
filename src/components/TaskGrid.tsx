@@ -504,8 +504,10 @@ const TaskGrid: React.FC = () => {
   const trainingCompletedCount = isTraining ? Math.max(0, (user?.task_number || 1) - 1) : 0;
   
   // For training accounts, use user.task_number from Supabase directly (source of truth)
-  // For personal accounts, find pending task from tasks array
-  const currentTaskNumber = isTraining ? (user?.task_number || 1) : (safeTasks.find(t => t.status === 'pending')?.task_number || 1);
+  // For personal accounts, derive from completed tasks count (completed + 1 = current task)
+  const currentTaskNumber = isTraining 
+    ? (user?.task_number || 1) 
+    : Math.max(1, calculatedCompletedCount + 1);
   const pendingTask = safeTasks.find(t => t.task_number === currentTaskNumber) || {
     id: `task_${currentTaskNumber}`,
     task_number: currentTaskNumber,

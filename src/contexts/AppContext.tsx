@@ -1411,7 +1411,7 @@ else if (
 
       // Refresh user and tasks in background (non-blocking)
       refreshUser().catch(err => console.error('[Task Submit] Background refresh failed:', err));
-      refreshTasks().catch(err => console.error('[Task Submit] Background refresh failed:', err));
+      await refreshTasks(); // AWAIT for personal accounts to ensure UI sync
 
       return { success: true, reward: commission };
     } else {
@@ -1463,9 +1463,9 @@ else if (
         description: `You earned $${(result?.reward || 0).toFixed(2)}`
       });
 
-      // Refresh user and tasks in background (non-blocking)
-      refreshUser().catch(err => console.error('[Task Submit] Background refresh failed:', err));
-      refreshTasks().catch(err => console.error('[Task Submit] Background refresh failed:', err));
+      // Refresh user and tasks - AWAIT to ensure UI sync with database
+      await refreshUser();
+      await refreshTasks();
 
       // Check if we should trigger pending order for personal accounts
       // Phase 2, task 28 triggers pending order

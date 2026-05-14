@@ -3,7 +3,8 @@ import { Toaster, toast } from 'sonner';
 import {
   MessageCircle, Send, RefreshCw, CheckCircle, User,
   Clock, ChevronLeft, Search, Trash2, Unlock, Lock,
-  AlertCircle, CheckCheck, X, Paperclip, FileText, Image as ImageIcon
+  AlertCircle, CheckCheck, X, Paperclip, FileText, Image as ImageIcon,
+  Bot, Copy, Sparkles, Tag
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -15,6 +16,7 @@ interface Conversation {
   updated_at: string;
   unread_count?: number;
   last_message?: string;
+  issue_label?: string;
 }
 
 interface Message {
@@ -27,6 +29,23 @@ interface Message {
   attachment_type?: string;
   attachment_name?: string;
   attachment_size?: number;
+}
+
+interface UserData {
+  id: string;
+  email: string;
+  username?: string;
+  display_name?: string;
+  account_type: 'training' | 'personal' | 'admin';
+  vip_level: number;
+  balance: number;
+  total_earned: number;
+  tasks_completed: number;
+  total_tasks: number;
+  created_at: string;
+  user_status?: string;
+  personal_cycle?: number;
+  personal_cycle_completed?: boolean;
 }
 
 const AdminCustomerService: React.FC = () => {
@@ -45,6 +64,11 @@ const AdminCustomerService: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const subscriptionsRef = useRef<any[]>([]);
   const processedMessageIds = useRef<Set<string>>(new Set());
+  
+  // New states for AI features
+  const [selectedUserData, setSelectedUserData] = useState<UserData | null>(null);
+  const [aiSuggestion, setAiSuggestion] = useState('');
+  const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
   
   // Attachment states
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -106,6 +130,99 @@ const AdminCustomerService: React.FC = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  // AI Suggestion Logic
+  const generateAISuggestion = (message: string): string => {
+    const lowerMessage = message.toLowerCase();
+    
+    // Issue detection and suggestion mapping
+    if (lowerMessage.includes('reset') || lowerMessage.includes('restart') || lowerMessage.includes('start over')) {
+      return "Hello, your reset request has been received. Please confirm your registered email for verification. Once verified, we will proceed with resetting your account.";
+    }
+    if (lowerMessage.includes('withdrawal') || lowerMessage.includes('withdraw') || lowerMessage.includes('cash out')) {
+      return "Your withdrawal is currently under review. Processing time depends on account level and verification status. Please ensure your wallet address is correct and your account is fully verified.";
+    }
+    if (lowerMessage.includes('login') || lowerMessage.includes('sign in') || lowerMessage.includes('access') || lowerMessage.includes('password')) {
+      return "I understand you're having trouble accessing your account. Please try clearing your browser cache or using a different browser. If the issue persists, please provide your registered email so we can assist further.";
+    }
+    if (lowerMessage.includes('wallet') || lowerMessage.includes('bind') || lowerMessage.includes('wallet address')) {
+      return "For wallet binding, please ensure you're using a supported wallet type (USDT-TRC20, USDT-ERC20, USDT-BEP20, or BTC). Double-check your wallet address before submitting. If you've already submitted, our team is reviewing it.";
+    }
+    if (lowerMessage.includes('deposit') || lowerMessage.includes('add funds') || lowerMessage.includes('top up')) {
+      return "For deposit assistance, please check your transaction hash on the blockchain. If your deposit is not showing after 30 minutes, please provide the transaction hash and timestamp for investigation.";
+    }
+    if (lowerMessage.includes('upgrade') || lowerMessage.includes('vip') || lowerMessage.includes('level')) {
+      return "VIP upgrades are available based on your account balance and task completion. Please check your current balance and completed tasks. Contact us if you need assistance with the upgrade process.";
+    }
+    if (lowerMessage.includes('task') || lowerMessage.includes('commission') || lowerMessage.includes('earnings')) {
+      return "Regarding tasks and earnings, please ensure you've completed all required tasks correctly. If you believe there's an error in your earnings calculation, please provide specific details about which task is affected.";
+    }
+    
+    // Default generic response
+    return "Thank you for your message. Our support team is reviewing your inquiry. For faster resolution, please include your account email and any relevant details about your issue.";
+  };
+
+  // Auto-labeling logic
+  const detectIssueLabel = (message: string): string => {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('reset') || lowerMessage.includes('restart')) return 'Reset Request';
+    if (lowerMessage.includes('withdrawal') || lowerMessage.includes('withdraw')) return 'Withdrawal Issue';
+    if (lowerMessage.includes('login') || lowerMessage.includes('sign in') || lowerMessage.includes('password')) return 'Login Problem';
+    if (lowerMessage.includes('wallet') || lowerMessage.includes('bind')) return 'Wallet Binding';
+    if (lowerMessage.includes('deposit') || lowerMessage.includes('add funds')) return 'Deposit Issue';
+    if (lowerMessage.includes('upgrade') || lowerMessage.includes('vip')) return 'Upgrade Inquiry';
+    
+    return 'General Inquiry';
+  };
+
+  // Fetch user data when conversation is selected
+  const fetchUserData = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('[AdminCustomerService] Error fetching user data:', error);
+        return;
+      }
+
+      setSelectedUserData(data as UserData);
+    } catch (err) {
+      console.error('[AdminCustomerService] Exception fetching user data:', err);
+    }
+  };
+
+  // Generate AI suggestion when customer sends a message
+  const handleGenerateSuggestion = async () => {
+    if (!messages.length) return;
+    
+    // Get last customer message
+    const lastCustomerMessage = [...messages].reverse().find(msg => msg.user_id !== 'admin');
+    if (!lastCustomerMessage) return;
+
+    setIsGeneratingSuggestion(true);
+    
+    // Simulate AI processing delay
+    setTimeout(() => {
+      const suggestion = generateAISuggestion(lastCustomerMessage.content);
+      setAiSuggestion(suggestion);
+      setIsGeneratingSuggestion(false);
+    }, 800);
+  };
+
+  const copySuggestion = () => {
+    navigator.clipboard.writeText(aiSuggestion);
+    toast.success('Suggestion copied to clipboard');
+  };
+
+  const useSuggestion = () => {
+    setNewMessage(aiSuggestion);
+    setAiSuggestion('');
   };
 
   const uploadAttachment = async (file: File): Promise<{url: string, type: string, name: string, size: number} | null> => {
@@ -293,6 +410,8 @@ const AdminCustomerService: React.FC = () => {
     const loadAdminMessages = async () => {
       if (!isMounted) return;
       await fetchMessages(selectedConversation.id);
+      // Fetch user data
+      await fetchUserData(selectedConversation.user_id);
     };
 
     loadAdminMessages();
@@ -310,6 +429,9 @@ const AdminCustomerService: React.FC = () => {
         clearInterval(pollIntervalRef.current);
         pollIntervalRef.current = null;
       }
+      // Clear user data when conversation changes
+      setSelectedUserData(null);
+      setAiSuggestion('');
     };
   }, [selectedConversation?.id]);
 
@@ -363,6 +485,20 @@ const AdminCustomerService: React.FC = () => {
           if (newMessage.sender === 'user') {
             toast.info('New message from customer');
             fetchConversations();
+            // Auto-generate AI suggestion for new customer message
+            const suggestion = generateAISuggestion(newMessage.message || '');
+            setAiSuggestion(suggestion);
+            // Auto-detect and save issue label
+            const label = detectIssueLabel(newMessage.message || '');
+            if (label && label !== 'General Inquiry') {
+              supabase
+                .from('conversations')
+                .update({ issue_label: label })
+                .eq('id', selectedConversation.id)
+                .then(({ error }) => {
+                  if (error) console.error('[AdminCustomerService] Error updating issue label:', error);
+                });
+            }
           }
         }
       )
@@ -782,7 +918,13 @@ const AdminCustomerService: React.FC = () => {
                 <p className="text-slate-400 text-sm mt-2 truncate">
                   {conv.last_message || 'No messages yet'}
                 </p>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  {conv.issue_label && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                      <Tag className="w-3 h-3" />
+                      {conv.issue_label}
+                    </span>
+                  )}
                   <span className={`px-2 py-0.5 rounded-full text-xs ${
                     conv.status === 'open' ? 'bg-green-500/20 text-green-400' :
                     conv.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
@@ -805,63 +947,90 @@ const AdminCustomerService: React.FC = () => {
           {selectedConversation ? (
             <>
               {/* Chat Header */}
-              <div className="p-2 md:p-4 border-b border-white/10 flex items-center justify-between">
-                <div className="flex items-center gap-2 md:gap-3">
-                  <button
-                    onClick={() => setSelectedConversation(null)}
-                    className="p-2 hover:bg-white/10 rounded-lg md:hidden"
-                  >
-                    <ChevronLeft className="w-5 h-5 text-white" />
-                  </button>
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
-                    <User className="w-4 h-4 md:w-5 md:h-5 text-white" />
+              <div className="p-2 md:p-4 border-b border-white/10">
+                {/* User Identity Header */}
+                {selectedUserData && (
+                  <div className="mb-3 p-3 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-xl">
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <span className="font-bold text-white">{selectedUserData.display_name || selectedUserData.username || 'User'}</span>
+                      <span className="text-slate-400">|</span>
+                      <a href={`mailto:${selectedUserData.email}`} className="text-indigo-400 hover:underline">{selectedUserData.email}</a>
+                      <span className="text-slate-400">|</span>
+                      <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded text-xs font-medium">
+                        {selectedUserData.account_type.toUpperCase()}
+                      </span>
+                      <span className="text-slate-400">|</span>
+                      <span className="text-emerald-400 font-medium">Balance ${selectedUserData.balance.toFixed(2)}</span>
+                      <span className="text-slate-400">|</span>
+                      <span className="text-amber-400">
+                        VIP{selectedUserData.vip_level} • {selectedUserData.tasks_completed}/{selectedUserData.total_tasks} tasks
+                      </span>
+                      <span className="text-slate-400">|</span>
+                      <span className="text-slate-500 text-xs">
+                        Joined {new Date(selectedUserData.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="text-white font-semibold text-sm md:text-base truncate">{selectedConversation.user_id?.slice(0, 8) || 'Unknown User'}</h3>
-                    <p className="text-slate-400 text-xs md:text-sm hidden sm:block">
-                      Customer Service
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  {/* Status Badge */}
-                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border ${getStatusBadgeClass(selectedConversation.status)} hidden sm:flex`}>
-                    {getStatusIcon(selectedConversation.status)}
-                    <span className="capitalize">{selectedConversation.status}</span>
-                  </div>
-
-                  <button
-                    onClick={() => fetchMessages(selectedConversation.id)}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
-                    title="Refresh"
-                    disabled={isLoading}
-                  >
-                    <RefreshCw className={`w-4 h-4 text-slate-400 ${isLoading ? 'animate-spin' : ''}`} />
-                  </button>
-
-                  {/* Status Dropdown */}
-                  <div className="relative">
-                    <select
-                      value={selectedConversation.status}
-                      onChange={(e) => updateConversationStatus(selectedConversation.id, e.target.value as any)}
-                      disabled={isUpdatingStatus}
-                      className="px-2 py-1 bg-slate-800 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-pink-500"
-                      title="Change status"
+                )}
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <button
+                      onClick={() => setSelectedConversation(null)}
+                      className="p-2 hover:bg-white/10 rounded-lg md:hidden"
                     >
-                      <option value="open">Open</option>
-                      <option value="pending">Pending</option>
-                      <option value="closed">Closed</option>
-                    </select>
+                      <ChevronLeft className="w-5 h-5 text-white" />
+                    </button>
+                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
+                      <User className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-white font-semibold text-sm md:text-base truncate">{selectedConversation.user_id?.slice(0, 8) || 'Unknown User'}</h3>
+                      <p className="text-slate-400 text-xs md:text-sm hidden sm:block">
+                        Customer Service
+                      </p>
+                    </div>
                   </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {/* Status Badge */}
+                    <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border ${getStatusBadgeClass(selectedConversation.status)} hidden sm:flex`}>
+                      {getStatusIcon(selectedConversation.status)}
+                      <span className="capitalize">{selectedConversation.status}</span>
+                    </div>
 
-                  <button
-                    onClick={() => deleteConversation(selectedConversation.id)}
-                    className="flex items-center gap-1 px-2 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors flex-shrink-0"
-                    title="Delete conversation"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span className="text-xs font-medium hidden lg:inline">Delete</span>
-                  </button>
+                    <button
+                      onClick={() => fetchMessages(selectedConversation.id)}
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
+                      title="Refresh"
+                      disabled={isLoading}
+                    >
+                      <RefreshCw className={`w-4 h-4 text-slate-400 ${isLoading ? 'animate-spin' : ''}`} />
+                    </button>
+
+                    {/* Status Dropdown */}
+                    <div className="relative">
+                      <select
+                        value={selectedConversation.status}
+                        onChange={(e) => updateConversationStatus(selectedConversation.id, e.target.value as any)}
+                        disabled={isUpdatingStatus}
+                        className="px-2 py-1 bg-slate-800 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-pink-500"
+                        title="Change status"
+                      >
+                        <option value="open">Open</option>
+                        <option value="pending">Pending</option>
+                        <option value="closed">Closed</option>
+                      </select>
+                    </div>
+
+                    <button
+                      onClick={() => deleteConversation(selectedConversation.id)}
+                      className="flex items-center gap-1 px-2 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors flex-shrink-0"
+                      title="Delete conversation"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span className="text-xs font-medium hidden lg:inline">Delete</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -953,6 +1122,66 @@ const AdminCustomerService: React.FC = () => {
                   </div>
                 ) : (
                   <>
+                    {/* AI Assistant Panel */}
+                    {aiSuggestion && (
+                      <div className="mb-3 p-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl">
+                        <div className="flex items-start gap-2 mb-2">
+                          <Bot className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-purple-300 font-medium text-sm">AI Suggestion</span>
+                              <Sparkles className="w-3 h-3 text-purple-400" />
+                            </div>
+                            <p className="text-slate-300 text-sm">{aiSuggestion}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={copySuggestion}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-xs text-white transition-colors"
+                          >
+                            <Copy className="w-3 h-3" />
+                            Copy
+                          </button>
+                          <button
+                            onClick={useSuggestion}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-lg text-xs text-purple-300 transition-colors"
+                          >
+                            <Send className="w-3 h-3" />
+                            Use
+                          </button>
+                          <button
+                            onClick={() => setAiSuggestion('')}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-slate-500/20 hover:bg-slate-500/30 border border-slate-500/30 rounded-lg text-xs text-slate-300 transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                            Dismiss
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Generate AI Suggestion Button */}
+                    {!aiSuggestion && messages.length > 0 && (
+                      <button
+                        onClick={handleGenerateSuggestion}
+                        disabled={isGeneratingSuggestion}
+                        className="mb-3 w-full flex items-center justify-center gap-2 p-2 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg text-purple-300 hover:bg-purple-500/20 transition-all text-sm disabled:opacity-50"
+                      >
+                        {isGeneratingSuggestion ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4" />
+                            Generate AI Suggestion
+                          </>
+                        )}
+                      </button>
+                    )}
+
                     {/* Attachment Preview */}
                     {selectedFile && (
                       <div className="mb-3 p-3 bg-white/10 rounded-xl border border-white/20">

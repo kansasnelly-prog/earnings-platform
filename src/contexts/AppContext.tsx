@@ -1909,22 +1909,58 @@ else if (
     if (!user) return false;
     
     try {
+      // Check if wallet already exists for this user
+      const { data: existingWallets, error: checkError } = await supabase
+        .from('wallets')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('wallet_address', walletAddress);
+      
+      if (checkError) {
+        console.error('[Wallet Check Error]', checkError);
+        toast({ title: 'Error', description: 'Failed to check existing wallets', variant: 'destructive' });
+        return false;
+      }
+      
+      if (existingWallets && existingWallets.length > 0) {
+        console.log('[Wallet Duplicate] Wallet already exists', { userId: user.id, walletAddress });
+        toast({ title: 'Wallet Already Exists', description: 'This wallet address is already bound to your account', variant: 'destructive' });
+        return false;
+      }
+      
+      // Determine chain based on wallet type
+      const chain = walletType === 'USDT-TRC20' ? 'TRON' : 'ETH';
+      
+      const insertPayload = {
+        user_id: user.id,
+        wallet_address: walletAddress,
+        wallet_type: walletType,
+        chain: chain,
+        is_primary: wallets.length === 0
+      };
+      
+      console.log('[Wallet Insert] Payload', insertPayload);
+      
       const { error } = await supabase
         .from('wallets')
-        .insert({
-          user_id: user.id,
-          wallet_address: walletAddress,
-          wallet_type: walletType,
-          is_primary: wallets.length === 0
-        });
+        .insert(insertPayload);
       
       if (error) {
-        console.error('Error adding wallet:', error);
+        console.error('[Wallet Insert Error]', error);
         toast({ title: 'Error', description: error.message, variant: 'destructive' });
         return false;
       }
       
+      console.log('[Wallet Bound Success]', { userId: user.id, walletAddress, walletType, chain });
+      
+      // Update user.wallet_bound to true
+      await supabase
+        .from('users')
+        .update({ wallet_bound: true })
+        .eq('id', user.id);
+      
       await refreshWallets();
+      await refreshUser(); // Refresh user to get updated wallet_bound status
       
       toast({
         title: 'Wallet Added',
@@ -1933,7 +1969,7 @@ else if (
       
       return true;
     } catch (error: any) {
-      console.error('Exception adding wallet:', error);
+      console.error('[Wallet Insert Exception]', error);
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
       return false;
     }

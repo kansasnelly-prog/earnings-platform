@@ -1549,44 +1549,83 @@ else if (
     // For training accounts, rebuild tasks from Supabase task_number (source of truth)
     if (user.account_type === 'training' && user.email) {
       try {
-        // FETCH FRESH task_number from Supabase to avoid stale closure issues
+        // FETCH FRESH task_number and training_completed from Supabase to avoid stale closure issues
         const { data: freshAccount, error: fetchError } = await supabase
           .from('training_accounts')
-          .select('task_number')
+          .select('task_number, completed')
           .eq('auth_user_id', user.id)
           .single();
-        
+
         if (fetchError) {
           console.error('[refreshTasks] Error fetching fresh task_number:', fetchError);
         }
-        
+
         const emailKey = user.email.toLowerCase();
         // Use FRESH task_number from Supabase (next task to complete) with fallback
         const currentTaskNumber = freshAccount?.task_number || taskNumber || 1;
+        const isTrainingCompleted = freshAccount?.completed === true || user.training_completed === true;
         const completedTasks = Math.max(0, currentTaskNumber - 1);
-        
-        console.log('[refreshTasks] FRESH task_number from Supabase:', currentTaskNumber, 'completed:', completedTasks);
-        
+
+        console.log('[refreshTasks] FRESH task_number from Supabase:', currentTaskNumber, 'completed:', completedTasks, 'training_completed:', isTrainingCompleted);
+
+        // If training is completed, load existing tasks from database instead of rebuilding
+        // This preserves the completed state (45/45) and prevents reset to 0/45
+        if (isTrainingCompleted) {
+          console.log('[refreshTasks] Training completed - loading existing tasks from database to preserve state');
+          const dbTasks = await SupabaseService.getUserTasks(user.id);
+          if (dbTasks && dbTasks.length > 0) {
+            setTasks(dbTasks.map(mapDatabaseTaskToTask));
+            console.log('[refreshTasks] Loaded completed tasks from database, count:', dbTasks.length);
+          } else {
+            // Fallback: if no tasks in DB but training is completed, rebuild with all tasks completed
+            const RAW_COMMISSION_RATE = 0.01;
+            const SCALE_FACTOR = 2.735;
+            const completedTasksArray: Task[] = Array.from({ length: totalTasks }, (_, i) => {
+              const taskNum = i + 1;
+              const product = ProductCatalogService.getProductForTask(taskNum, 'training');
+              const rawCommission = product.price * RAW_COMMISSION_RATE;
+              const scaledCommission = Math.round(rawCommission * SCALE_FACTOR * 100) / 100;
+              
+              return {
+                id: `task_${taskNum}`,
+                user_id: user.id,
+                task_number: taskNum,
+                title: product.name,
+                description: `Complete task ${taskNum}`,
+                reward: scaledCommission,
+                status: 'completed' as const,
+                created_at: new Date().toISOString(),
+                completed_at: new Date().toISOString(),
+                task_set: 0
+              };
+            });
+            setTasks(completedTasksArray);
+            console.log('[refreshTasks] Rebuilt completed tasks as fallback, count:', completedTasksArray.length);
+          }
+          isRefreshingTasks.current = false;
+          return;
+        }
+
         // RESTORED: Original product-based commission with scaling to achieve $165.60 total
         const RAW_COMMISSION_RATE = 0.01; // 1% base rate
         const SCALE_FACTOR = 2.735; // Scale raw commissions to reach $165.60 total
-        
-        // Rebuild tasks array based on Supabase task_number
+
+        // Rebuild tasks array based on Supabase task_number (only for active/incomplete training)
         const rebuiltTasks: Task[] = Array.from({ length: totalTasks }, (_, i) => {
           const taskNum = i + 1;
           const product = ProductCatalogService.getProductForTask(taskNum, 'training');
-          
+
           // Calculate scaled product-based commission (unique for each product)
           const rawCommission = product.price * RAW_COMMISSION_RATE;
           const scaledCommission = Math.round(rawCommission * SCALE_FACTOR * 100) / 100;
-          
+
           let status: 'pending' | 'completed' | 'locked' = 'locked';
           if (taskNum < currentTaskNumber) {
             status = 'completed';
           } else if (taskNum === currentTaskNumber) {
             status = 'pending';
           }
-          
+
           return {
             id: `task_${taskNum}`,
             user_id: user.id,
@@ -1600,9 +1639,9 @@ else if (
             task_set: 0
           };
         });
-        
+
         setTasks(rebuiltTasks);
-        
+
         // Update localStorage with rebuilt tasks
         localStorage.setItem(`training_tasks_${emailKey}`, JSON.stringify(rebuiltTasks));
         console.log('[refreshTasks] Rebuilt and saved training tasks, count:', rebuiltTasks.length, 'current task:', currentTaskNumber);

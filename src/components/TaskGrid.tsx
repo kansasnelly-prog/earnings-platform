@@ -704,7 +704,7 @@ const allComplete = displayCompletedCount === totalTasks;
     return Math.round(rawCommission * SCALE_FACTOR * 100) / 100;
   };
   
-  // Calculate commission for current task
+  // For personal/admin accounts, use task.reward from database (NOT product-based calculation)
   const currentTaskCommission = pendingTask ? (() => {
     if (isTraining) {
       // Use scaled product-based commission for training accounts
@@ -716,12 +716,8 @@ const allComplete = displayCompletedCount === totalTasks;
       }
       return 0;
     }
-    // For personal accounts, use product-based commission
-    const product = safeCatalog[(pendingTask.task_number - 1) % safeCatalog.length];
-    if (product) {
-      const commission = SupabaseService.calculateTaskReward(product.price, user?.vip_level || 2, false);
-      return commission;
-    }
+    // For personal accounts, use reward from database (predefined values for VIP1)
+    console.log('[TaskGrid] Using database reward for personal task', pendingTask.task_number, ':', pendingTask.reward);
     return pendingTask.reward || 0;
   })() : 0;
 

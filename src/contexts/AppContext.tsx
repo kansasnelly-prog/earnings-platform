@@ -763,9 +763,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           user_status: dbUser.user_status
         });
 
-        // Load tasks
+        // Load tasks - create 35 tasks if none exist for personal account
         const dbTasks = await SupabaseService.getUserTasks(userId);
-        setTasks((dbTasks || []).map(mapDatabaseTaskToTask));
+        if (!dbTasks || dbTasks.length === 0) {
+          console.log('[loadUserData] No tasks found for personal account, creating 35 tasks');
+          await SupabaseService.createTrainingTasks(userId, 35);
+          const newTasks = await SupabaseService.getUserTasks(userId);
+          setTasks((newTasks || []).map(mapDatabaseTaskToTask));
+        } else {
+          setTasks(dbTasks.map(mapDatabaseTaskToTask));
+        }
       } catch (error) {
         console.error('Error loading personal account data:', error);
         setTasks([]);

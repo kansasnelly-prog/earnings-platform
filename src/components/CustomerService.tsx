@@ -512,11 +512,11 @@ const CustomerService: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
     let newConversation: any = null;
     let savedMessage: any = null;
     
-    // Add timeout guard (15 seconds for new conversation)
+    // Add timeout guard (30 seconds for new conversation)
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
-        reject(new Error('Submission timeout after 15 seconds'));
-      }, 15000);
+        reject(new Error('Submission timeout after 30 seconds'));
+      }, 30000);
     });
 
     try {
@@ -613,7 +613,7 @@ const CustomerService: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
         return;
       }
       
-      const errorMessage = error.message === 'Submission timeout after 15 seconds'
+      const errorMessage = error.message === 'Submission timeout after 30 seconds'
         ? 'Request timed out. Please check your connection and try again.'
         : error.message || 'Failed to send message. Please try again.';
       

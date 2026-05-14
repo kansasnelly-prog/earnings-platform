@@ -905,7 +905,9 @@ export class SupabaseService {
 
       const vipLevel = user?.vip_level || 1;
       const isTraining = user?.account_type === 'training';
-      const commissionRate = this.getVIPCommissionRate(vipLevel, isTraining);
+      const isPersonal = user?.account_type === 'personal';
+      // Personal accounts always use 0.5% reward rate
+      const commissionRate = isPersonal ? 0.005 : this.getVIPCommissionRate(vipLevel, isTraining);
 
       // Use provided taskCount (default 35 for VIP1 personal accounts)
       // Training accounts can have 45 tasks

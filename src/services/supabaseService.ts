@@ -3828,12 +3828,19 @@ export class SupabaseService {
       const userId = user.id;
       const trainingAccountId = trainingAccount.id;
 
+      console.log('[processSingleTrainingTransfer] Starting transfer - trainingAccountId:', trainingAccountId, 'trainingAccount.email:', trainingAccount.email);
+
       // Fetch training account fresh balance from training_accounts table (source of truth for training earnings)
       const { data: freshTraining, error: trainingFetchError } = await supabase
         .from('training_accounts')
         .select('amount')
         .eq('auth_user_id', trainingAccountId)
         .single();
+
+      if (trainingFetchError) {
+        console.error('[processSingleTrainingTransfer] Error fetching training account balance:', trainingFetchError);
+        return { success: false, amount: 0 };
+      }
 
       const earnedRewards = freshTraining?.amount || 0;
       const INITIAL_TRAINING_BALANCE = 1100;
@@ -3890,12 +3897,13 @@ export class SupabaseService {
         // Don't fail the transfer if training_accounts update fails, but log it
       }
 
-      // Update users table - set to full remaining balance (initial + remaining earned)
+      // Update users table - set balance to remaining amount but keep total_earned unchanged (earned rewards only)
+      console.log('[processSingleTrainingTransfer] Updating training account balance in users table - trainingAccountId:', trainingAccountId, 'remainingBalance:', remainingBalance, 'earnedRewards:', earnedRewards);
       const { error: trainingUpdateError } = await supabase
         .from('users')
         .update({
           balance: remainingBalance,
-          total_earned: remainingBalance,
+          total_earned: earnedRewards, // Keep original earned rewards unchanged (don't include initial capital)
           commission_transferred: true,
           commission_transfer_amount: commissionAmount,
           commission_transferred_at: new Date().toISOString()
@@ -3904,8 +3912,12 @@ export class SupabaseService {
 
       if (trainingUpdateError) {
         console.error('[processSingleTrainingTransfer] Training account balance update error:', trainingUpdateError);
-        // Don't fail the transfer if training account update fails, but log it
+        // CRITICAL: Fail the transfer if training account balance update fails
+        // This prevents duplicate funds between training and personal accounts
+        return { success: false, amount: 0 };
       }
+
+      console.log('[processSingleTrainingTransfer] Training account balance updated successfully - new balance:', remainingBalance);
 
       // Reset personal account tasks to 0/35
       const { error: tasksResetError } = await supabase

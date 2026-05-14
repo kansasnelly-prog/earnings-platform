@@ -6,6 +6,7 @@ CREATE OR REPLACE FUNCTION update_vip1_personal_rewards()
 RETURNS JSONB AS $$
 DECLARE
     updated_count INTEGER := 0;
+    row_count INTEGER;
 BEGIN
     -- Update existing VIP1 personal account tasks to use predefined rewards
     -- Cycle 1 rewards (35 tasks summing to $10.25)
@@ -55,7 +56,8 @@ BEGIN
     AND (u.personal_cycle IS NULL OR u.personal_cycle = 1)
     AND t.task_number <= 35;
     
-    GET DIAGNOSTICS updated_count = ROW_COUNT;
+    GET DIAGNOSTICS row_count = ROW_COUNT;
+    updated_count := updated_count + row_count;
     
     -- Cycle 2 rewards (35 tasks summing to $10.25) - for users in cycle 2
     UPDATE tasks t
@@ -104,7 +106,8 @@ BEGIN
     AND u.personal_cycle = 2
     AND t.task_number <= 35;
     
-    GET DIAGNOSTICS updated_count = updated_count + ROW_COUNT;
+    GET DIAGNOSTICS row_count = ROW_COUNT;
+    updated_count := updated_count + row_count;
     
     RETURN jsonb_build_object(
         'success', true,

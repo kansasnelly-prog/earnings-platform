@@ -6,12 +6,11 @@ CREATE OR REPLACE FUNCTION update_vip1_personal_rewards()
 RETURNS JSONB AS $$
 DECLARE
     updated_count INTEGER := 0;
-    row_count INTEGER;
 BEGIN
     -- Update existing VIP1 personal account tasks to use predefined rewards
     -- Cycle 1 rewards (35 tasks summing to $10.25)
-    UPDATE tasks t
-    SET reward = CASE t.task_number
+    UPDATE tasks
+    SET reward = CASE task_number
         WHEN 1 THEN 0.12
         WHEN 2 THEN 0.13
         WHEN 3 THEN 0.14
@@ -49,19 +48,19 @@ BEGIN
         WHEN 35 THEN 0.56
     END,
     commission_rate = 0.005
-    FROM users u
-    WHERE t.user_id = u.id
-    AND u.account_type = 'personal'
-    AND u.vip_level = 1
-    AND (u.personal_cycle IS NULL OR u.personal_cycle = 1)
-    AND t.task_number <= 35;
+    WHERE user_id IN (
+        SELECT id FROM users
+        WHERE account_type = 'personal'
+        AND vip_level = 1
+        AND (personal_cycle IS NULL OR personal_cycle = 1)
+    )
+    AND task_number <= 35;
     
-    GET DIAGNOSTICS row_count = ROW_COUNT;
-    updated_count := updated_count + row_count;
+    GET DIAGNOSTICS updated_count = ROW_COUNT;
     
     -- Cycle 2 rewards (35 tasks summing to $10.25) - for users in cycle 2
-    UPDATE tasks t
-    SET reward = CASE t.task_number
+    UPDATE tasks
+    SET reward = CASE task_number
         WHEN 1 THEN 0.12
         WHEN 2 THEN 0.13
         WHEN 3 THEN 0.14
@@ -99,15 +98,15 @@ BEGIN
         WHEN 35 THEN 0.56
     END,
     commission_rate = 0.005
-    FROM users u
-    WHERE t.user_id = u.id
-    AND u.account_type = 'personal'
-    AND u.vip_level = 1
-    AND u.personal_cycle = 2
-    AND t.task_number <= 35;
+    WHERE user_id IN (
+        SELECT id FROM users
+        WHERE account_type = 'personal'
+        AND vip_level = 1
+        AND personal_cycle = 2
+    )
+    AND task_number <= 35;
     
-    GET DIAGNOSTICS row_count = ROW_COUNT;
-    updated_count := updated_count + row_count;
+    updated_count := updated_count + ROW_COUNT;
     
     RETURN jsonb_build_object(
         'success', true,

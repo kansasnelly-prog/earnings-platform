@@ -10,18 +10,14 @@ SELECT
     balance,
     total_earned,
     tasks_completed,
-    personal_cycle,
-    personal_cycle_completed,
     wallet_bound,
     withdrawal_unlocked
 FROM users
 WHERE email IN ('umarjan2244@gmail.com', 'izaz83910@mail.com');
 
--- Step 2: Update personal_cycle fields for these accounts
+-- Step 2: Reset tasks_completed for these accounts
 UPDATE users
 SET 
-    personal_cycle = 1,
-    personal_cycle_completed = false,
     tasks_completed = 0,
     updated_at = NOW()
 WHERE email IN ('umarjan2244@gmail.com', 'izaz83910@mail.com')
@@ -37,7 +33,7 @@ WHERE user_id IN (
     AND vip_level = 1
 );
 
--- Step 4: Create 35 new tasks with predefined rewards for cycle 1
+-- Step 4: Create 35 new tasks with predefined rewards
 -- For umarjan2244@gmail.com
 INSERT INTO tasks (user_id, task_number, reward, commission_rate, status, product_name, product_price, product_image)
 SELECT 
@@ -138,7 +134,7 @@ SELECT
 FROM generate_series(1, 35) AS task_number
 WHERE EXISTS (SELECT 1 FROM users WHERE email = 'izaz83910@mail.com' AND account_type = 'personal' AND vip_level = 1);
 
--- Step 5: Ensure wallet binding and withdrawal are locked until cycle 2 completes
+-- Step 5: Ensure wallet binding and withdrawal are locked
 UPDATE users
 SET 
     wallet_bound = false,
@@ -154,8 +150,6 @@ SELECT
     u.vip_level,
     u.balance,
     u.tasks_completed,
-    u.personal_cycle,
-    u.personal_cycle_completed,
     u.wallet_bound,
     u.withdrawal_unlocked,
     COUNT(t.id) as task_count,
@@ -167,4 +161,4 @@ LEFT JOIN tasks t ON t.user_id = u.id
 WHERE u.email IN ('umarjan2244@gmail.com', 'izaz83910@mail.com')
 AND u.account_type = 'personal'
 AND u.vip_level = 1
-GROUP BY u.email, u.account_type, u.vip_level, u.balance, u.tasks_completed, u.personal_cycle, u.personal_cycle_completed, u.wallet_bound, u.withdrawal_unlocked;
+GROUP BY u.email, u.account_type, u.vip_level, u.balance, u.tasks_completed, u.wallet_bound, u.withdrawal_unlocked;

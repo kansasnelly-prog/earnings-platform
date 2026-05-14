@@ -879,6 +879,23 @@ export class SupabaseService {
     return ranges[vipLevel] || '$0 - $100';
   }
   
+  // Predefined reward arrays for VIP1 personal accounts
+  // Cycle 1: 35 tasks summing to $10.25
+  private static VIP1_CYCLE_1_REWARDS = [
+    0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21,
+    0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.30, 0.31,
+    0.32, 0.33, 0.34, 0.35, 0.36, 0.37, 0.38, 0.39, 0.40, 0.41,
+    0.42, 0.43, 0.44, 0.45, 0.56
+  ];
+  
+  // Cycle 2: 35 tasks summing to $10.25
+  private static VIP1_CYCLE_2_REWARDS = [
+    0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21,
+    0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.30, 0.31,
+    0.32, 0.33, 0.34, 0.35, 0.36, 0.37, 0.38, 0.39, 0.40, 0.41,
+    0.42, 0.43, 0.44, 0.45, 0.56
+  ];
+
   static calculateTaskReward(productPrice: number, vipLevel: number, isTraining: boolean = false): number {
     const commissionRate = this.getVIPCommissionRate(vipLevel, isTraining);
     const reward = productPrice * commissionRate;
@@ -891,10 +908,10 @@ export class SupabaseService {
   
   static async createTrainingTasks(userId: string, taskCount: number = 35): Promise<boolean> {
     try {
-      // Get user's VIP level
+      // Get user's VIP level and personal cycle
       const { data: user, error: userError } = await supabase
         .from('users')
-        .select('vip_level, account_type')
+        .select('vip_level, account_type, personal_cycle')
         .eq('id', userId)
         .single();
 
@@ -906,8 +923,8 @@ export class SupabaseService {
       const vipLevel = user?.vip_level || 1;
       const isTraining = user?.account_type === 'training';
       const isPersonal = user?.account_type === 'personal';
-      // Personal accounts always use 0.5% reward rate
-      const commissionRate = isPersonal ? 0.005 : this.getVIPCommissionRate(vipLevel, isTraining);
+      const personalCycle = user?.personal_cycle || 1;
+      const isVIP1Personal = isPersonal && vipLevel === 1;
 
       // Use provided taskCount (default 35 for VIP1 personal accounts)
       // Training accounts can have 45 tasks
@@ -937,13 +954,24 @@ export class SupabaseService {
           productImage = trainingProducts[i].image || null;
         }
 
-        // Calculate reward based on product price and VIP commission rate
-        let reward = this.calculateTaskReward(productPrice, vipLevel);
+        // VIP1 Personal accounts use predefined reward arrays
+        let reward;
+        let commissionRate = isPersonal ? 0.005 : this.getVIPCommissionRate(vipLevel, isTraining);
+        
+        if (isVIP1Personal) {
+          // Use predefined reward based on personal cycle
+          const rewardArray = personalCycle === 1 ? this.VIP1_CYCLE_1_REWARDS : this.VIP1_CYCLE_2_REWARDS;
+          reward = rewardArray[i] || 0.25;
+          commissionRate = 0.005; // 0.5% for VIP1 personal
+        } else {
+          // Calculate reward based on product price and VIP commission rate
+          reward = this.calculateTaskReward(productPrice, vipLevel);
 
-        // Add small variation for realism (±10%)
-        const variation = (Math.random() - 0.5) * 0.2;
-        reward = reward * (1 + variation);
-        reward = Math.max(0.25, reward); // Minimum $0.25 per task
+          // Add small variation for realism (±10%)
+          const variation = (Math.random() - 0.5) * 0.2;
+          reward = reward * (1 + variation);
+          reward = Math.max(0.25, reward); // Minimum $0.25 per task
+        }
 
         return {
           user_id: userId,
@@ -1107,18 +1135,29 @@ export class SupabaseService {
           console.log('[completeTask] Capping VIP1 personal earnings at $71.63');
         }
         
+        const updateData: any = {
+          balance: newBalance,
+          total_earned: newTotalEarned,
+          tasks_completed: newTasksCompleted,
+          training_progress: trainingProgress,
+          updated_at: new Date().toISOString()
+        };
+        
+        // Only include personal_cycle fields if they exist in the user record
+        if (user.personal_cycle !== undefined) {
+          updateData.personal_cycle = personalCycle;
+        }
+        if (user.personal_cycle_completed !== undefined) {
+          updateData.personal_cycle_completed = personalCycleCompleted;
+        }
+        
         const { error: userUpdateError } = await supabase
           .from('users')
-          .update({
-            balance: newBalance,
-            total_earned: newTotalEarned,
-            tasks_completed: newTasksCompleted,
-            training_progress: trainingProgress,
-            updated_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq('id', userId);
 
         if (userUpdateError) {
+          console.error('[completeTask] Failed to update user stats:', userUpdateError);
           return { success: false, error: userUpdateError.message };
         }
 

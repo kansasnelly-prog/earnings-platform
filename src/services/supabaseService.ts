@@ -906,6 +906,29 @@ export class SupabaseService {
   // TASK OPERATIONS
   // ===========================================
   
+  // ===========================================
+  // VIP1 PERSONAL TASK REWARD UPDATE
+  // ===========================================
+  
+  static async updateVIP1PersonalTaskRewards(userId: string): Promise<boolean> {
+    try {
+      console.log('[updateVIP1PersonalTaskRewards] Calling RPC to update rewards for user:', userId);
+      
+      const { data, error } = await supabase.rpc('update_vip1_personal_rewards');
+      
+      if (error) {
+        console.error('[updateVIP1PersonalTaskRewards] RPC error:', error);
+        return false;
+      }
+      
+      console.log('[updateVIP1PersonalTaskRewards] RPC success:', data);
+      return true;
+    } catch (error: any) {
+      console.error('[updateVIP1PersonalTaskRewards] Exception:', error);
+      return false;
+    }
+  }
+
   static async createTrainingTasks(userId: string, taskCount: number = 35): Promise<boolean> {
     try {
       // Get user's VIP level and personal cycle
@@ -1040,13 +1063,19 @@ export class SupabaseService {
 
       const reward = task.reward;
 
+      console.log('[completeTask] Task details:', { taskNumber, taskId: task.id, reward, task });
+
       // Update task status
+      const updatePayload = { status: 'completed', completed_at: new Date().toISOString() };
+      console.log('[TASK PATCH PAYLOAD]', updatePayload);
+      
       const { error: updateError } = await supabase
         .from('tasks')
-        .update({ status: 'completed', completed_at: new Date().toISOString() })
+        .update(updatePayload)
         .eq('id', task.id);
 
       if (updateError) {
+        console.error('[completeTask] Task update error:', updateError);
         return { success: false, error: updateError.message };
       }
 

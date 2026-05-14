@@ -1065,8 +1065,8 @@ export class SupabaseService {
 
       console.log('[completeTask] Task details:', { taskNumber, taskId: task.id, reward, task });
 
-      // Update task status
-      const updatePayload = { status: 'completed', completed_at: new Date().toISOString() };
+      // Update task status - do NOT include completed_at as it doesn't exist in database schema
+      const updatePayload = { status: 'completed' };
       console.log('[TASK PATCH PAYLOAD]', updatePayload);
       
       const { error: updateError } = await supabase

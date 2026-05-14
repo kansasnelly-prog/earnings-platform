@@ -13,7 +13,7 @@ const WALLET_TYPES = [
 ];
 
 const WalletSection: React.FC = () => {
-  const { wallets, refreshWallets, addWallet, isLoading, walletState } = useAppContext();
+  const { wallets, refreshWallets, addWallet, isLoading, walletState, user, tasks } = useAppContext();
   const [showBindForm, setShowBindForm] = useState(false);
   const [showWithdrawForm, setShowWithdrawForm] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
@@ -23,6 +23,20 @@ const WalletSection: React.FC = () => {
   const [accountDetails, setAccountDetails] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const safeTasks = tasks || [];
+  const completedCount = safeTasks.filter(t => t.status === 'completed').length;
+  const isPersonal = user?.account_type === 'personal';
+  const isVIP1 = user?.vip_level === 1;
+  
+  // VIP1 Personal accounts: Lock wallet binding until cycle 2 completes
+  const personalCycle = user?.personal_cycle || 1;
+  const personalCycleCompleted = user?.personal_cycle_completed || false;
+  const personalTasksComplete = completedCount === 35;
+  const vip1BothCyclesComplete = isVIP1 && isPersonal && personalCycle === 2 && personalTasksComplete;
+  
+  // Lock wallet binding for VIP1 personal accounts until cycle 2 completes
+  const walletBindingLocked = isVIP1 && isPersonal && !vip1BothCyclesComplete;
 
   const safeWallets = wallets || [];
   const primaryWallet = safeWallets.find(w => w.is_primary);
@@ -81,12 +95,31 @@ const WalletSection: React.FC = () => {
         </div>
         <button
           onClick={() => setShowBindForm(!showBindForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-indigo-500/25"
+          disabled={walletBindingLocked}
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={16} />
-          Bind Wallet
+          {walletBindingLocked ? 'Wallet Locked' : 'Bind Wallet'}
         </button>
       </div>
+
+      {/* Wallet binding lock message for VIP1 */}
+      {walletBindingLocked && (
+        <div className="p-4 bg-amber-500/5 border border-amber-500/15 rounded-xl">
+          <div className="flex items-start gap-3">
+            <AlertCircle size={20} className="text-amber-400 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-amber-400">Wallet Binding Locked</p>
+              <p className="text-xs text-gray-400 mt-1">
+                {personalCycle === 1 && personalCycleCompleted
+                  ? `You have completed Cycle 1 (35/35 tasks). Contact customer service to reset for Cycle 2.`
+                  : `VIP1 personal accounts must complete both cycles (2 × 35 tasks) before wallet binding. You are currently in Cycle ${personalCycle} with ${completedCount}/35 tasks completed.`
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Balance Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

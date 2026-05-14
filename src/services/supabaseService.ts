@@ -1094,11 +1094,24 @@ export class SupabaseService {
         }
       } else {
         // For personal/admin accounts, update users table as before
+        const isVIP1Personal = user.vip_level === 1 && user.account_type === 'personal';
+        const personalCycle = user.personal_cycle || 1;
+        const personalCycleCompleted = user.personal_cycle_completed || false;
+        
+        // Cap earnings at $71.63 for VIP1 personal accounts
+        let newBalance = user.balance + reward;
+        let newTotalEarned = user.total_earned + reward;
+        if (isVIP1Personal && newTotalEarned > 71.63) {
+          newTotalEarned = 71.63;
+          newBalance = 71.63;
+          console.log('[completeTask] Capping VIP1 personal earnings at $71.63');
+        }
+        
         const { error: userUpdateError } = await supabase
           .from('users')
           .update({
-            balance: user.balance + reward,
-            total_earned: user.total_earned + reward,
+            balance: newBalance,
+            total_earned: newTotalEarned,
             tasks_completed: newTasksCompleted,
             training_progress: trainingProgress,
             updated_at: new Date().toISOString()
@@ -1107,6 +1120,19 @@ export class SupabaseService {
 
         if (userUpdateError) {
           return { success: false, error: userUpdateError.message };
+        }
+
+        // Check if VIP1 personal account completed a cycle (35 tasks)
+        if (isVIP1Personal && newTasksCompleted >= 35 && !personalCycleCompleted) {
+          console.log('[completeTask] VIP1 personal account completed cycle', personalCycle, '(35/35 tasks)');
+          
+          // Mark current cycle as completed
+          await supabase
+            .from('users')
+            .update({ personal_cycle_completed: true })
+            .eq('id', userId);
+            
+          console.log('[completeTask] Set personal_cycle_completed to true for cycle', personalCycle);
         }
       }
 

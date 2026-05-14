@@ -490,30 +490,51 @@ const EnhancedAdminDashboard: React.FC = () => {
         return;
       }
 
-      // Delete all task assignments for this user
+      // Delete all tasks for this user
       const { error: deleteError } = await supabase
-        .from('user_task_assignments')
+        .from('tasks')
         .delete()
         .eq('user_id', userData.id);
 
       if (deleteError) throw deleteError;
 
+      // VIP1 Personal account: Handle cycle advancement
+      const isVIP1 = userData.vip_level === 1;
+      const personalCycle = userData.personal_cycle || 1;
+      const personalCycleCompleted = userData.personal_cycle_completed || false;
+
+      let updateData: any = {
+        tasks_completed: 0,
+        updated_at: new Date().toISOString()
+      };
+
+      let resetMessage = `Tasks for ${email} have been reset to 0/${userData.vip_level === 1 ? '35' : '45'}. Balance and earnings preserved.`;
+
+      if (isVIP1 && personalCycle === 1 && personalCycleCompleted) {
+        // Advance to cycle 2
+        updateData.personal_cycle = 2;
+        updateData.personal_cycle_completed = false;
+        resetMessage = `VIP1 Personal account advanced to Cycle 2. Tasks reset to 0/35. Balance and earnings preserved.`;
+      }
+
       // Reset only tasks, NOT balance or earnings
       const { error: updateError } = await supabase
         .from('users')
-        .update({
-          tasks_completed: 0,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', userData.id);
 
       if (updateError) throw updateError;
+
+      // Recreate 35 tasks for the user
+      await SupabaseService.createTrainingTasks(userData.id, 35);
 
       // Log admin action
       await logAdminAction('PERSONAL_ACCOUNT_RESET', 'admin@optimize.com', {
         userId: userData.id,
         email: email,
         resetType: 'personal',
+        vipLevel: userData.vip_level,
+        cycle: personalCycle,
         timestamp: new Date().toISOString()
       });
 
@@ -527,7 +548,7 @@ const EnhancedAdminDashboard: React.FC = () => {
 
       toast({
         title: 'Personal Account Reset Successfully',
-        description: `Tasks for ${email} have been reset to 0/${userData.vip_level === 1 ? '35' : '45'}. Balance and earnings preserved.`,
+        description: resetMessage,
       });
 
       // Refresh data

@@ -33,17 +33,26 @@ const WithdrawalSection: React.FC = () => {
   const completedCount = safeTasks.filter(t => t.status === 'completed').length;
   const isTraining = user?.account_type === 'training';
   const isPersonal = user?.account_type === 'personal';
+  const isVIP1 = user?.vip_level === 1;
   
   // Use total_tasks from database
   const totalTasks = user?.total_tasks || 45;
   
   // Training accounts: BOTH sets must be completed (90/90 tasks total = SET 1 + SET 2)
-  // Personal accounts: 35/35 tasks required
   const trainingFullyCompleted = user?.training_completed === true || 
     (user?.training_phase === 2 && completedCount === 45);
+  
+  // VIP1 Personal accounts: Must complete TWO cycles of 35 tasks
+  const personalCycle = user?.personal_cycle || 1;
+  const personalCycleCompleted = user?.personal_cycle_completed || false;
   const personalTasksComplete = completedCount === totalTasks;
   
-  const allTasksComplete = isTraining ? trainingFullyCompleted : personalTasksComplete;
+  // VIP1 personal: Only allow withdrawal after completing cycle 2
+  const vip1BothCyclesComplete = isVIP1 && isPersonal && personalCycle === 2 && personalTasksComplete;
+  // Non-VIP1 personal: Allow withdrawal after 35/35
+  const nonVip1PersonalComplete = !isVIP1 && isPersonal && personalTasksComplete;
+  
+  const allTasksComplete = isTraining ? trainingFullyCompleted : (isVIP1 ? vip1BothCyclesComplete : nonVip1PersonalComplete);
   // Check for primary wallet first, then fall back to any wallet if primary not found
   const primaryWallet = safeWallets.find(w => w.is_primary) || safeWallets[0];
   const balance = user?.balance || 0;
@@ -182,15 +191,31 @@ const WithdrawalSection: React.FC = () => {
                 <p className="text-xs text-gray-400 mt-1">
                   {isTraining
                     ? `You need to complete all 90 training tasks (SET 1 and SET 2) before you can withdraw. You are currently in SET ${user?.training_phase || 1} with ${completedCount}/45 tasks completed.`
-                    : `You need to complete all ${user?.total_tasks || 35} VIP${user?.vip_level || 1} tasks before you can withdraw. You have completed ${completedCount}/${user?.total_tasks || 35} tasks.`
+                    : isVIP1
+                      ? personalCycle === 1 && personalCycleCompleted
+                        ? `You have completed Cycle 1 (35/35 tasks). Contact customer service to reset for Cycle 2.`
+                        : personalCycle === 1
+                          ? `You need to complete Cycle 1 (35/35 tasks) before you can withdraw. You have completed ${completedCount}/35 tasks.`
+                          : `You need to complete Cycle 2 (35/35 tasks) before you can withdraw. You have completed ${completedCount}/35 tasks.`
+                      : `You need to complete all ${user?.total_tasks || 35} VIP${user?.vip_level || 1} tasks before you can withdraw. You have completed ${completedCount}/${user?.total_tasks || 35} tasks.`
                   }
                 </p>
-                <button
-                  onClick={() => setActiveTab('tasks')}
-                  className="mt-3 px-4 py-2 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg text-xs font-medium hover:bg-amber-500/20 transition-all"
-                >
-                  Go to Tasks
-                </button>
+                {isVIP1 && personalCycle === 1 && personalCycleCompleted && (
+                  <button
+                    onClick={() => setActiveTab('customer-service')}
+                    className="mt-3 px-4 py-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg text-xs font-medium hover:bg-indigo-500/20 transition-all"
+                  >
+                    Contact Customer Service
+                  </button>
+                )}
+                {(!isVIP1 || (isVIP1 && !personalCycleCompleted)) && (
+                  <button
+                    onClick={() => setActiveTab('tasks')}
+                    className="mt-3 px-4 py-2 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg text-xs font-medium hover:bg-amber-500/20 transition-all"
+                  >
+                    Go to Tasks
+                  </button>
+                )}
               </div>
             </div>
           </div>

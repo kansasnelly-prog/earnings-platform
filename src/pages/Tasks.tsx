@@ -37,7 +37,32 @@ const Tasks: React.FC = () => {
 
   // For VIP1 personal accounts, handle 35/35 completion state
   const isFirstSetComplete = !isTraining && user?.vip_level === 1 && (user?.tasks_completed === 35 || completedCount === 35);
+  const isSecondSetComplete = !isTraining && user?.vip_level === 1 && (user?.tasks_completed === 70 || completedCount === 70);
   const totalReward = user?.total_earned || 0;
+
+  // For VIP1 personal accounts, calculate current set display
+  // Only switch to Set 2 when tasks_completed > 35 (after customer service reset)
+  const currentSetDisplay = !isTraining && user?.vip_level === 1 && user?.tasks_completed > 35 ? 'Set 2' : 'Set 1';
+  const currentSetCompleted = !isTraining && user?.vip_level === 1 && user?.tasks_completed > 35 
+    ? Math.min(completedCount - 35, 35) 
+    : completedCount;
+  const currentSetTotal = 35;
+
+  // For progress display, use actual completed count to prevent 0/35 when first set complete
+  const displayCompletedCount = isFirstSetComplete ? 35 : currentSetCompleted;
+  const displayProgressPercent = currentSetTotal > 0 ? (displayCompletedCount / currentSetTotal) * 100 : 0;
+
+  // VIP1 commission rate: 1% base rate scaled by 2.735 factor
+  const VIP1_COMMISSION_RATE = 0.01 * 2.735;
+
+  // Calculate task reward based on VIP1 commission rate if task.reward is 0
+  const calculateTaskReward = (task: any) => {
+    if (task.reward && task.reward > 0) return task.reward;
+    // If reward is 0, calculate based on VIP1 commission rate
+    // Use a default product price of $100 for calculation if not specified
+    const productPrice = task.product_price || 100;
+    return productPrice * VIP1_COMMISSION_RATE;
+  };
 
   const filteredTasks = tasksArray.filter(task => {
     if (filter === 'pending') return task.status === 'pending' || task.status === 'locked';
@@ -82,6 +107,14 @@ const Tasks: React.FC = () => {
       return;
     }
     
+    // BLOCK task submission if first set is complete (awaiting customer service reset)
+    if (isFirstSetComplete) {
+      toast.error('Account reset required! Please contact customer service to reset your account for the next set.', {
+        duration: 5000,
+      });
+      return;
+    }
+    
     const success = await completeTask(task.task_number);
     if (success) {
       toast.success('Task completed!');
@@ -100,6 +133,14 @@ const Tasks: React.FC = () => {
     // BLOCK task submission if pending order exists
     if (user?.has_pending_order) {
       toast.error('Tasks are locked! Please clear your pending combination order first. Contact customer service.', {
+        duration: 5000,
+      });
+      return;
+    }
+    
+    // BLOCK task submission if first set is complete (awaiting customer service reset)
+    if (isFirstSetComplete) {
+      toast.error('Account reset required! Please contact customer service to reset your account for the next set.', {
         duration: 5000,
       });
       return;
@@ -129,7 +170,9 @@ const Tasks: React.FC = () => {
               <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-xl border border-amber-500/30">
                 <Target className="w-5 h-5 text-amber-400" />
                 <span className="text-amber-200 font-semibold text-base">
-                  {completedCount}/{totalTasks} Tasks
+                  {!isTraining && user?.vip_level === 1 
+                    ? `${currentSetDisplay} (${displayCompletedCount}/${currentSetTotal})` 
+                    : `${completedCount}/${totalTasks} Tasks`}
                 </span>
               </div>
             </div>
@@ -188,11 +231,11 @@ const Tasks: React.FC = () => {
               </div>
               <span className="text-slate-400 text-sm">Progress</span>
             </div>
-            <p className="text-2xl font-bold text-white">{Math.round(progressPercent)}%</p>
+            <p className="text-2xl font-bold text-white">{Math.round(displayProgressPercent)}%</p>
             <div className="mt-2 h-2 bg-slate-800 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
+                style={{ width: `${displayProgressPercent}%` }}
               />
             </div>
           </div>
@@ -204,7 +247,7 @@ const Tasks: React.FC = () => {
               </div>
               <span className="text-slate-400 text-sm">Completed</span>
             </div>
-            <p className="text-2xl font-bold text-white">{completedCount}</p>
+            <p className="text-2xl font-bold text-white">{displayCompletedCount}</p>
             <p className="text-sm text-emerald-400 font-medium">tasks done</p>
           </div>
 
@@ -300,7 +343,7 @@ const Tasks: React.FC = () => {
                 </div>
                 {task.status === 'completed' && (
                   <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-sm font-bold rounded-full">
-                    +${task.reward?.toFixed(2)}
+                    +${calculateTaskReward(task).toFixed(2)}
                   </span>
                 )}
               </div>
@@ -370,8 +413,8 @@ const Tasks: React.FC = () => {
 
                     {/* Price display */}
                     <div className="flex items-baseline gap-2 mb-6">
-                      <span className="text-3xl font-bold text-white">${task.reward?.toFixed(2)}</span>
-                      <span className="text-sm text-slate-500 line-through">${(task.reward * 1.4).toFixed(2)}</span>
+                      <span className="text-3xl font-bold text-white">${calculateTaskReward(task).toFixed(2)}</span>
+                      <span className="text-sm text-slate-500 line-through">${(calculateTaskReward(task) * 1.4).toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -382,7 +425,7 @@ const Tasks: React.FC = () => {
                         <Sparkles size={16} className="text-amber-400" />
                         <span className="text-sm font-semibold text-white">Task Reward</span>
                       </div>
-                      <span className="text-xl font-bold text-emerald-400">+${task.reward?.toFixed(2)}</span>
+                      <span className="text-xl font-bold text-emerald-400">+${calculateTaskReward(task).toFixed(2)}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-slate-400">
                       <Zap size={12} className="text-amber-400" />
@@ -397,17 +440,24 @@ const Tasks: React.FC = () => {
                         e.stopPropagation();
                         handleCompleteTaskDirect(task);
                       }}
-                      disabled={isLoading || user?.has_pending_order}
+                      disabled={isLoading || user?.has_pending_order || isFirstSetComplete}
                       className={`w-full py-4 text-white font-bold rounded-xl transition-all duration-300 shadow-lg flex items-center justify-center gap-3 text-lg disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98] group ${
-                        user?.has_pending_order 
-                          ? 'bg-red-500/20 text-red-400' 
-                          : 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 hover:from-amber-500 hover:via-orange-500 hover:to-amber-500 hover:shadow-amber-500/40'
+                        isFirstSetComplete
+                          ? 'bg-slate-700 text-slate-400'
+                          : user?.has_pending_order 
+                            ? 'bg-red-500/20 text-red-400' 
+                            : 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 hover:from-amber-500 hover:via-orange-500 hover:to-amber-500 hover:shadow-amber-500/40'
                       }`}
                     >
                       {isLoading ? (
                         <>
                           <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                           <span>Processing...</span>
+                        </>
+                      ) : isFirstSetComplete ? (
+                        <>
+                          <Lock className="w-5 h-5" />
+                          <span>Awaiting Account Reset</span>
                         </>
                       ) : user?.has_pending_order ? (
                         <>
@@ -418,7 +468,7 @@ const Tasks: React.FC = () => {
                         <>
                           <Check className="w-5 h-5 group-hover:scale-110 transition-transform" />
                           <span>Complete Task</span>
-                          <span className="ml-2 px-3 py-1 bg-white/15 rounded-full text-sm">+${task.reward?.toFixed(2)}</span>
+                          <span className="ml-2 px-3 py-1 bg-white/15 rounded-full text-sm">+${calculateTaskReward(task).toFixed(2)}</span>
                         </>
                       )}
                     </button>
@@ -486,7 +536,7 @@ const Tasks: React.FC = () => {
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-xl border border-amber-500/20">
                 <span className="text-slate-400 text-sm">Reward</span>
                 <span className="text-amber-400 font-bold text-lg">
-                  ${selectedTask.reward?.toFixed(2)}
+                  ${calculateTaskReward(selectedTask).toFixed(2)}
                 </span>
               </div>
               

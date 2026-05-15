@@ -115,6 +115,15 @@ const Dashboard: React.FC = () => {
   // Use Supabase-derived count for training, tasks array for personal
   const completedCount = isTraining ? trainingCompletedCount : safeTasks.filter(t => t.status === 'completed').length;
   
+  // For VIP1 personal accounts, handle 35/35 completion state
+  // If tasks_completed equals 35, show completion state instead of 0/0
+  const isFirstSetComplete = !isTraining && user?.vip_level === 1 && (user?.tasks_completed === 35 || completedCount === 35);
+  const isSecondSet = !isTraining && user?.vip_level === 1 && user?.tasks_completed > 35;
+  const currentSetTotal = isSecondSet ? 35 : 35; // Each set is 35 tasks
+  const currentSetCompleted = isSecondSet ? Math.min(completedCount - 35, 35) : completedCount;
+  const displayCompletedCount = isFirstSetComplete ? 35 : (isSecondSet ? currentSetCompleted : completedCount);
+  const displayTotalTasks = isSecondSet ? 35 : (isFirstSetComplete ? 35 : totalTasks);
+  
   // For training accounts, if task_number is 1 (fallback), try to get fresh data from Supabase
   // This prevents stale state on login
   useEffect(() => {
@@ -172,7 +181,8 @@ const Dashboard: React.FC = () => {
   // Use user.total_earned from database as the single source of truth
   const totalReward = user?.total_earned || 0;
   
-  const progress = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
+  // Calculate progress using display values
+  const progress = displayTotalTasks > 0 ? (displayCompletedCount / displayTotalTasks) * 100 : 0;
   const primaryWallet = safeWallets.find(w => w.is_primary);
   const displayRole =
     user?.account_type === 'admin'
@@ -265,17 +275,62 @@ const Dashboard: React.FC = () => {
           </div>
           <p className="text-gray-400 text-sm font-medium">
             {isTraining
-              ? trainingComplete
-                ? 'Training completed! You can now upgrade to a personal account.'
-                : `Complete ${trainingTotalTasks - completedCount} more tasks to finish training.`
-              : allTasksComplete
-                ? 'All tasks complete! You can now withdraw your earnings.'
-                : user?.tasks_locked
-                  ? 'Your account is locked until your linked training account completes the full training cycle.'
-                  : `You have ${totalTasks - completedCount} tasks remaining in your VIP${user?.vip_level || 1} set (${isTraining ? '45' : (user?.vip_level === 1 ? '35' : '45')} tasks total).`}
+  ? trainingComplete
+    ? 'Training completed! You can now upgrade to a personal account.'
+    : `Complete ${trainingTotalTasks - completedCount} more tasks to finish training.`
+  : isFirstSetComplete
+    ? 'First set of 35 tasks completed! Contact customer service to continue to the next set.'
+    : isSecondSet
+      ? `Complete ${displayTotalTasks - displayCompletedCount} more tasks to finish the second set.`
+      : allTasksComplete
+        ? 'All tasks complete! You can now withdraw your earnings.'
+        : user?.tasks_locked
+          ? 'Your account is locked until your linked training account completes the full training cycle.'
+          : `You have ${totalTasks - completedCount} tasks remaining in your VIP${user?.vip_level || 1} set (${isTraining ? '45' : (user?.vip_level === 1 ? '35' : '45')} tasks total).`}
           </p>
         </div>
       </div>
+
+      {/* VIP1 Completion Alert Banner */}
+      {isFirstSetComplete && (
+        <div className="relative p-6 bg-gradient-to-r from-emerald-600/20 via-green-600/15 to-teal-600/10 border border-emerald-500/20 rounded-2xl overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -left-24 top-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl animate-pulse" />
+            <div
+              className="absolute -right-20 top-0 w-72 h-72 rounded-full bg-green-500/10 blur-3xl animate-pulse"
+              style={{ animationDuration: '6s' }}
+            />
+          </div>
+          <div className="relative pr-16 z-10">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                <CheckCircle size={20} className="text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white">First Set Complete!</h3>
+            </div>
+            <p className="text-gray-300 text-sm font-medium mb-3">
+              You have successfully completed the first set of 35/35 tasks. Please contact customer service to reset your personal account to continue to the next set.
+            </p>
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2 text-emerald-400">
+                <DollarSign size={14} />
+                <span className="font-semibold">Balance: ${walletState.available_balance.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center gap-2 text-purple-400">
+                <TrendingUp size={14} />
+                <span className="font-semibold">Total Earned: ${totalReward.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowCSSelection(true)}
+            className="absolute top-4 right-4 z-20 w-12 h-12 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:scale-105 transition-transform"
+            title="Contact Customer Service"
+          >
+            <Headphones size={20} className="text-white" />
+          </button>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -325,7 +380,7 @@ const Dashboard: React.FC = () => {
             <Target size={14} className="text-indigo-400" />
           </div>
           <p className="text-xs text-gray-500 font-medium">Tasks</p>
-          <p className="text-2xl font-bold text-white">{completedCount}<span className="text-sm text-gray-500 font-normal">/{isTraining ? trainingTotalTasks : safeTasks.length}</span></p>
+          <p className="text-2xl font-bold text-white">{displayCompletedCount}<span className="text-sm text-gray-500 font-normal">/{isTraining ? trainingTotalTasks : displayTotalTasks}</span></p>
         </div>
 
         <div className="p-5 bg-white/[0.03] border border-white/[0.06] rounded-2xl hover:border-indigo-500/20 transition-all group cursor-pointer" onClick={() => safeSetActiveTab('profile')}>
@@ -391,7 +446,7 @@ const Dashboard: React.FC = () => {
 
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">{completedCount} of {isTraining ? trainingTotalTasks : safeTasks.length} tasks completed</span>
+            <span className="text-sm text-gray-400">{displayCompletedCount} of {isTraining ? trainingTotalTasks : displayTotalTasks} tasks completed</span>
             <span className="text-sm font-bold text-indigo-400">{progress.toFixed(0)}%</span>
           </div>
           <div className="h-3 bg-white/5 rounded-full overflow-hidden">
@@ -415,7 +470,19 @@ const Dashboard: React.FC = () => {
                 else if (taskNum === currentTaskNum) status = 'pending';
                 return { task_number: taskNum, status };
               })
-            : (safeTasks.length > 0 ? safeTasks : Array.from({ length: 35 }, (_, i) => ({ task_number: i + 1, status: i === 0 ? 'pending' : 'locked' })))
+            : (isFirstSetComplete 
+              ? Array.from({ length: 35 }, (_, i) => ({ task_number: i + 1, status: 'completed' }))
+              : (isSecondSet
+                ? Array.from({ length: 35 }, (_, i) => {
+                    const taskNum = i + 1;
+                    const completedInSet = currentSetCompleted;
+                    let status = 'locked';
+                    if (taskNum <= completedInSet) status = 'completed';
+                    else if (taskNum === completedInSet + 1) status = 'pending';
+                    return { task_number: taskNum, status };
+                  })
+                : (safeTasks.length > 0 ? safeTasks : Array.from({ length: 35 }, (_, i) => ({ task_number: i + 1, status: i === 0 ? 'pending' : 'locked' })))
+              ))
           ).map((task: any) => (
             <div
               key={task.task_number}

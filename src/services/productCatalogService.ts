@@ -277,6 +277,24 @@ export const ProductCatalogService = {
       }
 
       console.log('[ProductCatalog] Product updated successfully:', data);
+
+      // Sync product image to tasks table for all personal users
+      if (data && data.length > 0 && updates.image) {
+        const product = data[0];
+        console.log('[ProductCatalog] Syncing product image to tasks for product number:', product.product_number);
+
+        const { error: syncError } = await supabase
+          .from('tasks')
+          .update({ product_image: updates.image })
+          .eq('product_name', 'Personal Product ' + product.product_number);
+
+        if (syncError) {
+          console.error('[ProductCatalog] Error syncing product image to tasks:', syncError);
+        } else {
+          console.log('[ProductCatalog] Product image synced to tasks successfully');
+        }
+      }
+
       const products = await this.getPersonalProducts();
       return { success: true, products };
     } catch (error) {
@@ -368,6 +386,24 @@ export const ProductCatalogService = {
       }
 
       console.log('[ProductCatalog] Personal product added successfully:', data);
+
+      // Sync product image to tasks table for all personal users
+      if (data && data.length > 0 && product.image) {
+        const newProduct = data[0];
+        console.log('[ProductCatalog] Syncing product image to tasks for product number:', newProduct.product_number);
+
+        const { error: syncError } = await supabase
+          .from('tasks')
+          .update({ product_image: product.image })
+          .eq('product_name', 'Personal Product ' + newProduct.product_number);
+
+        if (syncError) {
+          console.error('[ProductCatalog] Error syncing product image to tasks:', syncError);
+        } else {
+          console.log('[ProductCatalog] Product image synced to tasks successfully');
+        }
+      }
+
       const products = await this.getPersonalProducts();
       return { success: true, products };
     } catch (error) {

@@ -1552,7 +1552,7 @@ else if (
         // FETCH FRESH task_number and training_completed from Supabase to avoid stale closure issues
         const { data: freshAccount, error: fetchError } = await supabase
           .from('training_accounts')
-          .select('task_number, completed')
+          .select('task_number, completed_tasks')
           .eq('auth_user_id', user.id)
           .single();
 
@@ -1563,7 +1563,7 @@ else if (
         const emailKey = user.email.toLowerCase();
         // Use FRESH task_number from Supabase (next task to complete) with fallback
         const currentTaskNumber = freshAccount?.task_number || taskNumber || 1;
-        const isTrainingCompleted = freshAccount?.completed === true || user.training_completed === true;
+        const isTrainingCompleted = freshAccount?.completed_tasks === true || user.training_completed === true;
         const completedTasks = Math.max(0, currentTaskNumber - 1);
 
         console.log('[refreshTasks] FRESH task_number from Supabase:', currentTaskNumber, 'completed:', completedTasks, 'training_completed:', isTrainingCompleted);
@@ -1722,7 +1722,7 @@ else if (
             task_number: trainingTaskNumber, // Next task to complete
             tasks_completed: completedTasks, // Calculate from task_number
             training_progress: completedTasks, // Use calculated value
-            training_completed: trainingAccount.completed || false
+            training_completed: trainingAccount.completed_tasks || false
           } : null);
         }
       } catch (error) {

@@ -10,7 +10,7 @@ import CSSelectionModal from './CSSelectionModal';
 
 const Dashboard: React.FC = () => {
   const context = useAppContext();
-  const { user, tasks, wallets, transactions, walletState, refreshTasks, refreshWallets, refreshTransactions, setActiveTab } = context;
+  const { user, tasks, wallets, transactions, walletState, refreshTasks, refreshWallets, refreshTransactions, setActiveTab, refreshUser } = context;
   const { unreadCount } = useCSNotification();
   
   // Safety wrapper for setActiveTab
@@ -130,13 +130,8 @@ const Dashboard: React.FC = () => {
           
           if (trainingAccount) {
             console.log('[Dashboard] Fresh training data from Supabase:', trainingAccount);
-            // Update user state with fresh data
-            setUser(prev => prev ? {
-              ...prev,
-              task_number: trainingAccount.task_number,
-              tasks_completed: Math.max(0, trainingAccount.task_number - 1),
-              training_completed: trainingAccount.completed_tasks === true
-            } : null);
+            // Refresh user to get fresh data from Supabase
+            await refreshUser();
           }
         } catch (error) {
           console.error('[Dashboard] Error fetching fresh training data:', error);
@@ -144,7 +139,33 @@ const Dashboard: React.FC = () => {
       };
       fetchFreshTrainingData();
     }
-  }, [isTraining, user?.task_number, user?.id]);
+  }, [isTraining, user?.task_number, user?.id, refreshUser]);
+
+  // For training accounts, if balance is 0 (fallback), try to get fresh data from Supabase
+  // This prevents stale balance state on refresh
+  useEffect(() => {
+    if (isTraining && user?.balance === 0 && user?.id) {
+      console.log('[Dashboard] Training account balance is 0 (fallback), fetching fresh data from Supabase');
+      const fetchFreshBalance = async () => {
+        try {
+          const { data: dbUser } = await supabase
+            .from('users')
+            .select('balance, total_earned')
+            .eq('id', user.id)
+            .single();
+          
+          if (dbUser) {
+            console.log('[Dashboard] Fresh balance data from Supabase:', dbUser);
+            // Refresh user to get fresh data from Supabase
+            await refreshUser();
+          }
+        } catch (error) {
+          console.error('[Dashboard] Error fetching fresh balance data:', error);
+        }
+      };
+      fetchFreshBalance();
+    }
+  }, [isTraining, user?.balance, user?.id, refreshUser]);
   
   const nextTask = safeTasks.find(t => t.status === 'pending');
   

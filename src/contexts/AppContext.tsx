@@ -710,25 +710,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         } else {
           console.log('[loadUserData] No training account found in Supabase');
-          setTasks([]);
-          setWalletState({
-            available_balance: 0,
-            pending_balance: 0,
-            total_earned: 0,
-            total_withdrawn: 0,
-            transactions: []
-          });
+          // Don't reset wallet state to 0 - this causes flash of 0 balance on refresh
+          // Keep existing state or set to loading state instead
+          console.log('[loadUserData] Training account not found, keeping existing wallet state');
         }
       } catch (error) {
         console.error('[loadUserData] Error loading training data:', error);
-        setTasks([]);
-        setWalletState({
-          available_balance: 0,
-          pending_balance: 0,
-          total_earned: 0,
-          total_withdrawn: 0,
-          transactions: []
-        });
+        // Don't reset wallet state to 0 - this causes flash of 0 balance on refresh
+        // Keep existing state or set to loading state instead
+        console.log('[loadUserData] Error loading training data, keeping existing wallet state');
       }
     } else {
       // For personal/admin accounts, load from Supabase

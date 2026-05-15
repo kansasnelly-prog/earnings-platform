@@ -1636,11 +1636,31 @@ else if (
     try {
       console.log('[refreshTasks] Loading personal/admin tasks from Supabase');
       const dbTasks = await SupabaseService.getUserTasks(user.id);
-      setTasks((dbTasks || []).map(mapDatabaseTaskToTask));
-      console.log('[refreshTasks] Set tasks from Supabase, count:', (dbTasks || []).length);
+      const tasksCount = (dbTasks || []).length;
+      
+      // For VIP1 personal accounts, prevent resetting tasks to empty array when tasks_completed is 35 or 70
+      // This preserves the completion state when the tasks table is empty after customer service reset
+      const isVIP1Personal = user.account_type === 'personal' && user.vip_level === 1;
+      const tasksCompleted = user.tasks_completed || 0;
+      const shouldPreserveState = isVIP1Personal && (tasksCompleted === 35 || tasksCompleted === 70) && tasksCount === 0;
+      
+      if (shouldPreserveState) {
+        console.log('[refreshTasks] VIP1 personal account with tasks_completed', tasksCompleted, 'but empty tasks array - preserving state to prevent reset to 0');
+        // Don't reset tasks to empty array - keep existing state
+      } else {
+        setTasks((dbTasks || []).map(mapDatabaseTaskToTask));
+        console.log('[refreshTasks] Set tasks from Supabase, count:', tasksCount);
+      }
     } catch (error) {
       console.error('[refreshTasks] Error refreshing tasks:', error);
-      setTasks([]);
+      // Only reset to empty if not a VIP1 account with completed tasks
+      const isVIP1Personal = user.account_type === 'personal' && user.vip_level === 1;
+      const tasksCompleted = user.tasks_completed || 0;
+      if (!isVIP1Personal || (tasksCompleted !== 35 && tasksCompleted !== 70)) {
+        setTasks([]);
+      } else {
+        console.log('[refreshTasks] Error but preserving VIP1 completion state (tasks_completed:', tasksCompleted, ')');
+      }
     } finally {
       isRefreshingTasks.current = false;
     }

@@ -37,7 +37,7 @@ UPDATE training_accounts
 SET 
     amount = 1456.61,  -- Total earned (should not change)
     task_number = 46,  -- 45 tasks completed + 1 = next task would be 46
-    completed = true  -- Mark training as completed
+    completed_tasks = 45  -- Mark 45 tasks completed
 WHERE auth_user_id IN (
     SELECT id FROM users 
     WHERE email = 'water@gmail.com'
@@ -56,7 +56,7 @@ SELECT
     u.tasks_completed,
     ta.task_number as training_task_number,
     ta.amount as training_amount,
-    ta.completed as training_completed
+    ta.completed_tasks as training_completed
 FROM users u
 LEFT JOIN training_accounts ta ON ta.auth_user_id = u.id
 WHERE u.email = 'water@gmail.com';

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useCSNotification } from '@/contexts/CSNotificationContext';
+import { supabase } from '@/lib/supabase';
 import { DollarSign, Zap, Award, Wallet, ArrowDownToLine, TrendingUp, CheckCircle, Clock, Lock, ArrowRight, BarChart3, Target, GraduationCap, Star, MessageCircle, AlertTriangle, Home, Play, FileText, Headphones } from 'lucide-react';
 import { DailyBonusCompact } from './DailyBonus';
 import CombinationOrderModal from './CombinationOrderModal';
@@ -113,6 +114,37 @@ const Dashboard: React.FC = () => {
   
   // Use Supabase-derived count for training, tasks array for personal
   const completedCount = isTraining ? trainingCompletedCount : safeTasks.filter(t => t.status === 'completed').length;
+  
+  // For training accounts, if task_number is 1 (fallback), try to get fresh data from Supabase
+  // This prevents stale state on login
+  useEffect(() => {
+    if (isTraining && user?.task_number === 1 && user?.id) {
+      console.log('[Dashboard] Training account task_number is 1 (fallback), fetching fresh data from Supabase');
+      const fetchFreshTrainingData = async () => {
+        try {
+          const { data: trainingAccount } = await supabase
+            .from('training_accounts')
+            .select('task_number, completed_tasks')
+            .eq('auth_user_id', user.id)
+            .single();
+          
+          if (trainingAccount) {
+            console.log('[Dashboard] Fresh training data from Supabase:', trainingAccount);
+            // Update user state with fresh data
+            setUser(prev => prev ? {
+              ...prev,
+              task_number: trainingAccount.task_number,
+              tasks_completed: Math.max(0, trainingAccount.task_number - 1),
+              training_completed: trainingAccount.completed_tasks === true
+            } : null);
+          }
+        } catch (error) {
+          console.error('[Dashboard] Error fetching fresh training data:', error);
+        }
+      };
+      fetchFreshTrainingData();
+    }
+  }, [isTraining, user?.task_number, user?.id]);
   
   const nextTask = safeTasks.find(t => t.status === 'pending');
   

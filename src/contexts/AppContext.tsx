@@ -1928,7 +1928,10 @@ else if (
       }
       
       // Determine chain based on wallet type
-      const chain = walletType === 'USDT-TRC20' ? 'TRON' : 'ETH';
+      const chain = walletType === 'USDT-TRC20' ? 'TRON' : 
+                    walletType === 'USDT-ERC20' ? 'ETH' : 
+                    walletType === 'USDT-BEP20' ? 'BSC' : 
+                    'ETH';
       
       const insertPayload = {
         user_id: user.id,
@@ -1952,10 +1955,15 @@ else if (
       
       console.log('[Wallet Bound Success]', { userId: user.id, walletAddress, walletType, chain });
       
-      // Update user.wallet_bound to true
+      // Update user.wallet_bound to true and also update wallet_address, wallet_type, chain on users table
       await supabase
         .from('users')
-        .update({ wallet_bound: true })
+        .update({ 
+          wallet_bound: true,
+          wallet_address: walletAddress,
+          wallet_type: walletType,
+          chain: chain
+        })
         .eq('id', user.id);
       
       await refreshWallets();

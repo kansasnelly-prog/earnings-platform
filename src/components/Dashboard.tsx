@@ -291,47 +291,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* VIP1 Completion Alert Banner */}
-      {isFirstSetComplete && (
-        <div className="relative p-6 bg-gradient-to-r from-emerald-600/20 via-green-600/15 to-teal-600/10 border border-emerald-500/20 rounded-2xl overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute -left-24 top-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl animate-pulse" />
-            <div
-              className="absolute -right-20 top-0 w-72 h-72 rounded-full bg-green-500/10 blur-3xl animate-pulse"
-              style={{ animationDuration: '6s' }}
-            />
-          </div>
-          <div className="relative pr-16 z-10">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                <CheckCircle size={20} className="text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white">First Set Complete!</h3>
-            </div>
-            <p className="text-gray-300 text-sm font-medium mb-3">
-              You have successfully completed the first set of 35/35 tasks. Please contact customer service to reset your personal account to continue to the next set.
-            </p>
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-2 text-emerald-400">
-                <DollarSign size={14} />
-                <span className="font-semibold">Balance: ${walletState.available_balance.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center gap-2 text-purple-400">
-                <TrendingUp size={14} />
-                <span className="font-semibold">Total Earned: ${totalReward.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowCSSelection(true)}
-            className="absolute top-4 right-4 z-20 w-12 h-12 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:scale-105 transition-transform"
-            title="Contact Customer Service"
-          >
-            <Headphones size={20} className="text-white" />
-          </button>
-        </div>
-      )}
-
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className={`p-6 bg-white/[0.02] border rounded-2xl ${

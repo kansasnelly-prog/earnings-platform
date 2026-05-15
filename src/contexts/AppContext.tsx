@@ -1808,7 +1808,16 @@ else if (
     if (!user) return false;
     
     // For training accounts, update localStorage wallet state only (skip Supabase)
+    // BUT if training is completed, skip localStorage updates entirely to prevent balance reset
     if (user.account_type === 'training') {
+      const isTrainingCompleted = user.training_completed === true || user.training_completed_v2 === true;
+      
+      if (isTrainingCompleted) {
+        console.log('[updateUser] Training account completed - skipping localStorage updates, use Supabase only');
+        // Don't update localStorage for completed training to prevent balance reset
+        return true;
+      }
+      
       if (updates.balance !== undefined) {
         const updatedWallet = {
           ...walletState,

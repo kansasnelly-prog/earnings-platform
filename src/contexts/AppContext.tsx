@@ -390,16 +390,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (event === 'SIGNED_IN' && session?.user) {
         isCheckingAuth.current = true;
         
-        // Clear stale cached state before loading fresh data
-        setWalletState({
-          available_balance: 0,
-          pending_balance: 0,
-          total_earned: 0,
-          total_withdrawn: 0,
-          transactions: []
-        });
-        console.log('[Auth State Change] SIGNED_IN - Cleared stale wallet state');
-        
         const dbUser = await SupabaseService.getUserById(session.user.id);
         if (dbUser) {
           setUser(mapDatabaseUserToUser(dbUser));
@@ -754,12 +744,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         });
 
         // Load tasks - create 35 tasks if none exist for personal account
+        // For VIP1 accounts, check if tasks_completed equals 35 before creating fresh tasks
+        const tasksCompleted = dbUser.tasks_completed || 0;
         const dbTasks = await SupabaseService.getUserTasks(userId);
+        
         if (!dbTasks || dbTasks.length === 0) {
-          console.log('[loadUserData] No tasks found for personal account, creating 35 tasks');
-          await SupabaseService.createTrainingTasks(userId, 35);
-          const newTasks = await SupabaseService.getUserTasks(userId);
-          setTasks((newTasks || []).map(mapDatabaseTaskToTask));
+          // Only create fresh tasks if user hasn't completed any tasks yet
+          if (tasksCompleted === 0) {
+            console.log('[loadUserData] No tasks found and tasks_completed is 0, creating 35 tasks');
+            await SupabaseService.createTrainingTasks(userId, 35);
+            const newTasks = await SupabaseService.getUserTasks(userId);
+            setTasks((newTasks || []).map(mapDatabaseTaskToTask));
+          } else {
+            console.log('[loadUserData] No tasks found but tasks_completed is', tasksCompleted, '- not creating fresh tasks to preserve completed state');
+            setTasks([]);
+          }
         } else {
           setTasks(dbTasks.map(mapDatabaseTaskToTask));
         }
@@ -812,16 +811,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAuthLoading(true);
     try {
       console.log('[AppContext.login] Attempting login for email:', email);
-      
-      // Clear stale cached state before loading fresh data
-      setWalletState({
-        available_balance: 0,
-        pending_balance: 0,
-        total_earned: 0,
-        total_withdrawn: 0,
-        transactions: []
-      });
-      console.log('[AppContext.login] Cleared stale wallet state');
       
       // Try Supabase auth for personal accounts
       console.log('[AppContext.login] Trying Supabase auth...');

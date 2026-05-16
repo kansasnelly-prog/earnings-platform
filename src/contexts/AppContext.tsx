@@ -1991,15 +1991,12 @@ else if (
       }
       
       console.log('[Wallet Bound Success]', { userId: user.id, walletAddress, walletType, chain });
-      
-      // Update user.wallet_bound to true and also update wallet_address, wallet_type, chain on users table
+
+      // Update wallet_address on users table (only column that exists in schema)
       await supabase
         .from('users')
-        .update({ 
-          wallet_bound: true,
-          wallet_address: walletAddress,
-          wallet_type: walletType,
-          chain: chain
+        .update({
+          wallet_address: walletAddress
         })
         .eq('id', user.id);
       

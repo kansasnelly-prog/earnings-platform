@@ -24,7 +24,7 @@ import { toast } from 'sonner';
 
 const Tasks: React.FC = () => {
   const navigate = useNavigate();
-  const { user, tasks, completeTask, isLoading, walletState } = useAppContext();
+  const { user, tasks, completeTask, isLoading, walletState, refreshTasks, refreshUser } = useAppContext();
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [showCSSelection, setShowCSSelection] = useState(false);
@@ -34,6 +34,35 @@ const Tasks: React.FC = () => {
   const tasksArray = tasks || [];
   const completedCount = tasksArray.filter(t => t.status === 'completed').length;
   const progressPercent = totalTasks > 0 ? (completedCount / totalTasks) * 0 : 0;
+
+  // Cache reset listener - watch for admin account resets
+  // When tasks_completed or task_number resets to 0 or 1, clear all local component state
+  useEffect(() => {
+    if (!user) return;
+
+    const tasksCompleted = user.tasks_completed || 0;
+    const taskNumber = user.task_number || 1;
+
+    // Detect if account was reset (tasks went from high number to 0/1)
+    const wasReset = tasksCompleted === 0 || taskNumber === 1;
+
+    if (wasReset) {
+      console.log('[Tasks] Account reset detected - clearing local component cache', {
+        tasksCompleted,
+        taskNumber,
+        accountType: user.account_type
+      });
+
+      // Clear all local state caches
+      setSelectedTask(null);
+      setFilter('all');
+      setShowCSSelection(false);
+
+      // Force refresh tasks and user data from server
+      refreshTasks();
+      refreshUser();
+    }
+  }, [user?.tasks_completed, user?.task_number]);
 
   // Determine task state strictly from database
   const tasksCompleted = user?.tasks_completed || 0;

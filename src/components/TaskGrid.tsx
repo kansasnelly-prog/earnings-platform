@@ -377,6 +377,42 @@ const TaskGrid: React.FC = () => {
     }
   }, [user?.current_task_set]);
 
+  // Cache reset listener - watch for admin account resets
+  // When tasks_completed or task_number resets to 0 or 1, clear all local component state
+  useEffect(() => {
+    if (!user) return;
+
+    const tasksCompleted = user.tasks_completed || 0;
+    const taskNumber = user.task_number || 1;
+
+    // Detect if account was reset (tasks went from high number to 0/1)
+    const wasReset = tasksCompleted === 0 || taskNumber === 1;
+
+    if (wasReset) {
+      console.log('[TaskGrid] Account reset detected - clearing local component cache', {
+        tasksCompleted,
+        taskNumber,
+        accountType: user.account_type
+      });
+
+      // Clear all local state caches
+      setCompletedCount(0);
+      setShowSuccess(false);
+      setCompletedReward(0);
+      setIsLoadingProduct(true);
+      setPendingCompletionTask(null);
+      setProductCatalog([]);
+      setIsTransitioningToSet2(false);
+      setCurrentTaskSet(1);
+      setShowPhase1LockModal(false);
+      setShowPhase2CheckpointModal(false);
+
+      // Force refresh tasks and user data from server
+      refreshTasks();
+      refreshUser();
+    }
+  }, [user?.tasks_completed, user?.task_number]);
+
   // Load appropriate product catalog from Supabase based on account type
   useEffect(() => {
     const loadProducts = async () => {

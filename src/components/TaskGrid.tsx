@@ -729,8 +729,14 @@ const allComplete = displayCompletedCount === totalTasks;
     // Fallback to VIP1 commission calculation when database reward is 0
     const product = safeCatalog[(pendingTask.task_number - 1) % safeCatalog.length];
     if (product) {
-      const VIP1_COMMISSION_RATE = 0.292857142857; // $10.25 / 35 tasks = 0.5% per task
-      const calculatedReward = VIP1_COMMISSION_RATE; // Flat rate per task, not based on product price
+      // Use deterministic variance based on task_number for natural fluctuation
+      // Range: 0.10 to 0.30, bouncing up and down
+      const taskNumber = pendingTask.task_number;
+      const hash = taskNumber * 7919; // Prime number for better distribution
+      const variance = Math.sin(hash) * 0.5; // -0.5 to 0.5
+      const baseRate = 0.20; // Midpoint
+      const fluctuation = variance * 0.10; // ±0.10 variance
+      const calculatedReward = Math.max(0.10, Math.min(0.30, baseRate + fluctuation));
       console.log('[TaskGrid] Database reward is 0, using calculated VIP1 commission for task', pendingTask.task_number, ':', calculatedReward);
       return calculatedReward;
     }

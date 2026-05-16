@@ -980,14 +980,19 @@ export class SupabaseService {
           productImage = trainingProducts[i].image || null;
         }
 
-        // VIP1 Personal accounts use predefined reward arrays
+        // VIP1 Personal accounts use deterministic variance for natural fluctuation
         let reward;
         let commissionRate = isPersonal ? 0.005 : this.getVIPCommissionRate(vipLevel, isTraining);
         
         if (isVIP1Personal) {
-          // Use predefined reward based on personal cycle
-          const rewardArray = personalCycle === 1 ? this.VIP1_CYCLE_1_REWARDS : this.VIP1_CYCLE_2_REWARDS;
-          reward = rewardArray[i] || 0.25;
+          // Use deterministic variance based on task_number for natural fluctuation
+          // Range: 0.10 to 0.30, bouncing up and down
+          const taskNumber = i + 1;
+          const hash = taskNumber * 7919; // Prime number for better distribution
+          const variance = Math.sin(hash) * 0.5; // -0.5 to 0.5
+          const baseRate = 0.20; // Midpoint
+          const fluctuation = variance * 0.10; // ±0.10 variance
+          reward = Math.max(0.10, Math.min(0.30, baseRate + fluctuation));
           commissionRate = 0.005; // 0.5% for VIP1 personal
         } else {
           // Calculate reward based on product price and VIP commission rate

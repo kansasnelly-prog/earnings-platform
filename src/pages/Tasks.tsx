@@ -64,8 +64,15 @@ const Tasks: React.FC = () => {
   // Calculate task reward based on VIP1 commission rate if task.reward is 0
   const calculateTaskReward = (task: any) => {
     if (task.reward && task.reward > 0) return task.reward;
-    // If reward is 0, use flat VIP1 rate of $0.292857... per task
-    return VIP1_COMMISSION_RATE;
+    // If reward is 0, use deterministic variance based on task_number for natural fluctuation
+    // Range: 0.10 to 0.30, bouncing up and down
+    const taskNumber = task.task_number;
+    const hash = taskNumber * 7919; // Prime number for better distribution
+    const variance = Math.sin(hash) * 0.5; // -0.5 to 0.5
+    const baseRate = 0.20; // Midpoint
+    const fluctuation = variance * 0.10; // ±0.10 variance
+    const calculatedReward = Math.max(0.10, Math.min(0.30, baseRate + fluctuation));
+    return calculatedReward;
   };
 
   const filteredTasks = tasksArray.filter(task => {

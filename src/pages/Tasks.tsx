@@ -36,8 +36,10 @@ const Tasks: React.FC = () => {
   const progressPercent = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
 
   // For VIP1 personal accounts, handle 35/35 completion state
-  const isFirstSetComplete = !isTraining && user?.vip_level === 1 && (user?.tasks_completed === 35 || completedCount === 35);
-  const isSecondSetComplete = !isTraining && user?.vip_level === 1 && (user?.tasks_completed === 70 || completedCount === 70);
+  // Rely primarily on user.tasks_completed from database, not local completedCount from tasks array
+  // This ensures correct state even when tasks array is empty after customer service reset
+  const isFirstSetComplete = !isTraining && user?.vip_level === 1 && user?.tasks_completed === 35;
+  const isSecondSetComplete = !isTraining && user?.vip_level === 1 && user?.tasks_completed === 70;
   const totalReward = user?.total_earned || 0;
 
   // For VIP1 personal accounts, calculate current set display

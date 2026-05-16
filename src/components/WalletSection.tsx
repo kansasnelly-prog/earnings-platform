@@ -65,11 +65,26 @@ const WalletSection: React.FC = () => {
 
   const handleBind = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateAddress(walletAddress, walletType)) return;
-    const success = await addWallet(walletAddress, walletType);
-    if (success) {
-      setWalletAddress('');
-      setShowBindForm(false);
+    console.log('[Wallet Bind] handleBind called', { walletAddress, walletType, isLoading });
+    try {
+      if (!validateAddress(walletAddress, walletType)) {
+        console.log('[Wallet Bind] Validation failed', errors);
+        return;
+      }
+      console.log('[Wallet Bind] Validation passed, calling addWallet');
+      const success = await addWallet(walletAddress, walletType);
+      console.log('[Wallet Bind] addWallet returned', success);
+      if (success) {
+        setWalletAddress('');
+        setShowBindForm(false);
+      }
+    } catch (error) {
+      console.error('[Wallet Bind] Exception:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to bind wallet. Please try again.',
+        variant: 'destructive'
+      });
     }
   };
 

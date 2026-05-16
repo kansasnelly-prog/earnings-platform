@@ -72,7 +72,9 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
   }, []);
 
   // Secure reset personal account
-  const resetPersonalAccount = async () => {
+  const resetPersonalAccount = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    
     if (!resetEmail.trim()) {
       toast.error('Please enter an email address');
       return;
@@ -133,7 +135,9 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
   };
 
   // Secure reset training account
-  const resetTrainingAccount = async () => {
+  const resetTrainingAccount = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    
     if (!resetEmail.trim()) {
       toast.error('Please enter an email address');
       return;
@@ -641,6 +645,7 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Button
+              type="button"
               onClick={resetPersonalAccount}
               disabled={isResetting || !resetEmail.trim()}
               className="bg-blue-600 hover:bg-blue-700"
@@ -659,6 +664,7 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
             </Button>
 
             <Button
+              type="button"
               onClick={resetTrainingAccount}
               disabled={isResetting || !resetEmail.trim()}
               className="bg-green-600 hover:bg-green-700"

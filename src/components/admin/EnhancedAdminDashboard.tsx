@@ -471,7 +471,9 @@ const EnhancedAdminDashboard: React.FC = () => {
   };
 
   // Reset functions for account management
-  const resetPersonalAccountTasks = async (email: string) => {
+  const resetPersonalAccountTasks = async (email: string, e?: React.MouseEvent) => {
+    e?.preventDefault();
+    
     setIsResetting(true);
     try {
       // Find the user by email
@@ -567,7 +569,9 @@ const EnhancedAdminDashboard: React.FC = () => {
     }
   };
 
-  const resetTrainingAccountTasks = async (email: string) => {
+  const resetTrainingAccountTasks = async (email: string, e?: React.MouseEvent) => {
+    e?.preventDefault();
+    
     setIsResetting(true);
     try {
       // Find the user by email
@@ -1114,7 +1118,8 @@ const EnhancedAdminDashboard: React.FC = () => {
                       </p>
                     </div>
                     <Button 
-                      onClick={() => resetTrainingAccountTasks(resetTargetEmail)}
+                      type="button"
+                      onClick={(e) => resetTrainingAccountTasks(resetTargetEmail, e)}
                       disabled={!resetTargetEmail || isResetting}
                       className="w-full bg-green-600 hover:bg-green-700"
                     >

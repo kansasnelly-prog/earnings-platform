@@ -33,7 +33,11 @@ const Tasks: React.FC = () => {
   const totalTasks = user?.total_tasks || 45;
   const tasksArray = tasks || [];
   const completedCount = tasksArray.filter(t => t.status === 'completed').length;
-  const progressPercent = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
+  const progressPercent = totalTasks > 0 ? (completedCount / totalTasks) * 0 : 0;
+
+  // Determine task state strictly from database
+  const tasksCompleted = user?.tasks_completed || 0;
+  const isLockedAwaitingReset = user?.tasks_completed === 35;
 
   // For VIP1 personal accounts, handle 35/35 completion state
   // Rely primarily on user.tasks_completed from database, not local completedCount from tasks array
@@ -309,8 +313,17 @@ const Tasks: React.FC = () => {
         </div>
 
         {/* Task Grid - Bigger cards like Daily Bonus */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredTasks.map((task) => (
+        {isLockedAwaitingReset ? (
+          <div className="locked-message p-8 bg-gradient-to-br from-emerald-600/20 via-green-600/15 to-teal-600/10 border border-emerald-500/20 rounded-2xl text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <CheckCircle className="w-12 h-12 text-emerald-400" />
+              <h3 className="text-2xl font-bold text-white">First set of 35 tasks completed!</h3>
+            </div>
+            <p className="text-gray-300 text-lg">Contact customer service to continue to the next set.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {filteredTasks.map((task) => (
             <div
               key={task.id}
               onClick={() => handleTaskClick(task)}
@@ -492,6 +505,7 @@ const Tasks: React.FC = () => {
             </div>
           ))}
         </div>
+        )}
 
         {filteredTasks.length === 0 && (
           <div className="text-center py-20">

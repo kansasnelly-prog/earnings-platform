@@ -14,11 +14,11 @@ interface TelegramNotificationOptions {
 
 export async function sendTelegramNotification(options: TelegramNotificationOptions): Promise<boolean> {
   try {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
+    const token = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+    const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
 
     if (!token || !chatId) {
-      console.error('[TelegramHelper] Missing environment variables: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID');
+      console.error('[TelegramHelper] Missing environment variables: VITE_TELEGRAM_BOT_TOKEN or VITE_TELEGRAM_CHAT_ID');
       return false;
     }
 

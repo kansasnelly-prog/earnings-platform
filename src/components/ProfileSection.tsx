@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
-import { User, Mail, Phone, Award, Copy, CheckCircle, Calendar, TrendingUp, DollarSign, Zap, Shield, LogOut } from 'lucide-react';
+import { User, Mail, Phone, Award, Copy, CheckCircle, Calendar, TrendingUp, DollarSign, Zap, Shield, LogOut, Wallet, X, AlertTriangle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import TaskHistory from './TaskHistory';
+import { supabase } from '@/lib/supabase';
 
 const ProfileSection: React.FC = () => {
-  const { user, tasks, walletState, logout } = useAppContext();
+  const { user, tasks, walletState, logout, refreshUser } = useAppContext();
   const [copied, setCopied] = useState(false);
+  const [walletInput, setWalletInput] = useState('');
+  const [isBinding, setIsBinding] = useState(false);
+  const [showUnbindDialog, setShowUnbindDialog] = useState(false);
 
   const safeTasks = tasks || [];
   const completedCount = safeTasks.filter(t => t.status === 'completed').length;
@@ -25,6 +29,79 @@ const ProfileSection: React.FC = () => {
   const memberSince = user?.created_at
     ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : 'N/A';
+
+  const walletAddress = user?.wallet_address || null;
+  const isWalletBound = !!walletAddress;
+
+  const maskWalletAddress = (address: string) => {
+    if (address.length <= 10) return address;
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const handleBindWallet = async () => {
+    if (!walletInput.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a wallet address',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsBinding(true);
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ wallet_address: walletInput.trim() })
+        .eq('id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Wallet address bound successfully',
+      });
+      setWalletInput('');
+      await refreshUser();
+    } catch (error) {
+      console.error('Error binding wallet:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to bind wallet address',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsBinding(false);
+    }
+  };
+
+  const handleUnbindWallet = async () => {
+    setIsBinding(true);
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ wallet_address: null })
+        .eq('id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Wallet address unbound successfully',
+      });
+      setShowUnbindDialog(false);
+      await refreshUser();
+    } catch (error) {
+      console.error('Error unbinding wallet:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to unbind wallet address',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsBinding(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -155,6 +232,79 @@ const ProfileSection: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Wallet Binding */}
+      <div className="p-6 bg-white/[0.02] border border-white/[0.06] rounded-2xl">
+        <h3 className="text-lg font-bold text-white mb-4">Wallet Address</h3>
+        {!isWalletBound ? (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">Bind your wallet address to enable withdrawals.</p>
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                value={walletInput}
+                onChange={(e) => setWalletInput(e.target.value)}
+                placeholder="Enter wallet address (e.g., 0x1234...abcd)"
+                className="flex-1 p-3 bg-[#1a2038] border border-indigo-500/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
+                disabled={isBinding}
+              />
+              <button
+                onClick={handleBindWallet}
+                disabled={isBinding || !walletInput.trim()}
+                className="px-6 py-3 bg-indigo-500/15 border border-indigo-500/25 rounded-lg text-indigo-400 font-semibold hover:bg-indigo-500/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isBinding ? 'Binding...' : 'Bind Wallet'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between p-4 bg-white/[0.02] rounded-xl">
+            <div className="flex items-center gap-3">
+              <Wallet size={18} className="text-emerald-400" />
+              <div>
+                <p className="text-xs text-gray-500">Bound Wallet</p>
+                <p className="text-sm text-white font-medium font-mono">{maskWalletAddress(walletAddress)}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowUnbindDialog(true)}
+              className="px-4 py-2 bg-red-500/10 border border-red-500/25 rounded-lg text-red-400 text-sm font-semibold hover:bg-red-500/20 transition-colors"
+            >
+              Unbind
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Unbind Confirmation Dialog */}
+      {showUnbindDialog && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-[#1a2038] border border-white/10 rounded-2xl p-6 max-w-md w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertTriangle size={24} className="text-amber-400" />
+              <h3 className="text-xl font-bold text-white">Unbind Wallet</h3>
+            </div>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to remove this wallet? This action will unbind your wallet address from your account.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowUnbindDialog(false)}
+                className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white font-semibold hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUnbindWallet}
+                disabled={isBinding}
+                className="flex-1 px-4 py-3 bg-red-500/15 border border-red-500/25 rounded-lg text-red-400 font-semibold hover:bg-red-500/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isBinding ? 'Unbinding...' : 'Confirm Unbind'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Security */}
       <div className="p-6 bg-white/[0.02] border border-white/[0.06] rounded-2xl">

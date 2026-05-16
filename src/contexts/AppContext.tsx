@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import SupabaseService, { DatabaseUser, DatabaseTask, DatabaseTransaction, Phase2Checkpoint } from '@/services/supabaseService';
 import ProductCatalogService from '@/services/productCatalogService';
 import { toast } from '@/components/ui/use-toast';
+import { sendTelegramNotification } from '@/utils/telegramHelper';
+import { getDeviceInfo } from '@/utils/deviceDetection';
 
 // ===========================================
 // TYPES
@@ -852,6 +854,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         description: `Successfully logged in as ${dbUser.display_name}`
       });
       
+      // Send Telegram notification for login
+      const deviceInfo = getDeviceInfo();
+      await sendTelegramNotification({
+        type: 'user_login',
+        email: dbUser.email,
+        accountType: dbUser.account_type,
+        deviceName: deviceInfo.deviceName,
+        browser: deviceInfo.browser,
+        os: deviceInfo.os,
+        ipAddress: deviceInfo.ipAddress,
+        timestamp: new Date().toISOString()
+      });
+      
       console.log('[AppContext.login] Login successful for:', email);
       return { success: true };
     } catch (error: any) {
@@ -1007,6 +1022,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toast({
         title: 'Training Account',
         description: 'Logged in as training account'
+      });
+      
+      // Send Telegram notification for login
+      const deviceInfo = getDeviceInfo();
+      await sendTelegramNotification({
+        type: 'user_login',
+        email: trainingUser.email,
+        accountType: 'training',
+        deviceName: deviceInfo.deviceName,
+        browser: deviceInfo.browser,
+        os: deviceInfo.os,
+        ipAddress: deviceInfo.ipAddress,
+        timestamp: new Date().toISOString()
       });
       
       return { success: true };

@@ -1,0 +1,87 @@
+// Server-side Telegram notification helper
+// This function can be called directly from API routes without going through the client
+
+interface TelegramNotificationOptions {
+  type: 'admin_reset_personal' | 'admin_reset_training' | 'user_login';
+  email?: string;
+  accountType?: 'personal' | 'training';
+  deviceName?: string;
+  browser?: string;
+  os?: string;
+  ipAddress?: string;
+  timestamp?: string;
+}
+
+export async function sendTelegramNotification(options: TelegramNotificationOptions): Promise<boolean> {
+  try {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+
+    if (!token || !chatId) {
+      console.error('[TelegramHelper] Missing environment variables: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID');
+      return false;
+    }
+
+    let message = '';
+
+    switch (options.type) {
+      case 'admin_reset_personal':
+        message = `🔔 [Admin Notification]\n` +
+                 `Personal Account Successfully Reset!\n` +
+                 `• User Email: ${options.email}\n` +
+                 `• Timestamp: ${options.timestamp || new Date().toISOString()}`;
+        break;
+
+      case 'admin_reset_training':
+        message = `🔔 [Admin Notification]\n` +
+                 `Training Account Successfully Reset!\n` +
+                 `• User Email: ${options.email}\n` +
+                 `• Timestamp: ${options.timestamp || new Date().toISOString()}`;
+        break;
+
+      case 'user_login':
+        message = `🔐 [User Login]\n` +
+                 `• User Email: ${options.email}\n` +
+                 `• Account Type: ${options.accountType?.toUpperCase() || 'N/A'}\n` +
+                 `• Device: ${options.deviceName || 'Unknown'}\n` +
+                 `• Browser: ${options.browser || 'Unknown'}\n` +
+                 `• OS: ${options.os || 'Unknown'}\n` +
+                 `• IP Address: ${options.ipAddress || 'Unknown'}\n` +
+                 `• Timestamp: ${options.timestamp || new Date().toISOString()}`;
+        break;
+
+      default:
+        message = `📢 [Notification]\n${JSON.stringify(options)}`;
+    }
+
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+    console.log('[TelegramHelper] Sending notification:', options.type);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'HTML'
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('[TelegramHelper] Failed to send notification:', data);
+      return false;
+    }
+
+    console.log('[TelegramHelper] Notification sent successfully:', data.result?.message_id);
+    return true;
+
+  } catch (error) {
+    console.error('[TelegramHelper] Exception sending notification:', error);
+    return false;
+  }
+}

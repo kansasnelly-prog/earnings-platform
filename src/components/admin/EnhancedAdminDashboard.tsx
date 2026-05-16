@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { setupRealtimeListeners, calculateRealTimeStats, logAdminAction, sendTelegramNotification } from '@/lib/realtime';
+import { setupRealtimeListeners, calculateRealTimeStats, logAdminAction } from '@/lib/realtime';
+import { sendTelegramNotification } from '@/utils/telegramHelper';
 import EnhancedPendingOrdersManager from './EnhancedPendingOrdersManager';
 
 interface RealUser {
@@ -539,10 +540,9 @@ const EnhancedAdminDashboard: React.FC = () => {
       });
 
       // Send Telegram notification
-      await sendTelegramNotification('ACCOUNT_RESET', {
-        type: 'PERSONAL',
+      await sendTelegramNotification({
+        type: 'admin_reset_personal',
         email: email,
-        userId: userData.id,
         timestamp: new Date().toISOString()
       });
 
@@ -616,10 +616,9 @@ const EnhancedAdminDashboard: React.FC = () => {
       });
 
       // Send Telegram notification
-      await sendTelegramNotification('ACCOUNT_RESET', {
-        type: 'TRAINING',
+      await sendTelegramNotification({
+        type: 'admin_reset_training',
         email: email,
-        userId: userData.id,
         timestamp: new Date().toISOString()
       });
 

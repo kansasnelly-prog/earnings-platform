@@ -67,7 +67,7 @@ const AdminCustomerService: React.FC = () => {
   
   // New states for AI features
   const [selectedUserData, setSelectedUserData] = useState<UserData | null>(null);
-  const [aiSuggestion, setAiSuggestion] = useState('');
+  const [aiSuggestions, setAiSuggestions] = useState<Array<{type: string, content: string}>>([]);
   const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
   
   // Attachment states
@@ -133,34 +133,62 @@ const AdminCustomerService: React.FC = () => {
   };
 
   // AI Suggestion Logic
-  const generateAISuggestion = (message: string): string => {
+  const generateAISuggestions = (message: string): Array<{type: string, content: string}> => {
     const lowerMessage = message.toLowerCase();
     
-    // Issue detection and suggestion mapping
+    // Base response based on issue type
+    let baseResponse = "";
+    let issueType = "general";
+    
     if (lowerMessage.includes('reset') || lowerMessage.includes('restart') || lowerMessage.includes('start over')) {
-      return "Hello, your reset request has been received. Please confirm your registered email for verification. Once verified, we will proceed with resetting your account.";
-    }
-    if (lowerMessage.includes('withdrawal') || lowerMessage.includes('withdraw') || lowerMessage.includes('cash out')) {
-      return "Your withdrawal is currently under review. Processing time depends on account level and verification status. Please ensure your wallet address is correct and your account is fully verified.";
-    }
-    if (lowerMessage.includes('login') || lowerMessage.includes('sign in') || lowerMessage.includes('access') || lowerMessage.includes('password')) {
-      return "I understand you're having trouble accessing your account. Please try clearing your browser cache or using a different browser. If the issue persists, please provide your registered email so we can assist further.";
-    }
-    if (lowerMessage.includes('wallet') || lowerMessage.includes('bind') || lowerMessage.includes('wallet address')) {
-      return "For wallet binding, please ensure you're using a supported wallet type (USDT-TRC20, USDT-ERC20, USDT-BEP20, or BTC). Double-check your wallet address before submitting. If you've already submitted, our team is reviewing it.";
-    }
-    if (lowerMessage.includes('deposit') || lowerMessage.includes('add funds') || lowerMessage.includes('top up')) {
-      return "For deposit assistance, please check your transaction hash on the blockchain. If your deposit is not showing after 30 minutes, please provide the transaction hash and timestamp for investigation.";
-    }
-    if (lowerMessage.includes('upgrade') || lowerMessage.includes('vip') || lowerMessage.includes('level')) {
-      return "VIP upgrades are available based on your account balance and task completion. Please check your current balance and completed tasks. Contact us if you need assistance with the upgrade process.";
-    }
-    if (lowerMessage.includes('task') || lowerMessage.includes('commission') || lowerMessage.includes('earnings')) {
-      return "Regarding tasks and earnings, please ensure you've completed all required tasks correctly. If you believe there's an error in your earnings calculation, please provide specific details about which task is affected.";
+      baseResponse = "Hello, your reset request has been received. Please confirm your registered email for verification. Once verified, we will proceed with resetting your account.";
+      issueType = "reset";
+    } else if (lowerMessage.includes('withdrawal') || lowerMessage.includes('withdraw') || lowerMessage.includes('cash out')) {
+      baseResponse = "Your withdrawal is currently under review. Processing time depends on account level and verification status. Please ensure your wallet address is correct and your account is fully verified.";
+      issueType = "withdrawal";
+    } else if (lowerMessage.includes('login') || lowerMessage.includes('sign in') || lowerMessage.includes('access') || lowerMessage.includes('password')) {
+      baseResponse = "I understand you're having trouble accessing your account. Please try clearing your browser cache or using a different browser. If the issue persists, please provide your registered email so we can assist further.";
+      issueType = "login";
+    } else if (lowerMessage.includes('wallet') || lowerMessage.includes('bind') || lowerMessage.includes('wallet address')) {
+      baseResponse = "For wallet binding, please ensure you're using a supported wallet type (USDT-TRC20, USDT-ERC20, USDT-BEP20, or BTC). Double-check your wallet address before submitting. If you've already submitted, our team is reviewing it.";
+      issueType = "wallet";
+    } else if (lowerMessage.includes('deposit') || lowerMessage.includes('add funds') || lowerMessage.includes('top up')) {
+      baseResponse = "For deposit assistance, please check your transaction hash on the blockchain. If your deposit is not showing after 30 minutes, please provide the transaction hash and timestamp for investigation.";
+      issueType = "deposit";
+    } else if (lowerMessage.includes('upgrade') || lowerMessage.includes('vip') || lowerMessage.includes('level')) {
+      baseResponse = "VIP upgrades are available based on your account balance and task completion. Please check your current balance and completed tasks. Contact us if you need assistance with the upgrade process.";
+      issueType = "upgrade";
+    } else if (lowerMessage.includes('task') || lowerMessage.includes('commission') || lowerMessage.includes('earnings')) {
+      baseResponse = "Regarding tasks and earnings, please ensure you've completed all required tasks correctly. If you believe there's an error in your earnings calculation, please provide specific details about which task is affected.";
+      issueType = "task";
+    } else {
+      baseResponse = "Thank you for your message. Our support team is reviewing your inquiry. For faster resolution, please include your account email and any relevant details about your issue.";
+      issueType = "general";
     }
     
-    // Default generic response
-    return "Thank you for your message. Our support team is reviewing your inquiry. For faster resolution, please include your account email and any relevant details about your issue.";
+    // Generate 5 distinct variations
+    return [
+      {
+        type: "Professional",
+        content: baseResponse
+      },
+      {
+        type: "Empathetic",
+        content: `I understand this might be frustrating, and I'm here to help. ${baseResponse.toLowerCase()}`
+      },
+      {
+        type: "Short",
+        content: baseResponse.split('.')[0] + "."
+      },
+      {
+        type: "Detailed",
+        content: `${baseResponse} Our team typically responds within 24-48 hours. If this is urgent, please mark it as high priority. We appreciate your patience while we work to resolve your ${issueType} issue.`
+      },
+      {
+        type: "Technical",
+        content: `${baseResponse} Please also provide any error messages or screenshots if applicable. This will help our technical team diagnose the issue more efficiently.`
+      }
+    ];
   };
 
   // Auto-labeling logic
@@ -200,29 +228,29 @@ const AdminCustomerService: React.FC = () => {
   // Generate AI suggestion when customer sends a message
   const handleGenerateSuggestion = async () => {
     if (!messages.length) return;
-    
+
     // Get last customer message
     const lastCustomerMessage = [...messages].reverse().find(msg => msg.user_id !== 'admin');
     if (!lastCustomerMessage) return;
 
     setIsGeneratingSuggestion(true);
-    
+
     // Simulate AI processing delay
     setTimeout(() => {
-      const suggestion = generateAISuggestion(lastCustomerMessage.content);
-      setAiSuggestion(suggestion);
+      const suggestions = generateAISuggestions(lastCustomerMessage.content);
+      setAiSuggestions(suggestions);
       setIsGeneratingSuggestion(false);
     }, 800);
   };
 
-  const copySuggestion = () => {
-    navigator.clipboard.writeText(aiSuggestion);
+  const copySuggestion = (content: string) => {
+    navigator.clipboard.writeText(content);
     toast.success('Suggestion copied to clipboard');
   };
 
-  const useSuggestion = () => {
-    setNewMessage(aiSuggestion);
-    setAiSuggestion('');
+  const useSuggestion = (content: string) => () => {
+    setNewMessage(content);
+    setAiSuggestions([]);
   };
 
   const uploadAttachment = async (file: File): Promise<{url: string, type: string, name: string, size: number} | null> => {
@@ -375,7 +403,7 @@ const AdminCustomerService: React.FC = () => {
   // Fetch conversations on mount
   useEffect(() => {
     let isMounted = true;
-    
+
     const loadConversations = async () => {
       if (!isMounted) return;
       try {
@@ -385,7 +413,7 @@ const AdminCustomerService: React.FC = () => {
         if (isMounted) setError('Failed to load conversations');
       }
     };
-    
+
     loadConversations();
 
     // Poll for new conversations every 15 seconds (reduced from 5s to avoid excessive polling)
@@ -400,6 +428,24 @@ const AdminCustomerService: React.FC = () => {
       clearInterval(interval);
     };
   }, []);
+
+  // Reset unread count when conversation is selected
+  useEffect(() => {
+    if (!selectedConversation?.id) return;
+
+    const resetUnreadCount = async () => {
+      try {
+        await supabase
+          .from('conversations')
+          .update({ unread_count: 0 })
+          .eq('id', selectedConversation.id);
+      } catch (err) {
+        console.error('[AdminCustomerService] Error resetting unread count:', err);
+      }
+    };
+
+    resetUnreadCount();
+  }, [selectedConversation?.id]);
 
   // Fetch messages when conversation selected
   useEffect(() => {
@@ -431,7 +477,7 @@ const AdminCustomerService: React.FC = () => {
       }
       // Clear user data when conversation changes
       setSelectedUserData(null);
-      setAiSuggestion('');
+      setAiSuggestions([]);
     };
   }, [selectedConversation?.id]);
 
@@ -486,8 +532,8 @@ const AdminCustomerService: React.FC = () => {
             toast.info('New message from customer');
             fetchConversations();
             // Auto-generate AI suggestion for new customer message
-            const suggestion = generateAISuggestion(newMessage.message || '');
-            setAiSuggestion(suggestion);
+            const suggestions = generateAISuggestions(newMessage.message || '');
+            setAiSuggestions(suggestions);
             // Auto-detect and save issue label
             const label = detectIssueLabel(newMessage.message || '');
             if (label && label !== 'General Inquiry') {
@@ -596,11 +642,11 @@ const AdminCustomerService: React.FC = () => {
       console.log('[AdminCustomerService] Skipping fetch - already in progress');
       return;
     }
-    
+
     isFetchingRef.current = true;
     setIsLoading(true);
     console.log('[AdminCustomerService] Fetching conversations...');
-    
+
     try {
       const { data, error } = await supabase
         .from('conversations')
@@ -623,15 +669,15 @@ const AdminCustomerService: React.FC = () => {
             .eq('conversation_id', conv.id)
             .order('created_at', { ascending: false })
             .limit(1);
-          
+
           if (msgError) {
             console.error('[AdminCustomerService] Error fetching last message:', msgError);
           }
-          
+
           return {
             ...conv,
             last_message: messages?.[0]?.message || '',
-            unread_count: 0
+            unread_count: conv.unread_count || 0
           };
         })
       );
@@ -1123,46 +1169,56 @@ const AdminCustomerService: React.FC = () => {
                 ) : (
                   <>
                     {/* AI Assistant Panel */}
-                    {aiSuggestion && (
+                    {aiSuggestions.length > 0 && (
                       <div className="mb-3 p-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl">
-                        <div className="flex items-start gap-2 mb-2">
+                        <div className="flex items-start gap-2 mb-3">
                           <Bot className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-purple-300 font-medium text-sm">AI Suggestion</span>
+                              <span className="text-purple-300 font-medium text-sm">AI Suggestions</span>
                               <Sparkles className="w-3 h-3 text-purple-400" />
                             </div>
-                            <p className="text-slate-300 text-sm">{aiSuggestion}</p>
+                            <p className="text-slate-400 text-xs">Click any suggestion to use it</p>
                           </div>
-                        </div>
-                        <div className="flex gap-2 mt-2">
                           <button
-                            onClick={copySuggestion}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-xs text-white transition-colors"
-                          >
-                            <Copy className="w-3 h-3" />
-                            Copy
-                          </button>
-                          <button
-                            onClick={useSuggestion}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-lg text-xs text-purple-300 transition-colors"
-                          >
-                            <Send className="w-3 h-3" />
-                            Use
-                          </button>
-                          <button
-                            onClick={() => setAiSuggestion('')}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-slate-500/20 hover:bg-slate-500/30 border border-slate-500/30 rounded-lg text-xs text-slate-300 transition-colors"
+                            onClick={() => setAiSuggestions([])}
+                            className="flex items-center gap-1 px-2 py-1 bg-slate-500/20 hover:bg-slate-500/30 border border-slate-500/30 rounded-lg text-xs text-slate-300 transition-colors"
                           >
                             <X className="w-3 h-3" />
-                            Dismiss
                           </button>
+                        </div>
+                        <div className="space-y-2">
+                          {aiSuggestions.map((suggestion, index) => (
+                            <button
+                              key={index}
+                              onClick={() => useSuggestion(suggestion.content)}
+                              className="w-full text-left p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors group"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-xs font-medium text-purple-300">{suggestion.type}</span>
+                                  </div>
+                                  <p className="text-slate-300 text-xs line-clamp-2">{suggestion.content}</p>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    copySuggestion(suggestion.content);
+                                  }}
+                                  className="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <Copy className="w-3 h-3 text-slate-400" />
+                                </button>
+                              </div>
+                            </button>
+                          ))}
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Generate AI Suggestion Button */}
-                    {!aiSuggestion && messages.length > 0 && (
+                    {aiSuggestions.length === 0 && messages.length > 0 && (
                       <button
                         onClick={handleGenerateSuggestion}
                         disabled={isGeneratingSuggestion}

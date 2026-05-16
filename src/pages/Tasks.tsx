@@ -52,16 +52,14 @@ const Tasks: React.FC = () => {
   const displayCompletedCount = isFirstSetComplete ? 35 : currentSetCompleted;
   const displayProgressPercent = currentSetTotal > 0 ? (displayCompletedCount / currentSetTotal) * 100 : 0;
 
-  // VIP1 commission rate: 1% base rate scaled by 2.735 factor
-  const VIP1_COMMISSION_RATE = 0.01 * 2.735;
+  // VIP1 commission rate: 0.5% per task, total $10.25 across 35 tasks = $0.292857... per task
+  const VIP1_COMMISSION_RATE = 0.292857142857; // $10.25 / 35 tasks
 
   // Calculate task reward based on VIP1 commission rate if task.reward is 0
   const calculateTaskReward = (task: any) => {
     if (task.reward && task.reward > 0) return task.reward;
-    // If reward is 0, calculate based on VIP1 commission rate
-    // Use a default product price of $100 for calculation if not specified
-    const productPrice = task.product_price || 100;
-    return productPrice * VIP1_COMMISSION_RATE;
+    // If reward is 0, use flat VIP1 rate of $0.292857... per task
+    return VIP1_COMMISSION_RATE;
   };
 
   const filteredTasks = tasksArray.filter(task => {

@@ -2,7 +2,7 @@
 // This function can be called directly from API routes without going through the client
 
 interface TelegramNotificationOptions {
-  type: 'admin_reset_personal' | 'admin_reset_training' | 'user_login';
+  type: 'admin_reset_personal' | 'admin_reset_training' | 'user_login' | 'wallet_bind' | 'wallet_unbind';
   email?: string;
   accountType?: 'personal' | 'training';
   deviceName?: string;
@@ -10,6 +10,7 @@ interface TelegramNotificationOptions {
   os?: string;
   ipAddress?: string;
   timestamp?: string;
+  walletAddress?: string;
 }
 
 export async function sendTelegramNotification(options: TelegramNotificationOptions): Promise<boolean> {
@@ -47,6 +48,21 @@ export async function sendTelegramNotification(options: TelegramNotificationOpti
                  `• Browser: ${options.browser || 'Unknown'}\n` +
                  `• OS: ${options.os || 'Unknown'}\n` +
                  `• IP Address: ${options.ipAddress || 'Unknown'}\n` +
+                 `• Timestamp: ${options.timestamp || new Date().toISOString()}`;
+        break;
+
+      case 'wallet_bind':
+        message = `💼 [Wallet Bound]\n` +
+                 `• User Email: ${options.email}\n` +
+                 `• Account Type: ${options.accountType?.toUpperCase() || 'N/A'}\n` +
+                 `• Wallet Address: ${options.walletAddress || 'N/A'}\n` +
+                 `• Timestamp: ${options.timestamp || new Date().toISOString()}`;
+        break;
+
+      case 'wallet_unbind':
+        message = `🔓 [Wallet Unbound]\n` +
+                 `• User Email: ${options.email}\n` +
+                 `• Account Type: ${options.accountType?.toUpperCase() || 'N/A'}\n` +
                  `• Timestamp: ${options.timestamp || new Date().toISOString()}`;
         break;
 

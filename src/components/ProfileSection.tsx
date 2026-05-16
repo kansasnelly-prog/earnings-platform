@@ -4,6 +4,7 @@ import { User, Mail, Phone, Award, Copy, CheckCircle, Calendar, TrendingUp, Doll
 import { toast } from '@/components/ui/use-toast';
 import TaskHistory from './TaskHistory';
 import { supabase } from '@/lib/supabase';
+import { sendTelegramNotification } from '@/utils/telegramHelper';
 
 const ProfileSection: React.FC = () => {
   const { user, tasks, walletState, logout, refreshUser } = useAppContext();
@@ -57,6 +58,15 @@ const ProfileSection: React.FC = () => {
 
       if (error) throw error;
 
+      // Send Telegram notification
+      await sendTelegramNotification({
+        type: 'wallet_bind',
+        email: user?.email,
+        accountType: user?.account_type,
+        walletAddress: walletInput.trim(),
+        timestamp: new Date().toISOString()
+      });
+
       toast({
         title: 'Success',
         description: 'Wallet address bound successfully',
@@ -84,6 +94,14 @@ const ProfileSection: React.FC = () => {
         .eq('id', user?.id);
 
       if (error) throw error;
+
+      // Send Telegram notification
+      await sendTelegramNotification({
+        type: 'wallet_unbind',
+        email: user?.email,
+        accountType: user?.account_type,
+        timestamp: new Date().toISOString()
+      });
 
       toast({
         title: 'Success',

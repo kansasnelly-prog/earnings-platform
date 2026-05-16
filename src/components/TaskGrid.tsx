@@ -586,11 +586,13 @@ const progress = totalTasks > 0
   : 0;
 
 const allComplete = displayCompletedCount === totalTasks;
-  
-  // Personal VIP1 accounts now have normal workflow - no training requirements
-  // Personal accounts can access tasks immediately
-  const canSubmitTasks = true; // All accounts can submit tasks
-  const needsTraining = false; // No training lock for personal accounts
+
+  // Personal accounts must complete training before accessing task submissions
+  // Check training_completed field - defaults to FALSE for new accounts
+  const isPersonal = user?.account_type === 'personal';
+  const trainingCompleted = user?.training_completed === true;
+  const needsTraining = isPersonal && !trainingCompleted; // Lock personal accounts until training completes
+  const canSubmitTasks = !needsTraining; // Can submit if not locked
 
   const handleSubmit = async (e?: React.MouseEvent) => {
     // STOP EVENT BUBBLING: Prevent duplicate triggers from parent containers

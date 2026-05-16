@@ -1053,6 +1053,23 @@ export class SupabaseService {
   
   static async completeTask(userId: string, taskNumber: number): Promise<{ success: boolean; reward?: number; error?: string; autoReset?: boolean; phase1Locked?: boolean; phase2Checkpoint?: boolean }> {
     try {
+      // Get user info to check training completion status
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('account_type, training_completed')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !user) {
+        return { success: false, error: 'User not found' };
+      }
+
+      // CRITICAL: Personal accounts must complete training before submitting tasks
+      if (user.account_type === 'personal' && !user.training_completed) {
+        console.error('[completeTask] Training completion check failed for personal account:', userId);
+        return { success: false, error: 'Training must be completed before submitting tasks' };
+      }
+
       // Get task info
       const { data: task, error: taskError } = await supabase
         .from('tasks')

@@ -953,6 +953,9 @@ export class SupabaseService {
       // Training accounts can have 45 tasks
       const actualTaskCount = taskCount;
 
+      // Define commission rate for logging (outside task loop scope)
+      const commissionRate = isPersonal ? 0.005 : this.getVIPCommissionRate(vipLevel, isTraining);
+
       // Fetch training products from database
       const { data: trainingProducts, error: productsError } = await supabase
         .from('training_products')

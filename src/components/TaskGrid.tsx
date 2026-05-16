@@ -719,8 +719,24 @@ const allComplete = displayCompletedCount === totalTasks;
       return 0;
     }
     // For personal accounts, use reward from database (predefined values for VIP1)
-    console.log('[TaskGrid] Using database reward for personal task', pendingTask.task_number, ':', pendingTask.reward);
-    return pendingTask.reward || 0;
+    // If database reward is 0, null, or undefined, fall back to VIP1 commission calculation
+    const dbReward = pendingTask.reward || 0;
+    if (dbReward > 0) {
+      console.log('[TaskGrid] Using database reward for personal task', pendingTask.task_number, ':', dbReward);
+      return dbReward;
+    }
+    
+    // Fallback to VIP1 commission calculation when database reward is 0
+    const product = safeCatalog[(pendingTask.task_number - 1) % safeCatalog.length];
+    if (product) {
+      const VIP1_COMMISSION_RATE = 0.01 * 2.735; // 1% base rate scaled by 2.735 factor
+      const calculatedReward = product.price * VIP1_COMMISSION_RATE;
+      console.log('[TaskGrid] Database reward is 0, using calculated VIP1 commission for task', pendingTask.task_number, ':', calculatedReward);
+      return calculatedReward;
+    }
+    
+    console.log('[TaskGrid] No product found, returning 0 for task', pendingTask.task_number);
+    return 0;
   })() : 0;
 
   // When pending order exists and we're at the trigger task, show pending product

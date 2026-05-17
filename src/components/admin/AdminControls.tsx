@@ -19,7 +19,7 @@ import {
   Minus
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import SupabaseService from '@/services/supabaseService';
+import { SupabaseService } from '@/services/supabaseService';
 import { TELEGRAM_CONFIG } from '../../config/telegram';
 import { sendTelegramNotification } from '@/lib/realtime';
 

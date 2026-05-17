@@ -42,6 +42,11 @@ const WalletSection: React.FC = () => {
   const safeWallets = wallets || [];
   const primaryWallet = safeWallets.find(w => w.is_primary);
 
+  // Force re-render when wallets change to update UI
+  useEffect(() => {
+    console.log('[WalletSection] Wallets changed', { wallets, primaryWallet });
+  }, [wallets, primaryWallet]);
+
   const validateAddress = (address: string, type: string): boolean => {
     if (!address.trim()) {
       setErrors({ address: 'Wallet address is required' });

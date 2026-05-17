@@ -88,7 +88,7 @@ const AIAssistantWorkspace = () => {
             <div>
               <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
                 <Sparkles className="h-8 w-8 text-purple-600" />
-                AI Assistant Workspace
+                KANSAS NELLY'S AI
               </h1>
               <p className="text-slate-600 dark:text-slate-400 mt-1">
                 Professional response generator for difficult customer messages

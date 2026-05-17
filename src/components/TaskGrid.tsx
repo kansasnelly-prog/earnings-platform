@@ -8,7 +8,7 @@ import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import ProductCatalogService, { Product } from '@/services/productCatalogService';
-import SupabaseService from '@/services/supabaseService';
+import { SupabaseService } from '@/services/supabaseService';
 import { supabase } from '@/lib/supabase';
 
 

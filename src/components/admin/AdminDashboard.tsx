@@ -10,7 +10,7 @@ import AdminStatsCards, { PlatformStats } from './AdminStatsCards';
 import AdminUsersTable, { AdminUser } from './AdminUsersTable';
 import AdminWithdrawalsTable, { AdminWithdrawal } from './AdminWithdrawalsTable';
 import UserDetailsModal from './UserDetailsModal';
-import SupabaseService from '@/services/supabaseService';
+import { SupabaseService } from '@/services/supabaseService';
 
 // Mock data for demo when backend has no data
 const generateMockUsers = (): AdminUser[] => {

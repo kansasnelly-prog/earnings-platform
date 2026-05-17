@@ -3,6 +3,30 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 
 // ===========================================
+// CHUNK LOAD ERROR HANDLER
+// ===========================================
+
+// Handle webpack/vite chunk loading failures
+window.addEventListener('error', (event) => {
+  const error = event.error;
+  if (error && error.name === 'ChunkLoadError') {
+    console.error('[ChunkLoadError] Failed to load chunk:', error);
+    console.error('[ChunkLoadError] Forcing clean reload to fetch new assets...');
+    
+    // Clear caches to force fresh asset fetch
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {
+      console.error('[ChunkLoadError] Failed to clear caches:', e);
+    }
+    
+    // Force reload with cache bypass
+    window.location.reload();
+  }
+});
+
+// ===========================================
 // SERVICE WORKER REGISTRATION
 // ===========================================
 
@@ -59,6 +83,11 @@ const initializeApp = async () => {
     // Create and render app
     const root = createRoot(rootElement);
     root.render(<App />);
+
+    // Signal to cache buster that app mounted successfully
+    if (typeof window !== 'undefined' && (window as any).appMounted) {
+      (window as any).appMounted();
+    }
 
   } catch (error: any) {
     console.error('=== FATAL APP INITIALIZATION ERROR ===', error);

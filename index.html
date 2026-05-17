@@ -6,6 +6,121 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+    
+    <!-- Aggressive Cache Buster & Crash Handler -->
+    <script>
+      (function() {
+        // Version-based cache busting - update this number on critical deployments
+        const CACHE_BUSTER_VERSION = '20250518-v1';
+        const storedVersion = localStorage.getItem('app_version');
+        
+        // If version mismatch, clear caches and reload
+        if (storedVersion !== CACHE_BUSTER_VERSION) {
+          console.log('[Cache Buster] Version mismatch, clearing caches...');
+          
+          // Clear all localStorage
+          try {
+            localStorage.clear();
+          } catch(e) { console.error('[Cache Buster] Failed to clear localStorage:', e); }
+          
+          // Clear all sessionStorage
+          try {
+            sessionStorage.clear();
+          } catch(e) { console.error('[Cache Buster] Failed to clear sessionStorage:', e); }
+          
+          // Clear service worker caches if registered
+          if ('serviceWorker' in navigator && navigator.serviceWorker) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+              registrations.forEach(function(registration) {
+                registration.unregister();
+              });
+            }).catch(function(e) {
+              console.error('[Cache Buster] Failed to unregister service workers:', e);
+            });
+          }
+          
+          // Store new version
+          try {
+            localStorage.setItem('app_version', CACHE_BUSTER_VERSION);
+          } catch(e) {}
+          
+          // Force reload with cache bypass
+          window.location.reload(true);
+          return;
+        }
+        
+        // Track if React app has mounted successfully
+        let appMounted = false;
+        let mountTimeout;
+        
+        // Set a timeout to detect hung loading state (15 seconds)
+        mountTimeout = setTimeout(function() {
+          if (!appMounted) {
+            console.error('[Crash Handler] App failed to mount within 15 seconds, forcing reload...');
+            try {
+              localStorage.clear();
+              sessionStorage.clear();
+            } catch(e) {}
+            window.location.reload(true);
+          }
+        }, 15000);
+        
+        // Signal that app mounted successfully (called from React app)
+        window.appMounted = function() {
+          appMounted = true;
+          clearTimeout(mountTimeout);
+          console.log('[Crash Handler] App mounted successfully');
+        };
+        
+        // Global error handler
+        window.onerror = function(msg, url, line, col, error) {
+          console.error('[Crash Handler] Global error detected:', msg, error);
+          
+          // Only reload on critical errors (not minor issues)
+          const criticalErrors = ['TypeError', 'ReferenceError', 'SyntaxError'];
+          const errorName = error ? error.name : '';
+          
+          if (criticalErrors.some(name => errorName.includes(name))) {
+            console.error('[Crash Handler] Critical error detected, clearing caches and reloading...');
+            try {
+              localStorage.clear();
+              sessionStorage.clear();
+            } catch(e) {}
+            setTimeout(function() {
+              window.location.reload(true);
+            }, 500);
+          }
+          
+          // Return false to prevent default error handling
+          return false;
+        };
+        
+        // Unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', function(event) {
+          console.error('[Crash Handler] Unhandled promise rejection:', event.reason);
+          
+          // Only reload on critical rejections
+          if (event.reason && typeof event.reason === 'object') {
+            const reasonStr = event.reason.toString().toLowerCase();
+            const criticalKeywords = ['chunk', 'load', 'network', 'fetch', 'timeout'];
+            
+            if (criticalKeywords.some(keyword => reasonStr.includes(keyword))) {
+              console.error('[Crash Handler] Critical promise rejection, clearing caches and reloading...');
+              try {
+                localStorage.clear();
+                sessionStorage.clear();
+              } catch(e) {}
+              setTimeout(function() {
+                window.location.reload(true);
+              }, 500);
+            }
+          }
+        });
+        
+        console.log('[Cache Buster] Initialized with version:', CACHE_BUSTER_VERSION);
+      })();
+    </script>
+    
     <title>Task Reward Hub</title>
     <meta name="description" content="An optimization platform where users complete tasks to access digital wallet payments." />
     <link rel="icon" type="image/svg+xml" href="/placeholder.svg" />

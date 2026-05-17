@@ -335,6 +335,27 @@ const MainAdminPanel: React.FC = () => {
       }
 
       console.log('[MainAdmin] Data load completed successfully');
+
+      // Send Telegram notification for admin session initialization (only on initial load, not refresh)
+      if (!showRefreshToast && users.length > 0) {
+        try {
+          const { data: { user: adminUser } } = await supabase.auth.getUser();
+          await sendTelegramNotification('ADMIN_ACTION', {
+            action: 'ADMIN_PANEL_LOADED',
+            admin: adminUser?.email || 'Admin',
+            details: {
+              usersLoaded: users.length,
+              withdrawalsLoaded: withdrawalsData?.length || 0,
+              totalBalance: stats.totalBalance,
+              timestamp: new Date().toISOString()
+            }
+          });
+          console.log('[MainAdmin] Telegram notification sent for admin panel load');
+        } catch (telegramError) {
+          console.error('[MainAdmin] Failed to send Telegram notification:', telegramError);
+          // Don't block the app if Telegram notification fails
+        }
+      }
     } catch (err) {
       console.error('[MainAdmin] Data load failed:', err);
       toast({

@@ -4,8 +4,9 @@ VALUES ('chat-attachments', 'chat-attachments', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Enable Row Level Security
-ALTER TABLE storage.objects
-ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE storage.objects
+-- ENABLE ROW LEVEL SECURITY;
+
 
 -- Create policy to allow authenticated users to upload to chat-attachments
 CREATE POLICY "Authenticated users can upload chat attachments"

@@ -187,6 +187,44 @@ export default async function handler(req, res) {
       trainingAccount = newTrainingAccount;
     }
 
+    // STEP 5: Create tasks for the new training account
+    console.log('[CreateTrainingAccount] STEP 5: Creating tasks for training account');
+    try {
+      // Fetch training products from the training_products table
+      const { data: trainingProducts, error: productsError } = await supabase
+        .from('training_products')
+        .select('product_number, price')
+        .order('product_number', { ascending: true });
+
+      if (productsError) {
+        console.error('[CreateTrainingAccount] Failed to fetch training products:', productsError);
+      } else if (trainingProducts && trainingProducts.length > 0) {
+        console.log('[CreateTrainingAccount] Found', trainingProducts.length, 'training products');
+
+        // Create task records for each product
+        const tasksToInsert = trainingProducts.map(product => ({
+          user_id: authUserId,
+          task_number: product.product_number,
+          status: 'locked',
+          reward: product.price * 0.01, // 1% commission
+          created_at: new Date().toISOString()
+        }));
+
+        const { error: tasksInsertError } = await supabase
+          .from('tasks')
+          .insert(tasksToInsert);
+
+        if (tasksInsertError) {
+          console.error('[CreateTrainingAccount] Failed to create tasks:', tasksInsertError);
+        } else {
+          console.log('[CreateTrainingAccount] Successfully created', tasksToInsert.length, 'tasks for user');
+        }
+      }
+    } catch (taskError) {
+      console.error('[CreateTrainingAccount] Error during task creation:', taskError);
+      // Don't block account creation if task creation fails
+    }
+
     console.log('[CreateTrainingAccount] COMPLETE - Training account creation finished successfully');
 
     // Send Telegram notification for new training account (don't block on failure)

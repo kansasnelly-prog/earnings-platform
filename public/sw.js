@@ -109,18 +109,27 @@ self.addEventListener('notificationclick', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Bypass service worker for:
-  // 1. JavaScript modules (index-*.js, vendor-*.js, etc.)
+  // Bypass service worker entirely for:
+  // 1. Non-GET requests (POST, PUT, DELETE, etc.) - Cache API doesn't support them
   // 2. API requests
   // 3. Supabase requests
   // 4. WebSocket connections
   if (
-    url.pathname.match(/\.(js|css|map)$/) ||
-    url.pathname.includes('/assets/') ||
-    url.hostname.includes('supabase') ||
+    event.request.method !== 'GET' ||
     url.pathname.startsWith('/api/') ||
+    url.hostname.includes('supabase') ||
     url.protocol === 'ws:' ||
     url.protocol === 'wss:'
+  ) {
+    // Pass through to network without any caching
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Bypass service worker for JavaScript modules and assets (network-first with fallback)
+  if (
+    url.pathname.match(/\.(js|css|map)$/) ||
+    url.pathname.includes('/assets/')
   ) {
     // For dynamic assets, use network-first with fallback
     event.respondWith(

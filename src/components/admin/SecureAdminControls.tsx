@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Phase2Checkpoint, fixTestAccountBonus } from '@/services/supabaseService';
 import { TelegramService } from '@/services/telegramService';
+import { sendTelegramNotification } from '@/lib/realtime';
 
 interface SecureAdminControlsProps {
   onRefresh: () => void;
@@ -123,7 +124,15 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
       if (account.user?.id) {
         localStorage.removeItem('opt_tasks_' + account.user.id);
       }
-      
+
+      // Send Telegram notification
+      await sendTelegramNotification('PERSONAL_ACCOUNT_RESET', {
+        email: email,
+        userId: account.user?.id || 'unknown',
+        vipLevel: account.user?.vip_level || 0,
+        balance: account.user?.balance || 0
+      });
+
       toast.success(`Personal account ${email} has been reset successfully`);
       setResetEmail('');
       onRefresh();
@@ -229,7 +238,15 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
           localStorage.removeItem('training_tasks_' + account.user.email);
         }
       }
-      
+
+      // Send Telegram notification
+      await sendTelegramNotification('TRAINING_ACCOUNT_RESET', {
+        email: email,
+        userId: userData.id,
+        vipLevel: 0,
+        balance: 0
+      });
+
       toast.success(`Training account ${email} has been reset successfully. Balance preserved.`);
       setResetEmail('');
       onRefresh();

@@ -126,14 +126,28 @@ const formatTelegramMessage = (type: string, data: any): string => {
 
 🎉 Great job! Task completed successfully`;
 
-    case 'ACCOUNT_RESET':
-      return `🔄 *ACCOUNT RESET*
-🔧 *Type:* ${data.type} Account
-📧 *Email:* ${data.email}
-👤 *User ID:* ${data.userId}
+    case 'TRAINING_ACCOUNT_RESET':
+      return `🔄 *TRAINING ACCOUNT RESET*
+� *Email:* ${data.email}
+🆔 *User ID:* ${data.userId}
+👑 *VIP Level:* ${data.vipLevel || 'N/A'}
+📋 *Tasks Reset:* 0/45
+💰 *Balance Preserved:* $${data.balance || '0.00'}
 ⏰ *Time:* ${timestamp}
 
-⚠️ Account tasks and earnings have been reset to 0`;
+⚠️ Training account tasks have been reset to 0/45. Balance and earnings preserved.`;
+
+    case 'PERSONAL_ACCOUNT_RESET':
+      return `� *PERSONAL ACCOUNT RESET*
+�📧 *Email:* ${data.email}
+🆔 *User ID:* ${data.userId}
+👑 *VIP Level:* ${data.vipLevel || 'N/A'}
+📋 *Tasks Reset:* 0/35
+💰 *Balance Preserved:* $${data.balance || '0.00'}
+🔄 *Cycle:* ${data.cycle || '1'}
+⏰ *Time:* ${timestamp}
+
+⚠️ Personal account tasks have been reset to 0/35. Balance and earnings preserved.`;
 
     case 'ADMIN_ACTION':
       return `🛡️ *ADMIN ACTION*

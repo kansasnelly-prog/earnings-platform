@@ -542,10 +542,12 @@ const EnhancedAdminDashboard: React.FC = () => {
       });
 
       // Send Telegram notification
-      await sendTelegramNotification({
-        type: 'admin_reset_personal',
+      await sendTelegramNotification('PERSONAL_ACCOUNT_RESET', {
         email: email,
-        timestamp: new Date().toISOString()
+        userId: userData.id,
+        vipLevel: userData.vip_level,
+        balance: userData.balance,
+        cycle: personalCycle
       });
 
       toast({
@@ -620,10 +622,11 @@ const EnhancedAdminDashboard: React.FC = () => {
       });
 
       // Send Telegram notification
-      await sendTelegramNotification({
-        type: 'admin_reset_training',
+      await sendTelegramNotification('TRAINING_ACCOUNT_RESET', {
         email: email,
-        timestamp: new Date().toISOString()
+        userId: userData.id,
+        vipLevel: userData.vip_level,
+        balance: userData.balance
       });
 
       toast({

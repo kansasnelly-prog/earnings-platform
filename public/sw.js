@@ -1,7 +1,11 @@
 // Service Worker for Web Push Notifications
 // This service worker handles push notifications and notification clicks
 
-const CACHE_NAME = 'earnings-ink-v1';
+// Use timestamp-based cache version to force cache invalidation on each deployment
+const CACHE_VERSION = new Date().toISOString().split('T')[0];
+const CACHE_NAME = `earnings-ink-${CACHE_VERSION}`;
+const STATIC_CACHE_NAME = 'earnings-ink-static-v1';
+
 const urlsToCache = [
   '/',
   '/index.html',
@@ -24,7 +28,9 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          // Delete all old caches except the static cache
+          if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -102,17 +108,59 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Fetch event - handle network requests
+// Fetch event - handle network requests with safer caching strategy
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Bypass service worker for:
+  // 1. JavaScript modules (index-*.js, vendor-*.js, etc.)
+  // 2. API requests
+  // 3. Supabase requests
+  // 4. WebSocket connections
+  if (
+    url.pathname.match(/\.(js|css|map)$/) ||
+    url.pathname.includes('/assets/') ||
+    url.hostname.includes('supabase') ||
+    url.pathname.startsWith('/api/') ||
+    url.protocol === 'ws:' ||
+    url.protocol === 'wss:'
+  ) {
+    // For dynamic assets, use network-first with fallback
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          // If network fails, try cache as fallback
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // For static assets (HTML, images, icons), use cache-first with network fallback
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        // Cache hit - return response
         if (response) {
+          // Cache hit - return response
           return response;
         }
-        // Cache miss - fetch from network
-        return fetch(event.request);
+        // Cache miss - fetch from network and cache
+        return fetch(event.request)
+          .then((response) => {
+            // Only cache successful responses
+            if (response && response.status === 200) {
+              const responseToCache = response.clone();
+              caches.open(CACHE_NAME)
+                .then((cache) => {
+                  cache.put(event.request, responseToCache);
+                });
+            }
+            return response;
+          })
+          .catch((error) => {
+            console.error('[SW] Fetch failed:', error);
+            throw error;
+          });
       })
   );
 });

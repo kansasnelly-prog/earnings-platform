@@ -70,7 +70,9 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
-  const resetPersonalAccount = async () => {
+  const resetPersonalAccount = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     if (!resetEmail.trim()) {
       toast('Please enter an email address');
       return;
@@ -80,7 +82,27 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
     try {
       const email = resetEmail.trim().toLowerCase();
       
-      // Find personal account in localStorage
+      console.log(`[AdminControls] ==========================================`);
+      console.log(`[AdminControls] RESET PERSONAL ACCOUNT STARTED`);
+      console.log(`[AdminControls] Email: ${email}`);
+      console.log(`[AdminControls] ==========================================`);
+      
+      // PRIMARY: Use SupabaseService to reset personal account
+      const result = await SupabaseService.resetPersonalAccount(email);
+      
+      if (!result.success) {
+        console.error(`[AdminControls] RESET FAILED:`, result.error);
+        toast.error(result.error || 'Failed to reset personal account in Supabase');
+        setIsResetting(false);
+        return;
+      }
+      
+      console.log(`[AdminControls] ==========================================`);
+      console.log(`[AdminControls] RESET SUCCESSFUL`);
+      console.log(`[AdminControls] Message: ${result.message}`);
+      console.log(`[AdminControls] ==========================================`);
+      
+      // SECONDARY: Update localStorage as cache only (after Supabase success)
       const accountKey = 'opt_account_' + email;
       const accountData = localStorage.getItem(accountKey);
       
@@ -150,9 +172,7 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
           }
         }
         
-        const phaseMessage = newPhase === 2 
-          ? 'PHASE 2 ACTIVATED: Pending order will appear at task 28 (combination product)'
-          : 'Phase 1 reset';
+        const phaseMessage = newPhase === 2 ? 'Phase 2 reset (Set 2)' : 'Phase 1 reset (Set 1)';
         
         toast.success(`Personal account reset to 0/35 - ${phaseMessage}. Balance and earnings preserved.`);
         
@@ -165,11 +185,11 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
           cycle: newPhase
         });
       } else {
-        toast('Personal account not found in localStorage');
+        toast('Personal account not found in localStorage (but database was reset)');
       }
       
       setResetEmail('');
-      onRefresh();
+      // Removed onRefresh() to prevent admin panel reload loop
     } catch (error) {
       console.error('Error resetting personal account:', error);
       toast.error('Failed to reset personal account');
@@ -429,7 +449,8 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
     }
   };
 
-  const resetTrainingAccount = async () => {
+  const resetTrainingAccount = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
     if (!resetEmail.trim()) {
       toast.error('Please enter an email address');
       return;
@@ -575,7 +596,7 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
       }
       
       setResetEmail('');
-      onRefresh();
+      // Removed onRefresh() to prevent admin panel reload loop
     } catch (error) {
       console.error('[AdminControls] [resetTrainingAccount] Exception:', error);
       toast.error('Failed to reset training account');
@@ -685,7 +706,8 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
     }
   };
 
-  const completeTrainingAndTransfer = async () => {
+  const completeTrainingAndTransfer = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
     if (!resetEmail.trim()) {
       toast.error('Please enter a training account email address');
       return;
@@ -1135,75 +1157,80 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                User Email Address
-              </label>
-              <Input
-                type="email"
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
-                placeholder="user@example.com"
-                className="bg-slate-700 border-slate-600 text-white"
-              />
-            </div>
+            <form onSubmit={(e) => e.preventDefault()}>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  User Email Address
+                </label>
+                <Input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="user@example.com"
+                  className="bg-slate-700 border-slate-600 text-white"
+                />
+              </div>
 
-            <div className="grid grid-cols-1 gap-3">
-              <Button
-                onClick={resetPersonalAccount}
-                disabled={isResetting}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {isResetting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Resetting...
-                  </>
-                ) : (
-                  <>
-                    <UserX className="w-4 h-4 mr-2" />
-                    Reset Personal Account
-                  </>
-                )}
-              </Button>
+              <div className="grid grid-cols-1 gap-3">
+                <Button
+                  type="button"
+                  onClick={(e) => resetPersonalAccount(e)}
+                  disabled={isResetting}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {isResetting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Resetting...
+                    </>
+                  ) : (
+                    <>
+                      <UserX className="w-4 h-4 mr-2" />
+                      Reset Personal Account
+                    </>
+                  )}
+                </Button>
 
-              <Button
-                onClick={resetTrainingAccount}
-                disabled={isResetting}
-                variant="outline"
-                className="border-purple-600 text-purple-400 hover:bg-purple-700"
-              >
-                {isResetting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Resetting...
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Reset Training Account
-                  </>
-                )}
-              </Button>
+                <Button
+                  type="button"
+                  onClick={(e) => resetTrainingAccount(e)}
+                  disabled={isResetting}
+                  variant="outline"
+                  className="border-purple-600 text-purple-400 hover:bg-purple-700"
+                >
+                  {isResetting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Resetting...
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Reset Training Account
+                    </>
+                  )}
+                </Button>
 
-              <Button
-                onClick={completeTrainingAndTransfer}
-                disabled={isResetting}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                {isResetting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Complete Training & Transfer Balance
-                  </>
-                )}
-              </Button>
-            </div>
+                <Button
+                  type="button"
+                  onClick={(e) => completeTrainingAndTransfer(e)}
+                  disabled={isResetting}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {isResetting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Complete Training & Transfer Balance
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
 
             <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
               <div className="flex items-start space-x-2">

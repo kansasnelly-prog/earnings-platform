@@ -356,7 +356,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setIsAuthenticated(true);
 
           // Load user data
-          await loadUserData(dbUser.id);
+          await loadUserData(dbUser.id, dbUser.email);
         } else {
           setUser(null);
           setIsAuthenticated(false);
@@ -396,7 +396,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (dbUser) {
           setUser(mapDatabaseUserToUser(dbUser));
           setIsAuthenticated(true);
-          await loadUserData(dbUser.id);
+          await loadUserData(dbUser.id, dbUser.email);
           
           // Check and transfer commission from completed training accounts (only for personal accounts)
           if (dbUser.account_type === 'personal') {
@@ -413,7 +413,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               });
               
               // Refresh user data to show updated balance
-              await loadUserData(dbUser.id);
+              await loadUserData(dbUser.id, dbUser.email);
             } else {
               console.log('[Transfer] no transfer executed - result:', transferResult);
             }
@@ -524,8 +524,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id, user?.account_type, isAuthenticated]);
 
-  const loadUserData = async (userId: string, accountType?: 'training' | 'personal' | 'admin', email?: string) => {
-    console.log('[loadUserData] Starting loadUserData - userId:', userId, 'accountType param:', accountType);
+  const loadUserData = async (userId: string, email?: string) => {
+    console.log('[loadUserData] Starting loadUserData - userId:', userId);
 
     // ALWAYS fetch user from public.users first to get account_type
     let dbUser = null;
@@ -546,7 +546,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      console.log('[loadUserData] Loaded user from public.users:', userData);
+      console.log('[loadUserData] Loaded user from public.users - account_type:', userData.account_type);
       dbUser = userData;
     } catch (error) {
       console.error('[loadUserData] Exception fetching user from public.users:', error);
@@ -846,7 +846,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       setUser(mapDatabaseUserToUser(dbUser));
       setIsAuthenticated(true);
-      await loadUserData(dbUser.id);
+      await loadUserData(dbUser.id, dbUser.email);
       setAuthLoading(false);
       
       // Check and transfer commission from completed training accounts (only for personal accounts)
@@ -862,7 +862,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           });
           
           // Refresh user data to show updated balance
-          await loadUserData(dbUser.id);
+          await loadUserData(dbUser.id, dbUser.email);
         }
       }
       
@@ -963,7 +963,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         
         setUser(trainingUser);
         setIsAuthenticated(true);
-        await loadUserData(trainingUser.id, 'training', trainingUser.email);
+        await loadUserData(trainingUser.id, trainingUser.email);
       } else {
         // Fetch user data from users table to get balance (should include initial + earned)
         const { data: userData } = await supabase
@@ -1031,7 +1031,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         setUser(trainingUser);
         setIsAuthenticated(true);
-        await loadUserData(trainingUser.id, 'training', trainingUser.email);
+        await loadUserData(trainingUser.id, trainingUser.email);
       }
       
       setAuthLoading(false);
@@ -1075,7 +1075,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const mappedUser = mapDatabaseUserToUser(dbUser);
       setUser(mappedUser);
       setIsAuthenticated(true);
-      await loadUserData(dbUser.id);
+      await loadUserData(dbUser.id, dbUser.email);
 
       setAuthLoading(false);
 

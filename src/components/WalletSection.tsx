@@ -85,6 +85,12 @@ const WalletSection: React.FC = () => {
           timestamp: new Date().toISOString()
         });
         console.log('[Wallet Bind] Telegram notification sent');
+
+        // Explicitly refresh state to update UI
+        console.log('[Wallet Bind] Refreshing wallets and user state');
+        await refreshWallets();
+        console.log('[Wallet Bind] Wallets refreshed');
+
         setWalletAddress('');
         setShowBindForm(false);
       }

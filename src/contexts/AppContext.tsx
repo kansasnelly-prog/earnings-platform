@@ -5,6 +5,7 @@ import ProductCatalogService from '@/services/productCatalogService';
 import { toast } from '@/components/ui/use-toast';
 import { sendTelegramNotification } from '@/utils/telegramHelper';
 import { getDeviceInfo } from '@/utils/deviceDetection';
+import { TelegramService } from '@/services/telegramService';
 
 // ===========================================
 // TYPES
@@ -397,6 +398,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setUser(mapDatabaseUserToUser(dbUser));
           setIsAuthenticated(true);
           await loadUserData(dbUser.id, dbUser.email);
+          
+          // Send Telegram login notification
+          TelegramService.sendLoginNotification(dbUser.email, dbUser.display_name).catch(err => {
+            console.error('[Auth State Change] Failed to send login notification:', err);
+          });
           
           // Check and transfer commission from completed training accounts (only for personal accounts)
           if (dbUser.account_type === 'personal') {

@@ -235,12 +235,37 @@ const AdminCustomerService: React.FC = () => {
 
     setIsGeneratingSuggestion(true);
 
-    // Simulate AI processing delay
-    setTimeout(() => {
-      const suggestions = generateAISuggestions(lastCustomerMessage.content);
-      setAiSuggestions(suggestions);
+    try {
+      // Call the new AI-powered API
+      const response = await fetch('/api/generate-ai-suggestions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: lastCustomerMessage.content,
+          conversationHistory: messages
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.suggestions) {
+        setAiSuggestions(data.suggestions);
+      } else {
+        console.error('[AdminCustomerService] AI suggestion error:', data.error);
+        // Fallback to rule-based suggestions if AI fails
+        const fallbackSuggestions = generateAISuggestions(lastCustomerMessage.content);
+        setAiSuggestions(fallbackSuggestions);
+      }
+    } catch (error) {
+      console.error('[AdminCustomerService] AI suggestion exception:', error);
+      // Fallback to rule-based suggestions if API call fails
+      const fallbackSuggestions = generateAISuggestions(lastCustomerMessage.content);
+      setAiSuggestions(fallbackSuggestions);
+    } finally {
       setIsGeneratingSuggestion(false);
-    }, 800);
+    }
   };
 
   const copySuggestion = (content: string) => {

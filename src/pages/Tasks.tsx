@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { toast } from 'sonner';
+import CustomerService from '@/components/CustomerService';
+import CSSelectionModal from '@/components/CSSelectionModal';
 
 const Tasks: React.FC = () => {
   const navigate = useNavigate();
@@ -28,6 +30,7 @@ const Tasks: React.FC = () => {
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [showCSSelection, setShowCSSelection] = useState(false);
+  const [showCustomerService, setShowCustomerService] = useState(false);
 
   const isTraining = user?.account_type === 'training';
   const totalTasks = user?.total_tasks || 45;
@@ -74,6 +77,12 @@ const Tasks: React.FC = () => {
   const isFirstSetComplete = !isTraining && user?.vip_level === 1 && user?.tasks_completed === 35;
   const isSecondSetComplete = !isTraining && user?.vip_level === 1 && user?.tasks_completed === 70;
   const totalReward = user?.total_earned || 0;
+
+  // Training account completion state
+  const isTrainingComplete = isTraining && completedCount >= totalTasks;
+
+  // Show CS button when tasks are completed or reset is needed
+  const showTaskCustomerService = isFirstSetComplete || isSecondSetComplete || isTrainingComplete || isLockedAwaitingReset;
 
   // For VIP1 personal accounts, calculate current set display
   // Only switch to Set 2 when tasks_completed > 35 (after customer service reset)
@@ -251,13 +260,17 @@ const Tasks: React.FC = () => {
               </div>
             </div>
           </div>
-          <button
-            onClick={() => setShowCSSelection(true)}
-            className="absolute top-4 right-4 z-20 w-12 h-12 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:scale-105 transition-transform"
-            title="Contact Customer Service"
-          >
-            <Headphones size={20} className="text-white" />
-          </button>
+          
+          {/* Pink CS Button - Top Right */}
+          {showTaskCustomerService && (
+            <button
+              onClick={() => setShowCSSelection(true)}
+              className="absolute top-4 right-4 z-20 w-12 h-12 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30 hover:scale-105 transition-transform animate-pulse"
+              title="Customer Service"
+            >
+              <Headphones size={20} className="text-white" />
+            </button>
+          )}
         </div>
       )}
 
@@ -350,12 +363,23 @@ const Tasks: React.FC = () => {
 
         {/* Task Grid - Bigger cards like Daily Bonus */}
         {isLockedAwaitingReset ? (
-          <div className="locked-message p-8 bg-gradient-to-br from-emerald-600/20 via-green-600/15 to-teal-600/10 border border-emerald-500/20 rounded-2xl text-center">
+          <div className="locked-message p-8 bg-gradient-to-br from-emerald-600/20 via-green-600/15 to-teal-600/10 border border-emerald-500/20 rounded-2xl text-center relative">
             <div className="flex items-center justify-center gap-3 mb-4">
               <CheckCircle className="w-12 h-12 text-emerald-400" />
               <h3 className="text-2xl font-bold text-white">First set of 35 tasks completed!</h3>
             </div>
             <p className="text-gray-300 text-lg">Contact customer service to continue to the next set.</p>
+            
+            {/* Pink CS Button - Top Right */}
+            {showTaskCustomerService && (
+              <button
+                onClick={() => setShowCSSelection(true)}
+                className="absolute top-4 right-4 z-20 w-12 h-12 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30 hover:scale-105 transition-transform animate-pulse"
+                title="Customer Service"
+              >
+                <Headphones size={20} className="text-white" />
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -641,6 +665,26 @@ const Tasks: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* CS Selection Modal */}
+      <CSSelectionModal
+        isOpen={showCSSelection}
+        onClose={() => setShowCSSelection(false)}
+        onSelectTelegram={() => {
+          setShowCSSelection(false);
+          window.open('https://t.me/EARNINGSLLCONLINECS1', '_blank');
+        }}
+        onSelectOnline={() => {
+          setShowCSSelection(false);
+          setShowCustomerService(true);
+        }}
+      />
+
+      {/* Customer Service Modal */}
+      <CustomerService
+        isOpen={showCustomerService}
+        onClose={() => setShowCustomerService(false)}
+      />
     </div>
   );
 };

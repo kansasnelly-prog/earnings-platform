@@ -7,7 +7,7 @@ import { SupabaseService } from '@/services/supabaseService';
 import {
   LayoutDashboard, Users, ArrowDownToLine, RefreshCw, Shield, ChevronLeft,
   BarChart3, Activity, LogIn, Headphones, Settings, UserPlus,
-  AlertTriangle, DollarSign, CheckCircle, Search, ShoppingBag
+  AlertTriangle, DollarSign, CheckCircle, Search, ShoppingBag, Sparkles
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -403,8 +403,8 @@ const MainAdminPanel: React.FC = () => {
         description: 'Withdrawal has been processed successfully and balance deducted',
       });
       
-      // Refresh stats
-      loadData();
+      // Refresh stats - commented out to prevent layout refresh and text field wipe
+      // loadData();
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -440,8 +440,8 @@ const MainAdminPanel: React.FC = () => {
         description: 'Withdrawal has been rejected successfully. Funds remain available to user.',
       });
       
-      // Refresh stats
-      loadData();
+      // Refresh stats - commented out to prevent layout refresh and text field wipe
+      // loadData();
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -866,18 +866,21 @@ const MainAdminPanel: React.FC = () => {
               { id: 'product-catalog', label: 'Product Catalog', icon: ShoppingBag },
               { id: 'admin-controls', label: 'Admin Controls', icon: Settings },
               { id: 'create-account', label: 'Create Account', icon: UserPlus },
+              { id: 'ai-assistant', label: "KANSAS NELLY'S AI", icon: Sparkles, external: true },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => tab.external ? navigate('/ai-assistant') : setActiveTab(tab.id as any)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  activeTab === tab.id
+                  tab.external
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25 hover:bg-purple-700'
+                    : activeTab === tab.id
                     ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
                 <tab.icon size={16} />
-                <span>{tab.label}</span>
+                {tab.label}
               </button>
             ))}
           </nav>

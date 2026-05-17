@@ -1942,34 +1942,41 @@ else if (
   };
 
   const addWallet = async (walletAddress: string, walletType: string): Promise<boolean> => {
-    if (!user) return false;
-    
+    console.log('[addWallet] Function called', { walletAddress, walletType, userId: user?.id });
+    if (!user) {
+      console.log('[addWallet] No user found, returning false');
+      return false;
+    }
+
     try {
+      console.log('[addWallet] Checking for existing wallets');
       // Check if wallet already exists for this user
       const { data: existingWallets, error: checkError } = await supabase
         .from('wallets')
         .select('id')
         .eq('user_id', user.id)
         .eq('wallet_address', walletAddress);
-      
+
+      console.log('[addWallet] Existing wallet check completed', { existingWallets, checkError });
+
       if (checkError) {
         console.error('[Wallet Check Error]', checkError);
         toast({ title: 'Error', description: 'Failed to check existing wallets', variant: 'destructive' });
         return false;
       }
-      
+
       if (existingWallets && existingWallets.length > 0) {
         console.log('[Wallet Duplicate] Wallet already exists', { userId: user.id, walletAddress });
         toast({ title: 'Wallet Already Exists', description: 'This wallet address is already bound to your account', variant: 'destructive' });
         return false;
       }
-      
+
       // Determine chain based on wallet type
-      const chain = walletType === 'USDT-TRC20' ? 'TRON' : 
-                    walletType === 'USDT-ERC20' ? 'ETH' : 
-                    walletType === 'USDT-BEP20' ? 'BSC' : 
+      const chain = walletType === 'USDT-TRC20' ? 'TRON' :
+                    walletType === 'USDT-ERC20' ? 'ETH' :
+                    walletType === 'USDT-BEP20' ? 'BSC' :
                     'ETH';
-      
+
       const insertPayload = {
         user_id: user.id,
         wallet_address: walletAddress,
@@ -1977,21 +1984,24 @@ else if (
         chain: chain,
         is_primary: wallets.length === 0
       };
-      
-      console.log('[Wallet Insert] Payload', insertPayload);
-      
+
+      console.log('[Wallet Insert] About to insert wallet with payload', insertPayload);
+
       const { error } = await supabase
         .from('wallets')
         .insert(insertPayload);
-      
+
+      console.log('[Wallet Insert] Insert completed', { error });
+
       if (error) {
         console.error('[Wallet Insert Error]', error);
         toast({ title: 'Error', description: error.message, variant: 'destructive' });
         return false;
       }
-      
+
       console.log('[Wallet Bound Success]', { userId: user.id, walletAddress, walletType, chain });
 
+      console.log('[addWallet] About to update users table with wallet_address');
       // Update wallet_address on users table (only column that exists in schema)
       await supabase
         .from('users')
@@ -1999,15 +2009,23 @@ else if (
           wallet_address: walletAddress
         })
         .eq('id', user.id);
-      
+
+      console.log('[addWallet] Users table update completed');
+
+      console.log('[addWallet] About to refresh wallets');
       await refreshWallets();
+
+      console.log('[addWallet] Wallets refreshed, about to refresh user');
       await refreshUser(); // Refresh user to get updated wallet_bound status
-      
+
+      console.log('[addWallet] User refreshed, about to show success toast');
+
       toast({
         title: 'Wallet Added',
         description: 'Your wallet has been added successfully'
       });
-      
+
+      console.log('[addWallet] Returning true');
       return true;
     } catch (error: any) {
       console.error('[Wallet Insert Exception]', error);

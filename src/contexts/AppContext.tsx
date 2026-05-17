@@ -516,6 +516,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Refresh tasks when user changes to ensure tasks are loaded for new accounts
+  useEffect(() => {
+    if (user && isAuthenticated) {
+      console.log('[AppContext] User changed, refreshing tasks for:', user.id, 'account_type:', user.account_type);
+      refreshTasks().catch(err => console.error('[AppContext] refreshTasks failed:', err));
+    }
+  }, [user?.id, user?.account_type, isAuthenticated]);
+
   const loadUserData = async (userId: string, accountType?: 'training' | 'personal' | 'admin', email?: string) => {
     console.log('[loadUserData] Starting loadUserData - userId:', userId, 'accountType param:', accountType);
 
@@ -754,14 +762,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           // Only create fresh tasks if user hasn't completed any tasks yet
           if (tasksCompleted === 0) {
             console.log('[loadUserData] No tasks found and tasks_completed is 0, creating 35 tasks');
-            await SupabaseService.createTrainingTasks(userId, 35);
-            const newTasks = await SupabaseService.getUserTasks(userId);
-            setTasks((newTasks || []).map(mapDatabaseTaskToTask));
+            const tasksCreated = await SupabaseService.createTrainingTasks(userId, 35);
+            console.log('[loadUserData] Task creation result:', tasksCreated);
+            
+            if (tasksCreated) {
+              const newTasks = await SupabaseService.getUserTasks(userId);
+              console.log('[loadUserData] Loaded new tasks after creation:', newTasks?.length);
+              setTasks((newTasks || []).map(mapDatabaseTaskToTask));
+            } else {
+              console.error('[loadUserData] Failed to create tasks');
+              setTasks([]);
+            }
           } else {
             console.log('[loadUserData] No tasks found but tasks_completed is', tasksCompleted, '- not creating fresh tasks to preserve completed state');
             setTasks([]);
           }
         } else {
+          console.log('[loadUserData] Loaded existing tasks:', dbTasks.length);
           setTasks(dbTasks.map(mapDatabaseTaskToTask));
         }
       } catch (error) {

@@ -330,7 +330,7 @@ const ProgressTracker: React.FC<{ tasks: any[]; currentTask: number; productCata
           const isPending = task.status === 'pending';
           return (
             <div key={task.task_number} data-task={task.task_number} className={`relative flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border-2 transition-all duration-300 ${isActive ? 'border-indigo-500 ring-2 ring-indigo-500/30 scale-110' : isCompleted ? 'border-emerald-500/50 opacity-80' : isPending ? 'border-indigo-500/30' : 'border-white/[0.06] opacity-30'}`}>
-              <img src={product?.image || 'https://images.unsplash.com/photo-1610945265078-3858a0828671?w=400'} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              <img src={product?.image || 'https://images.unsplash.com/photo-1610945265078-3858a0828671?w=400'} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
               {isCompleted && <div className="absolute inset-0 bg-emerald-500/30 flex items-center justify-center"><CheckCircle size={14} className="text-white" /></div>}
               {!isCompleted && !isPending && <div className="absolute inset-0 bg-black/60 flex items-center justify-center"><Lock size={10} className="text-gray-400" /></div>}
               {isActive && <div className="absolute inset-0 border-2 border-indigo-400 rounded-md animate-pulse" />}
@@ -1514,6 +1514,7 @@ if (result.success) {
                           src={previewImageSrc}
                           alt={previewProduct?.name || 'Preview'}
                           className="w-full h-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.55)]"
+                          crossOrigin="anonymous"
                           onError={() => setPreviewImageFailed(true)}
                         />
                       ) : (

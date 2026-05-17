@@ -21,32 +21,11 @@ import {
 import { supabase } from '@/lib/supabase';
 import SupabaseService from '@/services/supabaseService';
 import { TELEGRAM_CONFIG } from '../../config/telegram';
+import { sendTelegramNotification } from '@/lib/realtime';
 
 interface AdminControlsProps {
   onRefresh: () => void;
 }
-
-const sendTelegramNotification = async (message: string, timeoutMs = 10000) => {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-    // Use Supabase Edge Function instead of direct Telegram API
-    const { data, error } = await supabase.functions.invoke('telegram-bot', {
-      body: { message }
-    });
-
-    clearTimeout(timeoutId);
-
-    if (error) {
-      throw new Error('Failed to send Telegram notification');
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Telegram notification error:', error);
-  }
-};
 
 // MIGRATION: Update existing tasks with new realistic rewards
 const migrateExistingTasks = (email: string, tasks: any[]) => {
@@ -176,6 +155,15 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
           : 'Phase 1 reset';
         
         toast.success(`Personal account reset to 0/35 - ${phaseMessage}. Balance and earnings preserved.`);
+        
+        // Send Telegram notification immediately after database update succeeds
+        await sendTelegramNotification('PERSONAL_ACCOUNT_RESET', {
+          email: email,
+          userId: userId || 'unknown',
+          vipLevel: account.user?.vip_level || 0,
+          balance: account.user?.balance || 0,
+          cycle: newPhase
+        });
       } else {
         toast('Personal account not found in localStorage');
       }
@@ -275,7 +263,17 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
       `.trim();
 
       try {
-        await sendTelegramNotification(telegramMessage, 10000);
+        await sendTelegramNotification('ADMIN_ACTION', {
+          action: 'BALANCE_ADDED',
+          admin: 'Admin',
+          details: {
+            email: email,
+            amount: balanceAmount,
+            newBalance: result.newBalance,
+            reason: reason,
+            timestamp: new Date().toISOString()
+          }
+        });
       } catch (telegramError) {
         console.error('[AdminControls] [addBalance] Telegram notification failed:', telegramError);
       }
@@ -361,19 +359,18 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
       console.log(`[AdminControls] [reduceBalance] Completed. Reduced $${balanceAmount}, new balance: $${result.newBalance}`);
       
       // Send Telegram notification
-      const telegramMessage = `
-💸 <b>ADMIN: BALANCE REDUCED</b>
-
-👤 <b>Email:</b> ${email}
-💵 <b>Amount Reduced:</b> $${balanceAmount}
-💵 <b>New Balance:</b> $${result.newBalance}
-📝 <b>Reason:</b> ${reason}
-⚙️ <b>Source:</b> Supabase (primary)
-📅 <b>Timestamp:</b> ${new Date().toLocaleString()}
-      `.trim();
-
       try {
-        await sendTelegramNotification(telegramMessage, 10000);
+        await sendTelegramNotification('ADMIN_ACTION', {
+          action: 'BALANCE_REDUCED',
+          admin: 'Admin',
+          details: {
+            email: email,
+            amount: balanceAmount,
+            newBalance: result.newBalance,
+            reason: reason,
+            timestamp: new Date().toISOString()
+          }
+        });
       } catch (telegramError) {
         console.error('[AdminControls] [reduceBalance] Telegram notification failed:', telegramError);
       }
@@ -565,22 +562,14 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
           : `✅ Training Account Reset!\n${email}\nPhase 1 restarted (0/45 tasks)`
       );
       
-      // Send Telegram notification
-      const telegramMessage = `
-🔄 <b>TRAINING ACCOUNT RESET (SUPABASE)</b>
-
-👤 <b>Email:</b> ${email}
-📊 <b>Status:</b> ${result.message}
-⚙️ <b>Source:</b> Supabase (primary)
-📅 <b>Timestamp:</b> ${new Date().toLocaleString()}
-
-✅ Tasks reset to 0/45
-✅ Balance preserved
-✅ Phase updated in Supabase
-      `.trim();
-
+      // Send Telegram notification immediately after database update succeeds
       try {
-        await sendTelegramNotification(telegramMessage, 10000);
+        await sendTelegramNotification('TRAINING_ACCOUNT_RESET', {
+          email: email,
+          userId: 'unknown',
+          vipLevel: 0,
+          balance: 0
+        });
       } catch (telegramError) {
         console.error('[AdminControls] [resetTrainingAccount] Telegram notification failed:', telegramError);
       }

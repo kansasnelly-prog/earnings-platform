@@ -12,14 +12,11 @@ const urlsToCache = [
   '/manifest.json'
 ];
 
-// Install event - cache assets
+// Install event - skip static precaching to avoid cache errors when asset hashes change
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        return cache.addAll(urlsToCache);
-      })
-  );
+  // Skip precaching to prevent "Cache: Request failed" errors
+  // when asset filenames change between deployments
+  event.waitUntil(self.skipWaiting());
 });
 
 // Activate event - clean up old caches
@@ -147,8 +144,8 @@ self.addEventListener('fetch', (event) => {
         // Cache miss - fetch from network and cache
         return fetch(event.request)
           .then((response) => {
-            // Only cache successful responses
-            if (response && response.status === 200) {
+            // Only cache successful GET responses (Cache API doesn't support POST)
+            if (response && response.status === 200 && event.request.method === 'GET') {
               const responseToCache = response.clone();
               caches.open(CACHE_NAME)
                 .then((cache) => {

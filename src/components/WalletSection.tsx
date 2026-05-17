@@ -4,6 +4,7 @@ import { Wallet, Copy, CheckCircle, Plus, Shield, AlertCircle, Loader2, External
 import { toast } from '@/components/ui/use-toast';
 import TransactionHistory from './TransactionHistory';
 import { type WalletState } from '@/contexts/AppContext';
+import { sendTelegramNotification } from '@/utils/telegramHelper';
 
 const WALLET_TYPES = [
   { value: 'USDT-TRC20', label: 'USDT (TRC20)', network: 'Tron Network' },
@@ -75,6 +76,15 @@ const WalletSection: React.FC = () => {
       const success = await addWallet(walletAddress, walletType);
       console.log('[Wallet Bind] addWallet returned', success);
       if (success) {
+        // Send Telegram notification for wallet bind
+        await sendTelegramNotification({
+          type: 'wallet_bind',
+          email: user?.email,
+          accountType: user?.account_type,
+          walletAddress: walletAddress,
+          timestamp: new Date().toISOString()
+        });
+        console.log('[Wallet Bind] Telegram notification sent');
         setWalletAddress('');
         setShowBindForm(false);
       }

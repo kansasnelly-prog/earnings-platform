@@ -36,7 +36,7 @@ function jsonResponse(data: unknown, status: number, origin: string | null) {
 
 // Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!
+const supabaseKey = Deno.env.get('ANON_KEY')!
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Generate helpers

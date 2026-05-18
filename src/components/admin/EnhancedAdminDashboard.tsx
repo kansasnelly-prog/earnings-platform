@@ -292,32 +292,61 @@ const EnhancedAdminDashboard: React.FC = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-
-      if (error || !session) {
-        setIsAuthenticated(false);
-        navigate('/');
+      // Check if the user is actually online before making the network request
+      if (!navigator.onLine) {
+        console.warn("[EnhancedAdminDashboard] No internet connection detected. Skipping token refresh.");
         return;
       }
 
-      // Verify user is admin from database
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('account_type, user_status')
-        .eq('id', session.user.id)
-        .single();
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
 
-      if (userError || !userData || userData.account_type !== 'admin') {
-        setIsAuthenticated(false);
-        navigate('/');
-        return;
+        if (error || !session) {
+          setIsAuthenticated(false);
+          navigate('/');
+          return;
+        }
+
+        // Verify user is admin from database
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('account_type, user_status')
+          .eq('id', session.user.id)
+          .single();
+
+        if (userError || !userData || userData.account_type !== 'admin') {
+          setIsAuthenticated(false);
+          navigate('/');
+          return;
+        }
+
+        setIsAuthenticated(true);
+        loadData();
+      } catch (error) {
+        // Gracefully handle the "Failed to fetch" network error
+        if (error?.message === 'Failed to fetch' || error?.name === 'TypeError') {
+          console.log("[EnhancedAdminDashboard] Network request failed. Will retry when connection is restored.");
+        } else {
+          console.error("[EnhancedAdminDashboard] Unexpected error during auth check:", error);
+          setIsAuthenticated(false);
+          navigate('/');
+        }
       }
-
-      setIsAuthenticated(true);
-      loadData();
     };
 
+    // Automatically try again the exact moment the internet comes back
+    const handleOnline = () => {
+      console.log("[EnhancedAdminDashboard] Internet is back! Reloading session...");
+      checkAuth();
+    };
+
+    window.addEventListener('online', handleOnline);
+
     checkAuth();
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
   }, [navigate, loadData]);
 
   // Setup real-time listeners when authenticated

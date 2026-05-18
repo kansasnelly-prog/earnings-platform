@@ -114,6 +114,13 @@ const MainAdminPanel: React.FC = () => {
     const checkAuth = async () => {
       console.log("ADMIN INIT: Checking Supabase Auth session");
 
+      // Check if the user is actually online before making the network request
+      if (!navigator.onLine) {
+        console.warn("[ADMIN INIT] No internet connection detected. Skipping token refresh.");
+        setIsInitialized(true);
+        return;
+      }
+
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         console.log("ADMIN INIT: Supabase session:", session ? 'Found' : 'Not found');
@@ -166,18 +173,36 @@ const MainAdminPanel: React.FC = () => {
         setIsInitialized(true);
         loadData();
       } catch (error) {
-        console.error("ADMIN INIT: Unexpected error during auth check:", error);
-        // Clear stale session and tokens on any error
-        await supabase.auth.signOut();
-        localStorage.removeItem('supabase.auth.token');
-        sessionStorage.removeItem('supabase.auth.token');
-        setIsAuthenticated(false);
-        setIsInitialized(true);
-        navigate('/');
+        // Gracefully handle the "Failed to fetch" network error
+        if (error?.message === 'Failed to fetch' || error?.name === 'TypeError') {
+          console.log("[ADMIN INIT] Network request failed. Will retry when connection is restored.");
+          setIsInitialized(true);
+        } else {
+          console.error("ADMIN INIT: Unexpected error during auth check:", error);
+          // Clear stale session and tokens on any error
+          await supabase.auth.signOut();
+          localStorage.removeItem('supabase.auth.token');
+          sessionStorage.removeItem('supabase.auth.token');
+          setIsAuthenticated(false);
+          setIsInitialized(true);
+          navigate('/');
+        }
       }
     };
 
+    // Automatically try again the exact moment the internet comes back
+    const handleOnline = () => {
+      console.log("[ADMIN INIT] Internet is back! Reloading session...");
+      checkAuth();
+    };
+
+    window.addEventListener('online', handleOnline);
+
     checkAuth();
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
   }, [navigate]);
 
     

@@ -85,20 +85,39 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ onLogout }) => {
   // Check authentication state on mount
   useEffect(() => {
     const checkAuth = async () => {
+      // Check if the user is actually online before making the network request
+      if (!navigator.onLine) {
+        console.warn("[AdminUsers] No internet connection detected. Skipping token refresh.");
+        return;
+      }
+
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         console.log('[AdminUsers] ADMIN SESSION:', sessionData.session ? 'Authenticated' : 'Not authenticated');
         console.log('[AdminUsers] Session data:', sessionData);
         setIsAuthenticated(!!sessionData.session);
       } catch (error) {
-        console.error('[AdminUsers] Session check error:', error);
-        // Clear stale session and tokens on any error
-        await supabase.auth.signOut();
-        localStorage.removeItem('supabase.auth.token');
-        sessionStorage.removeItem('supabase.auth.token');
-        setIsAuthenticated(false);
+        // Gracefully handle the "Failed to fetch" network error
+        if (error?.message === 'Failed to fetch' || error?.name === 'TypeError') {
+          console.log("[AdminUsers] Network request failed. Will retry when connection is restored.");
+        } else {
+          console.error('[AdminUsers] Session check error:', error);
+          // Clear stale session and tokens on any error
+          await supabase.auth.signOut();
+          localStorage.removeItem('supabase.auth.token');
+          sessionStorage.removeItem('supabase.auth.token');
+          setIsAuthenticated(false);
+        }
       }
     };
+
+    // Automatically try again the exact moment the internet comes back
+    const handleOnline = () => {
+      console.log("[AdminUsers] Internet is back! Reloading session...");
+      checkAuth();
+    };
+
+    window.addEventListener('online', handleOnline);
 
     checkAuth();
 
@@ -109,6 +128,7 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ onLogout }) => {
     });
 
     return () => {
+      window.removeEventListener('online', handleOnline);
       subscription.unsubscribe();
     };
   }, []);

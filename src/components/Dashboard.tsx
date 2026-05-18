@@ -135,7 +135,7 @@ const Dashboard: React.FC = () => {
             .from('training_accounts')
             .select('task_number, completed_tasks')
             .eq('auth_user_id', user.id)
-            .single();
+            .maybeSingle();
           
           if (trainingAccount) {
             console.log('[Dashboard] Fresh training data from Supabase:', trainingAccount);
@@ -161,7 +161,7 @@ const Dashboard: React.FC = () => {
             .from('users')
             .select('balance, total_earned')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
           
           if (dbUser) {
             console.log('[Dashboard] Fresh balance data from Supabase:', dbUser);

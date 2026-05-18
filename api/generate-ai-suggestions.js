@@ -4,9 +4,12 @@
 const { createClient } = require('@supabase/supabase-js');
 
 export default async function handler(req, res) {
+  // CRITICAL: Always set JSON content type header
+  res.setHeader('Content-Type', 'application/json');
+
   // Only allow POST requests
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
   try {
@@ -14,7 +17,7 @@ export default async function handler(req, res) {
 
     // Validate required fields
     if (!message) {
-      return res.status(400).json({ error: 'Message is required' });
+      return res.status(400).json({ success: false, error: 'Message is required' });
     }
 
     // Get environment variables
@@ -23,7 +26,7 @@ export default async function handler(req, res) {
 
     if (!openaiApiKey) {
       console.error('[AI Suggestions] OPENAI_API_KEY not configured');
-      return res.status(500).json({ error: 'AI service not configured' });
+      return res.status(500).json({ success: false, error: 'AI service not configured' });
     }
 
     // Build conversation context
@@ -103,7 +106,7 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
     if (!openaiResponse.ok) {
       const errorText = await openaiResponse.text();
       console.error('[AI Suggestions] OpenAI API error:', errorText);
-      return res.status(500).json({ error: 'Failed to generate suggestions' });
+      return res.status(500).json({ success: false, error: 'Failed to generate suggestions from OpenAI' });
     }
 
     const openaiData = await openaiResponse.json();
@@ -118,13 +121,13 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
     } catch (parseError) {
       console.error('[AI Suggestions] Failed to parse AI response:', parseError);
       // Fallback: try to extract suggestions manually
-      return res.status(500).json({ error: 'Failed to parse AI response' });
+      return res.status(500).json({ success: false, error: 'Failed to parse AI response' });
     }
 
     // Validate the response structure
     if (!parsedResponse.suggestions || !Array.isArray(parsedResponse.suggestions)) {
       console.error('[AI Suggestions] Invalid response structure:', parsedResponse);
-      return res.status(500).json({ error: 'Invalid response format' });
+      return res.status(500).json({ success: false, error: 'Invalid response format from AI' });
     }
 
     // Ensure all suggestions are in uppercase as per the critical rule
@@ -142,6 +145,6 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
 
   } catch (error) {
     console.error('[AI Suggestions] Exception:', error);
-    return res.status(500).json({ error: 'Failed to generate suggestions' });
+    return res.status(500).json({ success: false, error: 'Failed to generate suggestions: ' + (error?.message || 'Unknown error') });
   }
 }

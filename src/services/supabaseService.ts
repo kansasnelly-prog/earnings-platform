@@ -1777,28 +1777,38 @@ export class SupabaseService {
     try {
       console.log(`[SupabaseService] [ADMIN] Resetting personal account for: ${email}`);
       
-      // Find the personal user
+      // Find the personal user - use maybeSingle() to handle 406 errors
       const { data: personalUser, error: findError } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
         .eq('account_type', 'personal')
-        .single();
+        .maybeSingle();
       
-      if (findError || !personalUser) {
-        console.error(`[SupabaseService] [ADMIN] Personal account not found: ${email}`, findError);
+      if (findError) {
+        console.error(`[SupabaseService] [ADMIN] Error finding personal account: ${email}`, findError);
+        return { success: false, error: 'Error finding personal account: ' + findError.message };
+      }
+      
+      if (!personalUser) {
+        console.error(`[SupabaseService] [ADMIN] Personal account not found: ${email}`);
         return { success: false, error: 'Personal account not found in Supabase' };
       }
       
       console.log(`[SupabaseService] [ADMIN] Found personal user: ${personalUser.id}`);
       
-      // Find linked training account (same email, training account_type)
+      // Find linked training account (same email, training account_type) - use maybeSingle() to handle 406 errors
       const { data: trainingUser, error: trainingFindError } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
         .eq('account_type', 'training')
-        .single();
+        .maybeSingle();
+      
+      if (trainingFindError) {
+        console.warn(`[SupabaseService] [ADMIN] Error finding training account (non-critical):`, trainingFindError);
+        // Continue without training account - not critical for personal reset
+      }
       
       if (trainingUser) {
         console.log(`[SupabaseService] [ADMIN] Found linked training user: ${trainingUser.id}`);

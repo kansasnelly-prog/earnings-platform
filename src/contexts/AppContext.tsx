@@ -1757,11 +1757,16 @@ else if (
           const earnedRewards = trainingAccount.amount || 0; // Only earned rewards, not including initial capital
 
           // Fetch current balance from database to use as source of truth
-          const { data: dbUser } = await supabase
+          // Use maybeSingle() to handle 406 errors gracefully
+          const { data: dbUser, error: balanceError } = await supabase
             .from('users')
             .select('balance')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
+
+          if (balanceError) {
+            console.error('[refreshUser] Error fetching balance from users table:', balanceError);
+          }
 
           const dbBalance = dbUser?.balance || 0;
 

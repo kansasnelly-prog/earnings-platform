@@ -101,6 +101,11 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
       console.log(`[AdminControls] Message: ${result.message}`);
       console.log(`[AdminControls] ==========================================`);
       
+      // CRITICAL: Force refresh user state from Supabase to clear stale cached data
+      // This ensures the frontend displays the updated balance, total_earned, and tasks_completed
+      console.log(`[AdminControls] Forcing user state refresh from Supabase...`);
+      onRefresh();
+      
       // SECONDARY: Update localStorage as cache only (after Supabase success)
       // Wrap in try-catch to prevent localStorage errors from breaking the UI
       try {
@@ -510,6 +515,11 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
       console.log(`[AdminControls] RESET SUCCESSFUL`);
       console.log(`[AdminControls] Message: ${result.message}`);
       console.log(`[AdminControls] ==========================================`);
+      
+      // CRITICAL: Force refresh user state from Supabase to clear stale cached data
+      // This ensures the frontend displays the updated balance, total_earned, and tasks_completed
+      console.log(`[AdminControls] Forcing user state refresh from Supabase...`);
+      onRefresh();
       
       // SECONDARY: Update localStorage as cache only (after Supabase success)
       // Wrap in try-catch to prevent localStorage errors from breaking the UI

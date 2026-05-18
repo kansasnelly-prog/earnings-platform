@@ -614,6 +614,19 @@ const allComplete = displayCompletedCount === totalTasks;
     setIsSubmitting(true);
     setPendingCompletionTask(pendingTask.task_number);
     
+    // TIMEOUT PROTECTION: Prevent infinite processing
+    const timeoutId = setTimeout(() => {
+      console.error('[TaskGrid] Task submission timeout - resetting state');
+      setIsSubmitting(false);
+      submissionLockRef.current = false;
+      setPendingCompletionTask(null);
+      toast({
+        title: 'Submission Timeout',
+        description: 'Task submission took too long. Please refresh the page and try again.',
+        variant: 'destructive',
+      });
+    }, 30000); // 30 second timeout
+    
     try {
       // Personal VIP1 accounts now have normal workflow - no training lock blocking
       // Training lock logic removed - personal accounts can complete tasks immediately
@@ -623,12 +636,15 @@ const allComplete = displayCompletedCount === totalTasks;
       
       // BLOCK task submission if Phase 2 checkpoint is pending review (Phase 2 only)
       if (isPhase2 && user?.phase2_checkpoint?.status === 'pending_review') {
+        clearTimeout(timeoutId);
         toast({
           title: 'Checkpoint Review Required',
           description: 'Your account is pending admin review. Contact customer service to continue.',
           variant: 'destructive',
         });
         setShowCheckpointModal(true);
+        setIsSubmitting(false);
+        submissionLockRef.current = false;
         return;
       }
       
@@ -638,11 +654,14 @@ const allComplete = displayCompletedCount === totalTasks;
       
       // BLOCK task submission if pending order exists
       if (user?.has_pending_order) {
+        clearTimeout(timeoutId);
         toast({
           title: 'Tasks Locked',
           description: 'Please clear your pending combination order first. Contact customer service.',
           variant: 'destructive',
         });
+        setIsSubmitting(false);
+        submissionLockRef.current = false;
         return;
       }
       
@@ -651,6 +670,9 @@ const allComplete = displayCompletedCount === totalTasks;
       // Users should be able to submit normal tasks 32-45 after checkpoint completion
       
       const result = await completeTask(pendingTask.task_number);
+
+      // Clear timeout since completeTask completed
+      clearTimeout(timeoutId);
 
       // Clear loading state immediately after completeTask returns
       setIsSubmitting(false);
@@ -705,6 +727,7 @@ const allComplete = displayCompletedCount === totalTasks;
       }
     } catch (error) {
       console.error('[TaskGrid Submit] Exception during task submission:', error);
+      clearTimeout(timeoutId); // Clear timeout on error
       setPendingCompletionTask(null);
       setIsSubmitting(false);
       submissionLockRef.current = false;

@@ -1466,12 +1466,16 @@ export class SupabaseService {
         return { success: false, error: 'Failed to update training account: ' + updateTrainingError.message };
       }
 
-      // Update personal account - SET to commission amount only (do not add to existing balance)
+      // Update personal account - ADD commission to existing balance (preserve existing balance)
+      // CRITICAL FIX: Personal account should keep existing balance and add 2% commission
+      const newPersonalBalance = currentPersonalBalance + transferAmount;
+      const newPersonalTotalEarned = (personalUser.total_earned || 0) + transferAmount;
+      
       const { error: updatePersonalError } = await supabase
         .from('users')
         .update({
-          balance: transferAmount, // SET to commission amount only, not add
-          total_earned: transferAmount, // SET total_earned to commission amount only
+          balance: newPersonalBalance, // ADD commission to existing balance
+          total_earned: newPersonalTotalEarned, // ADD commission to existing total_earned
           training_completed: true, // Mark personal account training as completed
           user_status: 'active', // Activate personal account
           updated_at: new Date().toISOString()
@@ -1763,6 +1767,148 @@ export class SupabaseService {
     } catch (error) {
       console.error('Exception resetting user:', error);
       return false;
+    }
+  }
+
+  static async resetPersonalAccount(
+    email: string,
+    adminId?: string
+  ): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      console.log(`[SupabaseService] [ADMIN] Resetting personal account for: ${email}`);
+      
+      // Find the personal user
+      const { data: personalUser, error: findError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('account_type', 'personal')
+        .single();
+      
+      if (findError || !personalUser) {
+        console.error(`[SupabaseService] [ADMIN] Personal account not found: ${email}`, findError);
+        return { success: false, error: 'Personal account not found in Supabase' };
+      }
+      
+      console.log(`[SupabaseService] [ADMIN] Found personal user: ${personalUser.id}`);
+      
+      // Find linked training account (same email, training account_type)
+      const { data: trainingUser, error: trainingFindError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('account_type', 'training')
+        .single();
+      
+      if (trainingUser) {
+        console.log(`[SupabaseService] [ADMIN] Found linked training user: ${trainingUser.id}`);
+        
+        // Update training account - set training_completed = true and training_progress = 35
+        console.log(`[SupabaseService] [ADMIN] Updating linked training account...`);
+        const { error: updateTrainingError } = await supabase
+          .from('users')
+          .update({
+            training_completed: true,
+            training_progress: 35,
+            tasks_completed: 35,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', trainingUser.id);
+        
+        if (updateTrainingError) {
+          console.error(`[SupabaseService] [ADMIN] Error updating training account:`, updateTrainingError);
+          // Don't fail the entire operation if training update fails
+        } else {
+          console.log(`[SupabaseService] [ADMIN] Training account updated successfully`);
+        }
+      }
+      
+      // Update personal account - reset progress and cycle
+      console.log(`[SupabaseService] [ADMIN] Updating personal account...`);
+      const { error: updatePersonalError } = await supabase
+        .from('users')
+        .update({
+          tasks_completed: 0,
+          training_progress: 0,
+          training_phase: 1,
+          current_task_set: 1,
+          personal_cycle: 1,
+          personal_cycle_completed: false,
+          set_1_completed_at: null,
+          set_2_completed_at: null,
+          has_pending_order: false,
+          pending_amount: 0,
+          is_negative_balance: false,
+          trigger_task_number: null,
+          profit_added: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', personalUser.id);
+      
+      if (updatePersonalError) {
+        console.error(`[SupabaseService] [ADMIN] Error updating personal account:`, updatePersonalError);
+        return { success: false, error: 'Failed to update personal account' };
+      }
+      
+      console.log(`[SupabaseService] [ADMIN] Personal account updated successfully`);
+      
+      // Delete all existing tasks for this user
+      console.log(`[SupabaseService] [ADMIN] Deleting existing tasks...`);
+      const { error: deleteTasksError } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('user_id', personalUser.id);
+      
+      if (deleteTasksError) {
+        console.error(`[SupabaseService] [ADMIN] Error deleting tasks:`, deleteTasksError);
+        return { success: false, error: 'Failed to delete existing tasks' };
+      }
+      
+      console.log(`[SupabaseService] [ADMIN] Existing tasks deleted successfully`);
+      
+      // Recreate 35 Phase 1 tasks for personal account
+      console.log(`[SupabaseService] [ADMIN] Creating 35 new tasks...`);
+      const tasksCreated = await this.createTrainingTasks(personalUser.id, 35);
+      if (!tasksCreated) {
+        console.error(`[SupabaseService] [ADMIN] Failed to recreate tasks`);
+        return { success: false, error: 'Failed to recreate tasks' };
+      }
+      
+      console.log(`[SupabaseService] [ADMIN] Tasks recreated successfully`);
+      
+      // CRITICAL FIX: Ensure task 2 is unlocked immediately after task 1 is created
+      // This prevents the "stuck at 1/35" bug
+      console.log(`[SupabaseService] [ADMIN] Ensuring task 2 is unlocked for progression...`);
+      const { error: unlockError } = await supabase
+        .from('tasks')
+        .update({ status: 'pending' })
+        .eq('user_id', personalUser.id)
+        .eq('task_number', 2);
+      
+      if (unlockError) {
+        console.warn(`[SupabaseService] [ADMIN] Warning: Failed to unlock task 2 (may be normal):`, unlockError);
+      } else {
+        console.log(`[SupabaseService] [ADMIN] Task 2 unlocked successfully`);
+      }
+      
+      // Log admin action
+      await this.logAdminAction('RESET_PERSONAL_ACCOUNT', personalUser.id, {
+        email,
+        updated_training_account: !!trainingUser,
+        preserved_balance: personalUser?.balance || 0
+      });
+      
+      const message = `Personal account reset to 0/35 (Cycle 1). Training account marked as completed (35/35). Balance ($${personalUser?.balance || 0}) preserved.`;
+      
+      console.log(`[SupabaseService] [ADMIN] ==========================================`);
+      console.log(`[SupabaseService] [ADMIN] RESET SUCCESSFUL`);
+      console.log(`[SupabaseService] [ADMIN] ${message}`);
+      console.log(`[SupabaseService] [ADMIN] ==========================================`);
+      
+      return { success: true, message };
+    } catch (error) {
+      console.error(`[SupabaseService] [ADMIN] Exception resetting personal account:`, error);
+      return { success: false, error: 'Exception during reset' };
     }
   }
 

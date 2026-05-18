@@ -93,7 +93,6 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
       if (!result.success) {
         console.error(`[AdminControls] RESET FAILED:`, result.error);
         toast.error(result.error || 'Failed to reset personal account in Supabase');
-        setIsResetting(false);
         return;
       }
       
@@ -103,96 +102,129 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
       console.log(`[AdminControls] ==========================================`);
       
       // SECONDARY: Update localStorage as cache only (after Supabase success)
-      const accountKey = 'opt_account_' + email;
-      const accountData = localStorage.getItem(accountKey);
-      
-      if (accountData) {
-        const account = JSON.parse(accountData);
-        const userId = account.user?.id || account.id;
+      // Wrap in try-catch to prevent localStorage errors from breaking the UI
+      try {
+        const accountKey = 'opt_account_' + email;
+        const accountData = localStorage.getItem(accountKey);
         
-        // Check if Phase 1 is complete (35/35) to move to Phase 2
-        const currentPhase = account.user?.training_phase || account.training_phase || 1;
-        const tasksCompleted = account.user?.tasks_completed || account.tasks_completed || 0;
-        const isPhase1Complete = currentPhase === 1 && tasksCompleted >= 35;
-        const newPhase = isPhase1Complete ? 2 : 1;
-        
-        console.log(`[Personal Reset] Current phase: ${currentPhase}, Tasks: ${tasksCompleted}, IsPhase1Complete: ${isPhase1Complete}, NewPhase: ${newPhase}`);
-        
-        // Create fresh 35 tasks for the new phase with VIP1 rates (0.5%)
-        const resetTasks = Array.from({ length: 35 }, (_, i) => {
-          // VIP1 commission: 0.5% of product price
-          const productPrice = Math.floor(Math.random() * 100) + 50; // $50-$150
-          const commission = Math.round(productPrice * 0.005 * 100) / 100; // 0.5%
-          
-          return {
-            id: `task-${Date.now()}-${i}`,
-            user_id: userId,
-            task_number: i + 1,
-            title: `Personal Task ${i + 1} (Phase ${newPhase})`,
-            description: `Complete personal task ${i + 1} for phase ${newPhase}`,
-            status: i === 0 ? 'pending' : 'locked',
-            reward: commission,
-            created_at: new Date().toISOString()
-          };
-        });
-        
-        // Update user object
-        const updatedUser = {
-          ...account.user,
-          tasks_completed: 0,
-          training_phase: newPhase,
-          training_progress: 0,
-          has_pending_order: false,
-          pending_amount: 0,
-          is_negative_balance: false,
-          trigger_task_number: null,
-          profit_added: false,
-          updated_at: new Date().toISOString()
-        };
-        
-        // Save updated account
-        localStorage.setItem(accountKey, JSON.stringify({
-          ...account,
-          user: updatedUser
-        }));
-        
-        // Save new tasks
-        if (userId) {
-          const tasksKey = 'opt_tasks_' + userId;
-          localStorage.setItem(tasksKey, JSON.stringify(resetTasks));
-          console.log(`[Personal Reset] Created ${resetTasks.length} Phase ${newPhase} tasks for: ${email}, userId: ${userId}`);
-        }
-        
-        // Update opt_user if currently logged in
-        const currentUser = localStorage.getItem('opt_user');
-        if (currentUser) {
-          const user = JSON.parse(currentUser);
-          if (user.email.toLowerCase() === email && user.account_type === 'personal') {
-            localStorage.setItem('opt_user', JSON.stringify(updatedUser));
+        if (accountData) {
+          let account;
+          try {
+            account = JSON.parse(accountData);
+          } catch (parseError) {
+            console.error('[AdminControls] Failed to parse account data from localStorage:', parseError);
+            // Continue without localStorage update - database was reset successfully
           }
+          
+          if (account) {
+            const userId = account.user?.id || account.id;
+            
+            // Check if Phase 1 is complete (35/35) to move to Phase 2
+            const currentPhase = account.user?.training_phase || account.training_phase || 1;
+            const tasksCompleted = account.user?.tasks_completed || account.tasks_completed || 0;
+            const isPhase1Complete = currentPhase === 1 && tasksCompleted >= 35;
+            const newPhase = isPhase1Complete ? 2 : 1;
+            
+            console.log(`[Personal Reset] Current phase: ${currentPhase}, Tasks: ${tasksCompleted}, IsPhase1Complete: ${isPhase1Complete}, NewPhase: ${newPhase}`);
+            
+            // Create fresh 35 tasks for the new phase with VIP1 rates (0.5%)
+            const resetTasks = Array.from({ length: 35 }, (_, i) => {
+              // VIP1 commission: 0.5% of product price
+              const productPrice = Math.floor(Math.random() * 100) + 50; // $50-$150
+              const commission = Math.round(productPrice * 0.005 * 100) / 100; // 0.5%
+              
+              return {
+                id: `task-${Date.now()}-${i}`,
+                user_id: userId,
+                task_number: i + 1,
+                title: `Personal Task ${i + 1} (Phase ${newPhase})`,
+                description: `Complete personal task ${i + 1} for phase ${newPhase}`,
+                status: i === 0 ? 'pending' : 'locked',
+                reward: commission,
+                created_at: new Date().toISOString()
+              };
+            });
+            
+            // Update user object
+            const updatedUser = {
+              ...account.user,
+              tasks_completed: 0,
+              training_phase: newPhase,
+              training_progress: 0,
+              has_pending_order: false,
+              pending_amount: 0,
+              is_negative_balance: false,
+              trigger_task_number: null,
+              profit_added: false,
+              updated_at: new Date().toISOString()
+            };
+            
+            // Save updated account
+            try {
+              localStorage.setItem(accountKey, JSON.stringify({
+                ...account,
+                user: updatedUser
+              }));
+            } catch (saveError) {
+              console.error('[AdminControls] Failed to save account to localStorage:', saveError);
+            }
+            
+            // Save new tasks
+            if (userId) {
+              try {
+                const tasksKey = 'opt_tasks_' + userId;
+                localStorage.setItem(tasksKey, JSON.stringify(resetTasks));
+                console.log(`[Personal Reset] Created ${resetTasks.length} Phase ${newPhase} tasks for: ${email}, userId: ${userId}`);
+              } catch (saveError) {
+                console.error('[AdminControls] Failed to save tasks to localStorage:', saveError);
+              }
+            }
+            
+            // Update opt_user if currently logged in
+            try {
+              const currentUser = localStorage.getItem('opt_user');
+              if (currentUser) {
+                const user = JSON.parse(currentUser);
+                if (user.email.toLowerCase() === email && user.account_type === 'personal') {
+                  localStorage.setItem('opt_user', JSON.stringify(updatedUser));
+                }
+              }
+            } catch (updateError) {
+              console.error('[AdminControls] Failed to update opt_user in localStorage:', updateError);
+            }
+            
+            const phaseMessage = newPhase === 2 ? 'Phase 2 reset (Set 2)' : 'Phase 1 reset (Set 1)';
+            toast.success(`Personal account reset to 0/35 - ${phaseMessage}. Balance and earnings preserved.`);
+            
+            // Send Telegram notification immediately after database update succeeds
+            // Wrap in try-catch to prevent notification errors from breaking the flow
+            try {
+              await sendTelegramNotification('PERSONAL_ACCOUNT_RESET', {
+                email: email,
+                userId: userId || 'unknown',
+                vipLevel: account.user?.vip_level || 0,
+                balance: account.user?.balance || 0,
+                cycle: newPhase
+              });
+            } catch (telegramError) {
+              console.error('[AdminControls] Telegram notification failed (non-critical):', telegramError);
+            }
+          } else {
+            toast.success('Personal account reset successfully in database (localStorage cache not found)');
+          }
+        } else {
+          toast.success('Personal account reset successfully in database (localStorage cache not found)');
         }
-        
-        const phaseMessage = newPhase === 2 ? 'Phase 2 reset (Set 2)' : 'Phase 1 reset (Set 1)';
-        
-        toast.success(`Personal account reset to 0/35 - ${phaseMessage}. Balance and earnings preserved.`);
-        
-        // Send Telegram notification immediately after database update succeeds
-        await sendTelegramNotification('PERSONAL_ACCOUNT_RESET', {
-          email: email,
-          userId: userId || 'unknown',
-          vipLevel: account.user?.vip_level || 0,
-          balance: account.user?.balance || 0,
-          cycle: newPhase
-        });
-      } else {
-        toast('Personal account not found in localStorage (but database was reset)');
+      } catch (localStorageError) {
+        console.error('[AdminControls] localStorage update failed (non-critical):', localStorageError);
+        toast.success('Personal account reset successfully in database (localStorage update failed)');
       }
       
       setResetEmail('');
       // Removed onRefresh() to prevent admin panel reload loop
     } catch (error) {
-      console.error('Error resetting personal account:', error);
-      toast.error('Failed to reset personal account');
+      console.error('[AdminControls] Error resetting personal account:', error);
+      toast.error('Failed to reset personal account: ' + (error as Error).message);
     } finally {
       setIsResetting(false);
     }
@@ -471,7 +503,6 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
       if (!result.success) {
         console.error(`[AdminControls] RESET FAILED:`, result.error);
         toast.error(result.error || 'Failed to reset training account in Supabase');
-        setIsResetting(false);
         return;
       }
       
@@ -481,125 +512,157 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
       console.log(`[AdminControls] ==========================================`);
       
       // SECONDARY: Update localStorage as cache only (after Supabase success)
-      const accountKey = 'training_account_' + email;
-      const optTrainingDataKey = 'opt_training_data_' + email;
-      const tasksKey = 'training_tasks_' + email;
-      
-      // Reset tasks to 0/45 - create fresh tasks REALISTIC PRODUCT-BASED REWARDS
-      const rewardPatterns = [0.7, 1.6, 2.5, 6.4, 7.2];
-      const resetTasks = Array.from({ length: 45 }, (_, i) => {
-        const patternIndex = i % rewardPatterns.length;
-        const baseReward = rewardPatterns[patternIndex];
-        
-        // Add small variation to make it realistic (±0.2)
-        const variation = (Math.random() - 0.5) * 0.4;
-        const finalReward = Math.max(0.5, baseReward + variation); // Minimum $0.50
-        
-        return {
-          id: `task-${Date.now()}-${i}`,
-          task_number: i + 1,
-          title: `Training Task ${i + 1}`,
-          description: `Complete training task ${i + 1}`,
-          status: i === 0 ? 'pending' : 'locked',
-          reward: Math.round(finalReward * 100) / 100,
-          created_at: new Date().toISOString(),
-          completed_at: null,
-        };
-      });
-      
-      // Update localStorage cache (non-blocking)
-      const possibleTaskKeys = [
-        tasksKey,
-        'opt_tasks_' + email,
-        'training_tasks_' + email
-      ];
-      
-      possibleTaskKeys.forEach(key => {
-        localStorage.setItem(key, JSON.stringify(resetTasks));
-        console.log(`[AdminControls] [resetTrainingAccount] Updated cache: ${key}`);
-      });
-      
-      // Update training account cache
-      const trainingData = localStorage.getItem(accountKey);
-      if (trainingData) {
-        const trainingAcc = JSON.parse(trainingData);
-        localStorage.setItem(accountKey, JSON.stringify({
-          ...trainingAcc,
-          tasks_completed: 0,
-          training_progress: 0,
-          training_phase: result.message?.includes('Phase 2') ? 2 : 1,
-          training_completed: false,
-          trigger_task_number: null,
-          has_pending_order: false,
-          pending_amount: 0,
-          is_negative_balance: false,
-          profit_added: false,
-          reset_at: new Date().toISOString(),
-          reset_by: 'admin'
-        }));
-      }
-      
-      // Update opt_training_data cache
-      const existingOptData = localStorage.getItem(optTrainingDataKey);
-      if (existingOptData) {
-        const optData = JSON.parse(existingOptData);
-        localStorage.setItem(optTrainingDataKey, JSON.stringify({
-          ...optData,
-          tasks_completed: 0,
-          training_progress: 0,
-          training_phase: result.message?.includes('Phase 2') ? 2 : 1,
-          has_pending_order: false,
-          pending_amount: 0,
-          is_negative_balance: false,
-          profit_added: false
-        }));
-      }
-      
-      // Update opt_user if currently logged in
-      const currentUser = localStorage.getItem('opt_user');
-      if (currentUser) {
-        const user = JSON.parse(currentUser);
-        if (user.email === email && user.account_type === 'training') {
-          const resetUser = {
-            ...user,
-            tasks_completed: 0,
-            training_progress: 0,
-            training_phase: result.message?.includes('Phase 2') ? 2 : 1,
-            has_pending_order: false,
-            pending_amount: 0,
-            is_negative_balance: false,
-            profit_added: false
-          };
-          localStorage.setItem('opt_user', JSON.stringify(resetUser));
-          window.dispatchEvent(new Event('training-account-reset'));
-        }
-      }
-      
-      // Show detailed success toast
-      const isPhase2 = result.message?.includes('Phase 2');
-      toast.success(
-        isPhase2 
-          ? `✅ Phase 2 Activated!\n${email}\nBalance & earnings preserved` 
-          : `✅ Training Account Reset!\n${email}\nPhase 1 restarted (0/45 tasks)`
-      );
-      
-      // Send Telegram notification immediately after database update succeeds
+      // Wrap in try-catch to prevent localStorage errors from breaking the UI
       try {
-        await sendTelegramNotification('TRAINING_ACCOUNT_RESET', {
-          email: email,
-          userId: 'unknown',
-          vipLevel: 0,
-          balance: 0
+        const accountKey = 'training_account_' + email;
+        const optTrainingDataKey = 'opt_training_data_' + email;
+        const tasksKey = 'training_tasks_' + email;
+        
+        // Reset tasks to 0/45 - create fresh tasks REALISTIC PRODUCT-BASED REWARDS
+        const rewardPatterns = [0.7, 1.6, 2.5, 6.4, 7.2];
+        const resetTasks = Array.from({ length: 45 }, (_, i) => {
+          const patternIndex = i % rewardPatterns.length;
+          const baseReward = rewardPatterns[patternIndex];
+          
+          // Add small variation to make it realistic (±0.2)
+          const variation = (Math.random() - 0.5) * 0.4;
+          const finalReward = Math.max(0.5, baseReward + variation); // Minimum $0.50
+          
+          return {
+            id: `task-${Date.now()}-${i}`,
+            task_number: i + 1,
+            title: `Training Task ${i + 1}`,
+            description: `Complete training task ${i + 1}`,
+            status: i === 0 ? 'pending' : 'locked',
+            reward: Math.round(finalReward * 100) / 100,
+            created_at: new Date().toISOString(),
+            completed_at: null,
+          };
         });
-      } catch (telegramError) {
-        console.error('[AdminControls] [resetTrainingAccount] Telegram notification failed:', telegramError);
+        
+        // Update localStorage cache (non-blocking)
+        const possibleTaskKeys = [
+          tasksKey,
+          'opt_tasks_' + email,
+          'training_tasks_' + email
+        ];
+        
+        possibleTaskKeys.forEach(key => {
+          try {
+            localStorage.setItem(key, JSON.stringify(resetTasks));
+            console.log(`[AdminControls] [resetTrainingAccount] Updated cache: ${key}`);
+          } catch (saveError) {
+            console.error(`[AdminControls] Failed to save tasks to ${key}:`, saveError);
+          }
+        });
+        
+        // Update training account cache
+        try {
+          const trainingData = localStorage.getItem(accountKey);
+          if (trainingData) {
+            let trainingAcc;
+            try {
+              trainingAcc = JSON.parse(trainingData);
+              localStorage.setItem(accountKey, JSON.stringify({
+                ...trainingAcc,
+                tasks_completed: 0,
+                training_progress: 0,
+                training_phase: result.message?.includes('Phase 2') ? 2 : 1,
+                training_completed: false,
+                trigger_task_number: null,
+                has_pending_order: false,
+                pending_amount: 0,
+                is_negative_balance: false,
+                profit_added: false,
+                reset_at: new Date().toISOString(),
+                reset_by: 'admin'
+              }));
+            } catch (parseError) {
+              console.error('[AdminControls] Failed to parse training account data:', parseError);
+            }
+          }
+        } catch (cacheError) {
+          console.error('[AdminControls] Failed to update training account cache:', cacheError);
+        }
+        
+        // Update opt_training_data cache
+        try {
+          const existingOptData = localStorage.getItem(optTrainingDataKey);
+          if (existingOptData) {
+            let optData;
+            try {
+              optData = JSON.parse(existingOptData);
+              localStorage.setItem(optTrainingDataKey, JSON.stringify({
+                ...optData,
+                tasks_completed: 0,
+                training_progress: 0,
+                training_phase: result.message?.includes('Phase 2') ? 2 : 1,
+                has_pending_order: false,
+                pending_amount: 0,
+                is_negative_balance: false,
+                profit_added: false
+              }));
+            } catch (parseError) {
+              console.error('[AdminControls] Failed to parse opt_training_data:', parseError);
+            }
+          }
+        } catch (cacheError) {
+          console.error('[AdminControls] Failed to update opt_training_data cache:', cacheError);
+        }
+        
+        // Update opt_user if currently logged in
+        try {
+          const currentUser = localStorage.getItem('opt_user');
+          if (currentUser) {
+            const user = JSON.parse(currentUser);
+            if (user.email === email && user.account_type === 'training') {
+              const resetUser = {
+                ...user,
+                tasks_completed: 0,
+                training_progress: 0,
+                training_phase: result.message?.includes('Phase 2') ? 2 : 1,
+                has_pending_order: false,
+                pending_amount: 0,
+                is_negative_balance: false,
+                profit_added: false
+              };
+              localStorage.setItem('opt_user', JSON.stringify(resetUser));
+              window.dispatchEvent(new Event('training-account-reset'));
+            }
+          }
+        } catch (updateError) {
+          console.error('[AdminControls] Failed to update opt_user in localStorage:', updateError);
+        }
+        
+        // Show detailed success toast
+        const isPhase2 = result.message?.includes('Phase 2');
+        toast.success(
+          isPhase2 
+            ? `✅ Phase 2 Activated!\n${email}\nBalance & earnings preserved` 
+            : `✅ Training Account Reset!\n${email}\nPhase 1 restarted (0/45 tasks)`
+        );
+        
+        // Send Telegram notification immediately after database update succeeds
+        try {
+          await sendTelegramNotification('TRAINING_ACCOUNT_RESET', {
+            email: email,
+            userId: 'unknown',
+            vipLevel: 0,
+            balance: 0
+          });
+        } catch (telegramError) {
+          console.error('[AdminControls] [resetTrainingAccount] Telegram notification failed (non-critical):', telegramError);
+        }
+      } catch (localStorageError) {
+        console.error('[AdminControls] localStorage update failed (non-critical):', localStorageError);
+        toast.success('Training account reset successfully in database (localStorage update failed)');
       }
       
       setResetEmail('');
       // Removed onRefresh() to prevent admin panel reload loop
     } catch (error) {
       console.error('[AdminControls] [resetTrainingAccount] Exception:', error);
-      toast.error('Failed to reset training account');
+      toast.error('Failed to reset training account: ' + (error as Error).message);
     } finally {
       setIsResetting(false);
     }

@@ -407,9 +407,9 @@ const TaskGrid: React.FC = () => {
       setShowPhase1LockModal(false);
       setShowPhase2CheckpointModal(false);
 
-      // Force refresh tasks and user data from server
-      refreshTasks();
-      refreshUser();
+      // Force refresh tasks and user data from server (background, non-blocking)
+      refreshTasks().catch(err => console.error('[TaskGrid] Background refreshTasks error on reset:', err));
+      refreshUser().catch(err => console.error('[TaskGrid] Background refreshUser error on reset:', err));
     }
   }, [user?.tasks_completed, user?.task_number]);
 
@@ -929,11 +929,11 @@ const allComplete = displayCompletedCount === totalTasks;
         
         // Close modal and refresh user data
         setShowCheckpointModal(false);
-        
-        // Refresh user data to get updated balance
-        await refreshTasks();
-        await refreshUser();
-        
+
+        // Refresh user data to get updated balance (background, non-blocking)
+        refreshTasks().catch(err => console.error('[Checkpoint] Background refreshTasks error:', err));
+        refreshUser().catch(err => console.error('[Checkpoint] Background refreshUser error:', err));
+
         // Small delay to ensure state updates before reload
         setTimeout(() => {
           window.location.reload();

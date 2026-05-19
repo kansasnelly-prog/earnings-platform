@@ -111,6 +111,7 @@ const SimpleProductCard: React.FC<{
               src={product.image}
               alt={product.name}
               className="w-full h-64 object-contain rounded-2xl bg-gradient-to-br from-white/[0.05] to-transparent"
+              crossOrigin="anonymous"
               onError={() => setImageLoadFailed(true)}
             />
           )}
@@ -201,6 +202,7 @@ const CombinationProductCard: React.FC<{
                   src={product1.image}
                   alt={product1.name}
                   className="w-full h-32 object-contain rounded-xl bg-gradient-to-br from-white/[0.05] to-transparent group-hover:brightness-110 transition-all"
+                  crossOrigin="anonymous"
                   onError={() => setImage1Failed(true)}
                 />
               )}
@@ -231,6 +233,7 @@ const CombinationProductCard: React.FC<{
                   src={product2.image}
                   alt={product2.name}
                   className="w-full h-32 object-contain rounded-xl bg-gradient-to-br from-white/[0.05] to-transparent group-hover:brightness-110 transition-all"
+                  crossOrigin="anonymous"
                   onError={() => setImage2Failed(true)}
                 />
               )}
@@ -359,6 +362,8 @@ const TaskGrid: React.FC = () => {
   const [showTrainingShowroomModal, setShowTrainingShowroomModal] = useState(false);
   const [previewImageFailed, setPreviewImageFailed] = useState(false);
   const [optimisticTaskNumber, setOptimisticTaskNumber] = useState<number | null>(null);
+  const [phase2Product1Failed, setPhase2Product1Failed] = useState(false);
+  const [phase2Product2Failed, setPhase2Product2Failed] = useState(false);
   
   // Hard lock to prevent duplicate submissions across re-renders
   const submissionLockRef = useRef(false);
@@ -1164,11 +1169,19 @@ const allComplete = displayCompletedCount === totalTasks;
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Product 1 */}
                 <div className="bg-[#1a1f2e] rounded-xl p-4 flex items-center gap-4">
-                  <img
-                    src={user.phase2_checkpoint.product1_image || safeCatalog[0]?.image}
-                    alt={user.phase2_checkpoint.product1_name || 'Product 1'}
-                    className="w-16 h-16 rounded-lg object-cover bg-gray-800"
-                  />
+                  {phase2Product1Failed ? (
+                    <div className="w-16 h-16 rounded-lg bg-gray-800 flex items-center justify-center">
+                      <Package className="w-8 h-8 text-gray-500" />
+                    </div>
+                  ) : (
+                    <img
+                      src={user.phase2_checkpoint.product1_image || safeCatalog[0]?.image}
+                      alt={user.phase2_checkpoint.product1_name || 'Product 1'}
+                      className="w-16 h-16 rounded-lg object-cover bg-gray-800"
+                      crossOrigin="anonymous"
+                      onError={() => setPhase2Product1Failed(true)}
+                    />
+                  )}
                   <div>
                     <h4 className="text-white font-medium">{user.phase2_checkpoint.product1_name || 'PulseTrack Slim'}</h4>
                     <p className="text-emerald-400 font-bold">${(user.phase2_checkpoint.product1_price || 69.99).toFixed(2)}</p>
@@ -1184,11 +1197,19 @@ const allComplete = displayCompletedCount === totalTasks;
                 
                 {/* Product 2 */}
                 <div className="bg-[#1a1f2e] rounded-xl p-4 flex items-center gap-4">
-                  <img
-                    src={user.phase2_checkpoint.product2_image || safeCatalog[1]?.image}
-                    alt={user.phase2_checkpoint.product2_name || 'Product 2'}
-                    className="w-16 h-16 rounded-lg object-cover bg-gray-800"
-                  />
+                  {phase2Product2Failed ? (
+                    <div className="w-16 h-16 rounded-lg bg-gray-800 flex items-center justify-center">
+                      <Package className="w-8 h-8 text-gray-500" />
+                    </div>
+                  ) : (
+                    <img
+                      src={user.phase2_checkpoint.product2_image || safeCatalog[1]?.image}
+                      alt={user.phase2_checkpoint.product2_name || 'Product 2'}
+                      className="w-16 h-16 rounded-lg object-cover bg-gray-800"
+                      crossOrigin="anonymous"
+                      onError={() => setPhase2Product2Failed(true)}
+                    />
+                  )}
                   <div>
                     <h4 className="text-white font-medium">{user.phase2_checkpoint.product2_name || 'Studio Monitor Pro'}</h4>
                     <p className="text-emerald-400 font-bold">${(user.phase2_checkpoint.product2_price || 199.99).toFixed(2)}</p>

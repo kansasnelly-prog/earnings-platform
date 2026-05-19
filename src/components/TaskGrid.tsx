@@ -619,6 +619,21 @@ const allComplete = displayCompletedCount === totalTasks;
   const needsTraining = isPersonal && !trainingCompleted; // Lock personal accounts until training completes
   const canSubmitTasks = !needsTraining; // Can submit if not locked
 
+  // SAFETY CHECK: Separate account flows - handle new/reset accounts vs active accounts
+  const isNewAccount = !user || !user.tasks_completed;
+  
+  // Early return for new accounts to prevent rendering errors
+  if (isNewAccount && !user) {
+    console.log('[TaskGrid] User object not available, showing loading state');
+    return (
+      <div className="text-center py-12">
+        <Loader2 size={40} className="text-indigo-500 mx-auto mb-4 animate-spin" />
+        <h3 className="text-xl font-bold text-white mb-2">Loading User Data...</h3>
+        <p className="text-gray-400">Please wait while we fetch your account information.</p>
+      </div>
+    );
+  }
+
   const handleSubmit = async (e?: React.MouseEvent) => {
     // STOP EVENT BUBBLING: Prevent duplicate triggers from parent containers
     e?.preventDefault?.();
@@ -631,6 +646,17 @@ const allComplete = displayCompletedCount === totalTasks;
     
     // STATE CHECK: Also check isSubmitting state
     if (!pendingTask || isSubmitting) {
+      return;
+    }
+
+    // SAFETY CHECK: Ensure user object exists before proceeding
+    if (!user) {
+      console.error('[TaskGrid] User object not available, cannot submit task');
+      toast({
+        title: 'Error',
+        description: 'User data not available. Please refresh the page.',
+        variant: 'destructive',
+      });
       return;
     }
     

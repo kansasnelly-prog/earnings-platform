@@ -110,7 +110,7 @@ const SimpleProductCard: React.FC<{
             <img
               src={product.image}
               alt={product.name}
-              className="w-48 h-48 object-contain"
+              className="w-full max-w-2xl h-96 object-contain"
               crossOrigin="anonymous"
               onError={() => setImageLoadFailed(true)}
             />

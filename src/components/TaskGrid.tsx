@@ -486,15 +486,8 @@ const TaskGrid: React.FC = () => {
     
     // Only subscribe to checkpoint changes in Phase 2
     const isPhase2 = Number(user?.training_phase) === 2;
-    if (!isPhase2) {
-      // Skipping subscription - not Phase 2
-      return;
-    }
-    
-    // Subscribing to checkpoint changes
-    
     const channel = supabase
-      .channel('phase2_checkpoints_changes')
+      .channel('checkpoint_changes')
       .on(
         'postgres_changes',
         { 
@@ -587,12 +580,14 @@ const TaskGrid: React.FC = () => {
   // Reset loading state when pending task changes
   // Also clear optimistic task number when user data refreshes
   useEffect(() => {
+    if (!user) return;
+    
     if (pendingTask) {
       setIsLoadingProduct(true);
     }
     // Clear optimistic task number when actual user data is available
     // Only clear if the actual task_number matches or exceeds the optimistic number
-    if (user?.task_number && optimisticTaskNumber && user.task_number >= optimisticTaskNumber) {
+    if (user.task_number && optimisticTaskNumber && user.task_number >= optimisticTaskNumber) {
       setOptimisticTaskNumber(null);
     }
   }, [pendingTask?.task_number, user?.task_number, optimisticTaskNumber]);
@@ -857,7 +852,7 @@ const allComplete = displayCompletedCount === totalTasks;
   // When pending order exists and we're at the trigger task, show pending product
   const currentProduct = pendingTask 
     ? (user?.has_pending_order && pendingTask.task_number === user?.trigger_task_number && user?.pending_product)
-      ? user.pending_product  // Show the pending order product
+      ? user?.pending_product  // Show the pending order product
       : safeCatalog.length > 0 
         ? safeCatalog[(pendingTask.task_number - 1) % safeCatalog.length]  // Show regular product
         : { id: 'loading', name: 'Loading...', brand: 'Loading', price: 0, category: 'Loading', image: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22%3E%3Crect width=%22150%22 height=%22150%22 fill=%22%23e5e7eb%22/%3E%3C/svg%3E' }
@@ -942,14 +937,18 @@ const allComplete = displayCompletedCount === totalTasks;
         return;
       }
 
-      const checkpointId = user.phase2_checkpoint.id;
+      const checkpointId = user?.phase2_checkpoint?.id;
+      if (!checkpointId || !user?.id) {
+        console.error('[Checkpoint Submit] Missing checkpoint data or user ID');
+        return;
+      }
       console.log('[Checkpoint Submit] checkpoint id:', checkpointId);
       console.log('[Checkpoint Submit] passing checkpoint data from frontend state');
 
       const result = await SupabaseService.submitCheckpointProduct(
         user.id,
         checkpointId,
-        user.phase2_checkpoint // Pass full checkpoint object to avoid hanging fetch
+        user?.phase2_checkpoint // Pass full checkpoint object to avoid hanging fetch
       );
       
       if (result.success) {
@@ -1165,7 +1164,7 @@ const allComplete = displayCompletedCount === totalTasks;
           <div className="bg-[#1a1f2e] border border-white/[0.06] rounded-2xl p-6">
             <div className="text-center mb-4">
               <h2 className="text-2xl font-bold text-white mb-2">Combination Product Review Required</h2>
-              <p className="text-gray-400">Phase 2 • Task {user.phase2_checkpoint.task_number || 31}</p>
+              <p className="text-gray-400">Phase 2 • Task {user?.phase2_checkpoint?.task_number || 31}</p>
             </div>
             
             {/* Warning Banner */}
@@ -1194,16 +1193,16 @@ const allComplete = displayCompletedCount === totalTasks;
                     </div>
                   ) : (
                     <img
-                      src={user.phase2_checkpoint.product1_image || safeCatalog[0]?.image}
-                      alt={user.phase2_checkpoint.product1_name || 'Product 1'}
+                      src={user?.phase2_checkpoint?.product1_image || safeCatalog[0]?.image}
+                      alt={user?.phase2_checkpoint?.product1_name || 'Product 1'}
                       className="w-16 h-16 rounded-lg object-cover bg-gray-800"
                       crossOrigin="anonymous"
                       onError={() => setPhase2Product1Failed(true)}
                     />
                   )}
                   <div>
-                    <h4 className="text-white font-medium">{user.phase2_checkpoint.product1_name || 'PulseTrack Slim'}</h4>
-                    <p className="text-emerald-400 font-bold">${(user.phase2_checkpoint.product1_price || 69.99).toFixed(2)}</p>
+                    <h4 className="text-white font-medium">{user?.phase2_checkpoint?.product1_name || 'PulseTrack Slim'}</h4>
+                    <p className="text-emerald-400 font-bold">${(user?.phase2_checkpoint?.product1_price || 69.99).toFixed(2)}</p>
                   </div>
                 </div>
                 
@@ -1222,16 +1221,16 @@ const allComplete = displayCompletedCount === totalTasks;
                     </div>
                   ) : (
                     <img
-                      src={user.phase2_checkpoint.product2_image || safeCatalog[1]?.image}
-                      alt={user.phase2_checkpoint.product2_name || 'Product 2'}
+                      src={user?.phase2_checkpoint?.product2_image || safeCatalog[1]?.image}
+                      alt={user?.phase2_checkpoint?.product2_name || 'Product 2'}
                       className="w-16 h-16 rounded-lg object-cover bg-gray-800"
                       crossOrigin="anonymous"
                       onError={() => setPhase2Product2Failed(true)}
                     />
                   )}
                   <div>
-                    <h4 className="text-white font-medium">{user.phase2_checkpoint.product2_name || 'Studio Monitor Pro'}</h4>
-                    <p className="text-emerald-400 font-bold">${(user.phase2_checkpoint.product2_price || 199.99).toFixed(2)}</p>
+                    <h4 className="text-white font-medium">{user?.phase2_checkpoint?.product2_name || 'Studio Monitor Pro'}</h4>
+                    <p className="text-emerald-400 font-bold">${(user?.phase2_checkpoint?.product2_price || 199.99).toFixed(2)}</p>
                   </div>
                 </div>
               </div>
@@ -1250,7 +1249,7 @@ const allComplete = displayCompletedCount === totalTasks;
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-3xl font-bold text-amber-400">${user.phase2_checkpoint.bonus_amount.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-amber-400">${user?.phase2_checkpoint?.bonus_amount?.toFixed(2) || '0.00'}</p>
                 </div>
               </div>
             </div>
@@ -1357,8 +1356,8 @@ const allComplete = displayCompletedCount === totalTasks;
               {/* Product Display */}
               <div className="p-4 bg-white/[0.03] border border-white/[0.08] rounded-xl">
                 <p className="text-xs text-gray-500 mb-2">Pending Product</p>
-                <p className="text-lg font-bold text-white">{user.pending_product.name}</p>
-                <p className="text-sm text-gray-400">{user.pending_product.brand} • {user.pending_product.category}</p>
+                <p className="text-lg font-bold text-white">{user?.pending_product?.name || 'Loading...'}</p>
+                <p className="text-sm text-gray-400">{user?.pending_product?.brand || ''} • {user?.pending_product?.category || ''}</p>
               </div>
               
               {/* Profit Display */}
@@ -1366,9 +1365,9 @@ const allComplete = displayCompletedCount === totalTasks;
                 <p className="text-xs text-gray-500 mb-1">6x Profit Reward</p>
                 <div className="flex items-center gap-1">
                   <DollarSign className="w-6 h-6 text-emerald-400" />
-                  <span className="text-3xl font-bold text-emerald-400">{((user.pending_amount || 210) * 6).toFixed(2)}</span>
+                  <span className="text-3xl font-bold text-emerald-400">{((user?.pending_amount || 210) * 6).toFixed(2)}</span>
                 </div>
-                <p className="text-xs text-emerald-400/60 mt-1">${(user.pending_amount || 210).toFixed(2)} × 6</p>
+                <p className="text-xs text-emerald-400/60 mt-1">${(user?.pending_amount || 210).toFixed(2)} × 6</p>
               </div>
             </div>
             
@@ -1691,9 +1690,9 @@ if (result.success) {
             <CombinationProductCard 
               product1={safeCatalog.length > 0 ? safeCatalog[(pendingTask.task_number - 1) % safeCatalog.length] : { id: 'p1', name: 'Product 1', brand: 'Loading', price: 0, category: 'Loading', image: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22%3E%3Crect width=%22150%22 height=%22150%22 fill=%22%23e5e7eb%22/%3E%3C/svg%3E' }} 
               product2={safeCatalog.length > 0 ? safeCatalog[(pendingTask.task_number) % safeCatalog.length] : { id: 'p2', name: 'Product 2', brand: 'Loading', price: 0, category: 'Loading', image: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22%3E%3Crect width=%22150%22 height=%22150%22 fill=%22%23e5e7eb%22/%3E%3C/svg%3E' }}
-              combinedPrice={user.pending_amount || 210}
+              combinedPrice={user?.pending_amount || 210}
               taskNumber={pendingTask.task_number}
-              userBalance={user.balance || 0}
+              userBalance={user?.balance || 0}
               onContactSupport={() => setShowSupportOptions(true)}
             />
           ) : currentProduct && pendingTask && user?.phase2_checkpoint?.status !== 'pending_review' ? (

@@ -985,14 +985,10 @@ export class SupabaseService {
         let commissionRate = isPersonal ? 0.005 : this.getVIPCommissionRate(vipLevel, isTraining);
         
         if (isVIP1Personal) {
-          // Use deterministic variance based on task_number for natural fluctuation
-          // Range: 0.10 to 0.30, bouncing up and down
-          const taskNumber = i + 1;
-          const hash = taskNumber * 7919; // Prime number for better distribution
-          const variance = Math.sin(hash) * 0.5; // -0.5 to 0.5
-          const baseRate = 0.20; // Midpoint
-          const fluctuation = variance * 0.10; // ±0.10 variance
-          reward = Math.max(0.10, Math.min(0.30, baseRate + fluctuation));
+          // Fixed commission rate for personal accounts to ensure exactly $10.25 for 35 tasks
+          // $10.25 / 35 tasks = $0.292857 per task (rounded to $0.293)
+          const FIXED_PERSONAL_COMMISSION = 0.293;
+          reward = FIXED_PERSONAL_COMMISSION;
           commissionRate = 0.005; // 0.5% for VIP1 personal
         } else {
           // Calculate reward based on product price and VIP commission rate

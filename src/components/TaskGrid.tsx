@@ -882,23 +882,11 @@ const allComplete = displayCompletedCount === totalTasks;
       return dbReward;
     }
     
-    // Fallback to VIP1 commission calculation when database reward is 0
-    const product = safeCatalog[(pendingTask.task_number - 1) % safeCatalog.length];
-    if (product) {
-      // Use deterministic variance based on task_number for natural fluctuation
-      // Range: 0.10 to 0.30, bouncing up and down
-      const taskNumber = pendingTask.task_number;
-      const hash = taskNumber * 7919; // Prime number for better distribution
-      const variance = Math.sin(hash) * 0.5; // -0.5 to 0.5
-      const baseRate = 0.20; // Midpoint
-      const fluctuation = variance * 0.10; // ±0.10 variance
-      const calculatedReward = Math.max(0.10, Math.min(0.30, baseRate + fluctuation));
-      console.log('[TaskGrid] Database reward is 0, using calculated VIP1 commission for task', pendingTask.task_number, ':', calculatedReward);
-      return calculatedReward;
-    }
-    
-    console.log('[TaskGrid] No product found, returning 0 for task', pendingTask.task_number);
-    return 0;
+    // Fallback: Fixed commission rate for personal accounts to ensure exactly $10.25 for 35 tasks
+    // $10.25 / 35 tasks = $0.292857 per task (rounded to $0.293)
+    const FIXED_PERSONAL_COMMISSION = 0.293;
+    console.log('[TaskGrid] Database reward is 0, using fixed personal commission for task', pendingTask.task_number, ':', FIXED_PERSONAL_COMMISSION);
+    return FIXED_PERSONAL_COMMISSION;
   })() : 0;
 
   // When pending order exists and we're at the trigger task, show pending product

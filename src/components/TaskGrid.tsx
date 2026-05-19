@@ -682,6 +682,13 @@ const allComplete = displayCompletedCount === totalTasks;
         setCompletedReward(result.reward || pendingTask.reward);
         setCompletedCount(prev => prev + 1);
         setShowSuccess(true);
+
+        // CRITICAL: Immediately refresh tasks from Supabase to sync UI state
+        // This ensures the task status is updated in the tasks array, which
+        // drives the ProgressTracker and completed count calculations
+        await refreshTasks();
+        // Also refresh user data to get updated task_number
+        await refreshUser();
       
         // Handle Phase 1 lock for VIP2 (45/45)
         if (result.phase1Locked) {

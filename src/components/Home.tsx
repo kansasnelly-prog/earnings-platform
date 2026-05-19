@@ -44,6 +44,7 @@ const Home: React.FC = () => {
             src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80" 
             alt="Platform Banner"
             className="w-full h-full object-cover"
+            crossOrigin="anonymous"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0d1117] via-transparent to-transparent" />
           <div className="absolute bottom-4 left-4 right-4">

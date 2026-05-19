@@ -1598,7 +1598,6 @@ if (result.success) {
                           alt={previewProduct?.name || 'Preview'}
                           className="w-full h-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.55)]"
                           crossOrigin="anonymous"
-                          onError={() => setPreviewImageFailed(true)}
                         />
                       ) : (
                         <div className="w-full h-full rounded-2xl border border-white/[0.12] bg-gradient-to-br from-slate-800/90 to-slate-900/90 flex items-center justify-center">

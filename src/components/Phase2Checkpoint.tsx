@@ -74,6 +74,7 @@ const Phase2Checkpoint: React.FC<Phase2CheckpointProps> = ({
                         src={checkpoint.product1_image} 
                         alt={checkpoint.product1_name}
                         className="w-full h-full object-cover"
+                        crossOrigin="anonymous"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/334155/475569?text=Product';
                         }}
@@ -99,6 +100,7 @@ const Phase2Checkpoint: React.FC<Phase2CheckpointProps> = ({
                         src={checkpoint.product2_image} 
                         alt={checkpoint.product2_name}
                         className="w-full h-full object-cover"
+                        crossOrigin="anonymous"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/334155/475569?text=Product';
                         }}

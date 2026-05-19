@@ -18,7 +18,24 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    storageKey: 'supabase.auth.token',
+    storage: window.localStorage,
+    flowType: 'pkce',
+    debug: false,
   },
+  global: {
+    headers: {
+      'X-Client-Info': 'earnings-platform'
+    }
+  },
+  db: {
+    schema: 'public'
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  }
 })
 export default supabase;
 

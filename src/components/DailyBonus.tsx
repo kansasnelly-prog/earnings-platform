@@ -425,12 +425,12 @@ const DailyBonus: React.FC = () => {
                 src={dailyProduct.image}
                 alt={dailyProduct.name}
                 onLoad={() => setImageLoaded(true)}
-                className={`relative w-full max-w-[260px] md:max-w-[300px] h-auto rounded-2xl shadow-2xl shadow-black/30 transition-all duration-700 ${
-                  imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
-                }`}
+                className="w-full h-full object-contain"
+                crossOrigin="anonymous"
               />
               {/* Shimmer overlay */}
               <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer-once" />
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shimmer-once" />
               </div>
             </div>

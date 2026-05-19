@@ -71,7 +71,8 @@ const SimpleProductCard: React.FC<{
   isSubmitting: boolean;
   isTraining: boolean;
   hasPendingOrder?: boolean;
-}> = ({ product, reward, taskNumber, totalTasks, onSubmit, isSubmitting, isTraining, hasPendingOrder }) => {
+  vipLevel?: number;
+}> = ({ product, reward, taskNumber, totalTasks, onSubmit, isSubmitting, isTraining, hasPendingOrder, vipLevel = 1 }) => {
   const clickLockRef = useRef(false);
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
 
@@ -97,7 +98,7 @@ const SimpleProductCard: React.FC<{
         <div className="absolute top-3 right-3">
           <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
             <Crown className="w-3 h-3" />
-            {`VIP${user?.vip_level || 1}`}
+            {`VIP${vipLevel}`}
           </div>
         </div>
 
@@ -633,11 +634,23 @@ const allComplete = displayCompletedCount === totalTasks;
   const canSubmitTasks = !needsTraining; // Can submit if not locked
 
   // SAFETY CHECK: Separate account flows - handle new/reset accounts vs active accounts
-  const isNewAccount = !user || !user.tasks_completed;
+  const isNewAccount = !user || !user?.tasks_completed;
   
   // Early return for new accounts to prevent rendering errors
   if (isNewAccount && !user) {
     console.log('[TaskGrid] User object not available, showing loading state');
+    return (
+      <div className="text-center py-12">
+        <Loader2 size={40} className="text-indigo-500 mx-auto mb-4 animate-spin" />
+        <h3 className="text-xl font-bold text-white mb-2">Loading User Data...</h3>
+        <p className="text-gray-400">Please wait while we fetch your account information.</p>
+      </div>
+    );
+  }
+
+  // TOP-LEVEL SAFETY: Ensure user is defined before rendering main layout
+  if (!user) {
+    console.log('[TaskGrid] User object not available in main render, showing loading state');
     return (
       <div className="text-center py-12">
         <Loader2 size={40} className="text-indigo-500 mx-auto mb-4 animate-spin" />
@@ -1735,7 +1748,7 @@ if (result.success) {
               onContactSupport={() => setShowSupportOptions(true)}
             />
           ) : currentProduct && pendingTask && user?.phase2_checkpoint?.status !== 'pending_review' ? (
-            <SimpleProductCard product={currentProduct as Product} reward={currentTaskCommission} taskNumber={pendingTask.task_number} totalTasks={totalTasks} onSubmit={handleSubmit} isSubmitting={isSubmitting} isTraining={isTraining} hasPendingOrder={user?.has_pending_order} />
+            <SimpleProductCard product={currentProduct as Product} reward={currentTaskCommission} taskNumber={pendingTask.task_number} totalTasks={totalTasks} onSubmit={handleSubmit} isSubmitting={isSubmitting} isTraining={isTraining} hasPendingOrder={user?.has_pending_order} vipLevel={user?.vip_level} />
           ) : isTasksLoading ? (
             <div className="text-center py-12">
               <Loader2 size={40} className="text-indigo-500 mx-auto mb-4 animate-spin" />

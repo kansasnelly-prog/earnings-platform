@@ -140,7 +140,7 @@ const SimpleProductCard: React.FC<{
             disabled={isSubmitting} 
             className="w-full py-4 font-bold rounded-2xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2 text-lg disabled:opacity-60 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white"
           >
-            {isSubmitting ? <><Loader2 size={20} className="animate-spin" style={{ pointerEvents: 'none' }} /><span style={{ pointerEvents: 'none' }}>Processing...</span></> : <><Send size={20} style={{ pointerEvents: 'none' }} /><span style={{ pointerEvents: 'none' }}>Submit Task</span><span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-sm" style={{ pointerEvents: 'none' }}>+${reward.toFixed(2)}</span></>}
+            {isSubmitting ? <><Loader2 size={20} className="animate-spin" style={{ pointerEvents: 'none' }} /><span style={{ pointerEvents: 'none' }}>Submitting Task...</span></> : <><Send size={20} style={{ pointerEvents: 'none' }} /><span style={{ pointerEvents: 'none' }}>Submit Task</span><span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-sm" style={{ pointerEvents: 'none' }}>+${reward.toFixed(2)}</span></>}
           </button>
         )}
       </div>
@@ -801,10 +801,9 @@ const allComplete = displayCompletedCount === totalTasks;
           return; // Don't auto-advance to next task during transition
         }
       
-        // Auto-advance to next task after 2.5 seconds (normal flow)
-        setTimeout(() => {
-          handleNextProduct();
-        }, 2500);
+        // Auto-advance to next task immediately after success message
+        // The SuccessMessage component has its own 1.5s timer
+        // No additional delay needed here
       } else {
         setPendingCompletionTask(null);
       }

@@ -579,8 +579,10 @@ const TaskGrid: React.FC = () => {
   };
   const isTasksLoading = isLoading || (safeTasks.length === 0 && !isTraining);
   
-  // Use Supabase-derived completed count for training accounts
-  const displayCompletedCount = isTraining ? trainingCompletedCount : (completedCount || calculatedCompletedCount);
+  // Use current task number to calculate completed count for display
+  // This ensures the label is always in sync with the active task being displayed
+  // If user is on task 8, they've completed 7 tasks, so display "7/35 completed"
+  const displayCompletedCount = Math.max(0, currentTaskNumber - 1);
   
   // Reset loading state when pending task changes
   // Also clear optimistic task number when user data refreshes

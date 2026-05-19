@@ -302,6 +302,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+
+  // Local state cache for graceful fallback on 500 errors
+  const [cachedUser, setCachedUser] = useState<User | null>(null);
+  const [cachedTasks, setCachedTasks] = useState<Task[]>([]);
+  const [cachedTransactions, setCachedTransactions] = useState<Transaction[]>([]);
   const isCheckingAuth = useRef(false);
   const isRefreshingTasks = useRef(false);
   const lastRefreshTime = useRef<number>(0);
@@ -356,10 +361,58 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        const dbUser = await SupabaseService.getCurrentUser();
+        let dbUser: DatabaseUser | null = null;
+        try {
+          dbUser = await SupabaseService.getCurrentUser();
+        } catch (apiError: any) {
+          // Check for 500 Internal Server Error or other critical server errors
+          const isServerError = apiError?.message?.includes('500') ||
+                               apiError?.status === 500 ||
+                               apiError?.code === '500' ||
+                               apiError?.message?.includes('Internal Server Error');
+
+          if (isServerError) {
+            console.warn('[checkSession] Server error (500) detected, falling back to cached user data');
+            // Fall back to cached user state if available
+            if (cachedUser) {
+              setUser(cachedUser);
+              setIsAuthenticated(true);
+              console.log('[checkSession] Using cached user data for dashboard continuity');
+              return;
+            } else {
+              console.error('[checkSession] No cached data available, cannot fallback');
+              setUser(null);
+              setIsAuthenticated(false);
+              return;
+            }
+          } else if (apiError?.message?.includes('Failed to fetch') || apiError?.name === 'TypeError') {
+            console.log('[checkSession] Network connection interrupted. Waiting for network recovery...');
+            // Fall back to cached state on network errors too
+            if (cachedUser) {
+              setUser(cachedUser);
+              setIsAuthenticated(true);
+              console.log('[checkSession] Using cached user data during network interruption');
+              return;
+            }
+          } else {
+            console.error('[checkSession] Unexpected API error:', apiError);
+          }
+          // For other errors, try to continue with cached data if available
+          if (cachedUser) {
+            setUser(cachedUser);
+            setIsAuthenticated(true);
+            console.log('[checkSession] Using cached user data as fallback');
+            return;
+          }
+          setUser(null);
+          setIsAuthenticated(false);
+          return;
+        }
 
         if (dbUser) {
-          setUser(mapDatabaseUserToUser(dbUser));
+          const mappedUser = mapDatabaseUserToUser(dbUser);
+          setUser(mappedUser);
+          setCachedUser(mappedUser); // Update cache on success
           setIsAuthenticated(true);
 
           // Load user data
@@ -410,9 +463,59 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (event === 'SIGNED_IN' && session?.user) {
           isCheckingAuth.current = true;
 
-          const dbUser = await SupabaseService.getUserById(session.user.id);
+          let dbUser: DatabaseUser | null = null;
+          try {
+            dbUser = await SupabaseService.getUserById(session.user.id);
+          } catch (apiError: any) {
+            // Check for 500 Internal Server Error or other critical server errors
+            const isServerError = apiError?.message?.includes('500') ||
+                                 apiError?.status === 500 ||
+                                 apiError?.code === '500' ||
+                                 apiError?.message?.includes('Internal Server Error');
+
+            if (isServerError) {
+              console.warn('[Auth State Change] Server error (500) detected, falling back to cached user data');
+              // Fall back to cached user state if available
+              if (cachedUser) {
+                setUser(cachedUser);
+                setIsAuthenticated(true);
+                console.log('[Auth State Change] Using cached user data for dashboard continuity');
+                isCheckingAuth.current = false;
+                return;
+              } else {
+                console.error('[Auth State Change] No cached data available, cannot fallback');
+                isCheckingAuth.current = false;
+                return;
+              }
+            } else if (apiError?.message?.includes('Failed to fetch') || apiError?.name === 'TypeError') {
+              console.log('[Auth State Change] Network connection interrupted. Waiting for network recovery...');
+              // Fall back to cached state on network errors too
+              if (cachedUser) {
+                setUser(cachedUser);
+                setIsAuthenticated(true);
+                console.log('[Auth State Change] Using cached user data during network interruption');
+                isCheckingAuth.current = false;
+                return;
+              }
+            } else {
+              console.error('[Auth State Change] Unexpected API error:', apiError);
+            }
+            // For other errors, try to continue with cached data if available
+            if (cachedUser) {
+              setUser(cachedUser);
+              setIsAuthenticated(true);
+              console.log('[Auth State Change] Using cached user data as fallback');
+              isCheckingAuth.current = false;
+              return;
+            }
+            isCheckingAuth.current = false;
+            return;
+          }
+
           if (dbUser) {
-            setUser(mapDatabaseUserToUser(dbUser));
+            const mappedUser = mapDatabaseUserToUser(dbUser);
+            setUser(mappedUser);
+            setCachedUser(mappedUser); // Update cache on success
             setIsAuthenticated(true);
             await loadUserData(dbUser.id, dbUser.email);
 
@@ -446,9 +549,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         } else if (event === 'SIGNED_OUT') {
           console.log('[Auth State Change] User signed out');
           setUser(null);
+          setCachedUser(null); // Clear cache on sign out
           setIsAuthenticated(false);
           setTasks([]);
+          setCachedTasks([]); // Clear cache on sign out
           setTransactions([]);
+          setCachedTransactions([]); // Clear cache on sign out
           setWallets([]);
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('[Auth State Change] Token refreshed successfully');
@@ -581,6 +687,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (userError) {
+        // Check for 500 Internal Server Error
+        const isServerError = userError?.message?.includes('500') ||
+                             userError?.status === 500 ||
+                             userError?.code === '500' ||
+                             userError?.message?.includes('Internal Server Error');
+
+        if (isServerError) {
+          console.warn('[loadUserData] Server error (500) fetching user, falling back to cached user data');
+          if (cachedUser) {
+            setUser(cachedUser);
+            console.log('[loadUserData] Using cached user data for dashboard continuity');
+            return;
+          }
+        }
         console.error('[loadUserData] Error fetching user from public.users:', userError);
         return;
       }
@@ -592,7 +712,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       console.log('[loadUserData] Loaded user from public.users - account_type:', userData.account_type);
       dbUser = userData;
-    } catch (error) {
+    } catch (error: any) {
+      // Check for 500 Internal Server Error or network errors
+      const isServerError = error?.message?.includes('500') ||
+                           error?.status === 500 ||
+                           error?.code === '500' ||
+                           error?.message?.includes('Internal Server Error');
+
+      if (isServerError || error?.message?.includes('Failed to fetch') || error?.name === 'TypeError') {
+        console.warn('[loadUserData] Server or network error fetching user, falling back to cached user data');
+        if (cachedUser) {
+          setUser(cachedUser);
+          console.log('[loadUserData] Using cached user data for dashboard continuity');
+          return;
+        }
+      }
       console.error('[loadUserData] Exception fetching user from public.users:', error);
       return;
     }
@@ -1618,14 +1752,67 @@ else if (
     if (user.account_type === 'training' && user.email) {
       try {
         // FETCH FRESH task_number and training_completed from Supabase to avoid stale closure issues
-        const { data: freshAccount, error: fetchError } = await supabase
-          .from('training_accounts')
-          .select('task_number, completed_tasks')
-          .eq('auth_user_id', user.id)
-          .single();
+        let freshAccount: any = null;
+        try {
+          const { data: accountData, error: fetchError } = await supabase
+            .from('training_accounts')
+            .select('task_number, completed_tasks')
+            .eq('auth_user_id', user.id)
+            .single();
 
-        if (fetchError) {
-          console.error('[refreshTasks] Error fetching fresh task_number:', fetchError);
+          if (fetchError) {
+            // Check for 500 Internal Server Error
+            const isServerError = fetchError?.message?.includes('500') ||
+                                 fetchError?.status === 500 ||
+                                 fetchError?.code === '500' ||
+                                 fetchError?.message?.includes('Internal Server Error');
+
+            if (isServerError) {
+              console.warn('[refreshTasks] Server error (500) fetching training account, falling back to cached tasks');
+              if (cachedTasks.length > 0) {
+                setTasks(cachedTasks);
+                isRefreshingTasks.current = false;
+                console.log('[refreshTasks] Using cached tasks for dashboard continuity');
+                return;
+              }
+            }
+            console.error('[refreshTasks] Error fetching fresh task_number:', fetchError);
+          }
+
+          freshAccount = accountData;
+        } catch (apiError: any) {
+          // Check for 500 Internal Server Error or other critical server errors
+          const isServerError = apiError?.message?.includes('500') ||
+                               apiError?.status === 500 ||
+                               apiError?.code === '500' ||
+                               apiError?.message?.includes('Internal Server Error');
+
+          if (isServerError) {
+            console.warn('[refreshTasks] Server error (500) fetching training account, falling back to cached tasks');
+            if (cachedTasks.length > 0) {
+              setTasks(cachedTasks);
+              isRefreshingTasks.current = false;
+              console.log('[refreshTasks] Using cached tasks for dashboard continuity');
+              return;
+            }
+          } else if (apiError?.message?.includes('Failed to fetch') || apiError?.name === 'TypeError') {
+            console.log('[refreshTasks] Network connection interrupted. Waiting for network recovery...');
+            if (cachedTasks.length > 0) {
+              setTasks(cachedTasks);
+              isRefreshingTasks.current = false;
+              console.log('[refreshTasks] Using cached tasks during network interruption');
+              return;
+            }
+          } else {
+            console.error('[refreshTasks] Unexpected API error fetching training account:', apiError);
+          }
+          // Fall back to cached tasks if available
+          if (cachedTasks.length > 0) {
+            setTasks(cachedTasks);
+            isRefreshingTasks.current = false;
+            console.log('[refreshTasks] Using cached tasks as fallback');
+            return;
+          }
         }
 
         const emailKey = user.email.toLowerCase();
@@ -1640,9 +1827,48 @@ else if (
         // This preserves the completed state (45/45) and prevents reset to 0/45
         if (isTrainingCompleted) {
           console.log('[refreshTasks] Training completed - loading existing tasks from database to preserve state');
-          const dbTasks = await SupabaseService.getUserTasks(user.id);
+          let dbTasks: DatabaseTask[] | null = null;
+          try {
+            dbTasks = await SupabaseService.getUserTasks(user.id);
+          } catch (tasksError: any) {
+            // Check for 500 Internal Server Error
+            const isServerError = tasksError?.message?.includes('500') ||
+                                 tasksError?.status === 500 ||
+                                 tasksError?.code === '500' ||
+                                 tasksError?.message?.includes('Internal Server Error');
+
+            if (isServerError) {
+              console.warn('[refreshTasks] Server error (500) fetching tasks, falling back to cached tasks');
+              if (cachedTasks.length > 0) {
+                setTasks(cachedTasks);
+                isRefreshingTasks.current = false;
+                console.log('[refreshTasks] Using cached tasks for dashboard continuity');
+                return;
+              }
+            } else if (tasksError?.message?.includes('Failed to fetch') || tasksError?.name === 'TypeError') {
+              console.log('[refreshTasks] Network connection interrupted. Waiting for network recovery...');
+              if (cachedTasks.length > 0) {
+                setTasks(cachedTasks);
+                isRefreshingTasks.current = false;
+                console.log('[refreshTasks] Using cached tasks during network interruption');
+                return;
+              }
+            } else {
+              console.error('[refreshTasks] Unexpected API error fetching tasks:', tasksError);
+            }
+            // Fall back to cached tasks if available
+            if (cachedTasks.length > 0) {
+              setTasks(cachedTasks);
+              isRefreshingTasks.current = false;
+              console.log('[refreshTasks] Using cached tasks as fallback');
+              return;
+            }
+          }
+
           if (dbTasks && dbTasks.length > 0) {
-            setTasks(dbTasks.map(mapDatabaseTaskToTask));
+            const mappedTasks = dbTasks.map(mapDatabaseTaskToTask);
+            setTasks(mappedTasks);
+            setCachedTasks(mappedTasks); // Update cache on success
             console.log('[refreshTasks] Loaded completed tasks from database, count:', dbTasks.length);
           } else {
             // Fallback: if no tasks in DB but training is completed, rebuild with all tasks completed
@@ -1709,6 +1935,7 @@ else if (
         });
 
         setTasks(rebuiltTasks);
+        setCachedTasks(rebuiltTasks); // Update cache on success
 
         // Update localStorage with rebuilt tasks
         localStorage.setItem(`training_tasks_${emailKey}`, JSON.stringify(rebuiltTasks));
@@ -1720,24 +1947,63 @@ else if (
       }
       return;
     }
-    
+
     // For personal/admin accounts, load from Supabase
     try {
       console.log('[refreshTasks] Loading personal/admin tasks from Supabase');
-      const dbTasks = await SupabaseService.getUserTasks(user.id);
+      let dbTasks: DatabaseTask[] | null = null;
+      try {
+        dbTasks = await SupabaseService.getUserTasks(user.id);
+      } catch (tasksError: any) {
+        // Check for 500 Internal Server Error
+        const isServerError = tasksError?.message?.includes('500') ||
+                             tasksError?.status === 500 ||
+                             tasksError?.code === '500' ||
+                             tasksError?.message?.includes('Internal Server Error');
+
+        if (isServerError) {
+          console.warn('[refreshTasks] Server error (500) fetching tasks, falling back to cached tasks');
+          if (cachedTasks.length > 0) {
+            setTasks(cachedTasks);
+            isRefreshingTasks.current = false;
+            console.log('[refreshTasks] Using cached tasks for dashboard continuity');
+            return;
+          }
+        } else if (tasksError?.message?.includes('Failed to fetch') || tasksError?.name === 'TypeError') {
+          console.log('[refreshTasks] Network connection interrupted. Waiting for network recovery...');
+          if (cachedTasks.length > 0) {
+            setTasks(cachedTasks);
+            isRefreshingTasks.current = false;
+            console.log('[refreshTasks] Using cached tasks during network interruption');
+            return;
+          }
+        } else {
+          console.error('[refreshTasks] Unexpected API error fetching tasks:', tasksError);
+        }
+        // Fall back to cached tasks if available
+        if (cachedTasks.length > 0) {
+          setTasks(cachedTasks);
+          isRefreshingTasks.current = false;
+          console.log('[refreshTasks] Using cached tasks as fallback');
+          return;
+        }
+      }
+
       const tasksCount = (dbTasks || []).length;
-      
+
       // For VIP1 personal accounts, prevent resetting tasks to empty array when tasks_completed is 35 or 70
       // This preserves the completion state when the tasks table is empty after customer service reset
       const isVIP1Personal = user.account_type === 'personal' && user.vip_level === 1;
       const tasksCompleted = user.tasks_completed || 0;
       const shouldPreserveState = isVIP1Personal && (tasksCompleted === 35 || tasksCompleted === 70) && tasksCount === 0;
-      
+
       if (shouldPreserveState) {
         console.log('[refreshTasks] VIP1 personal account with tasks_completed', tasksCompleted, 'but empty tasks array - preserving state to prevent reset to 0');
         // Don't reset tasks to empty array - keep existing state
       } else {
-        setTasks((dbTasks || []).map(mapDatabaseTaskToTask));
+        const mappedTasks = (dbTasks || []).map(mapDatabaseTaskToTask);
+        setTasks(mappedTasks);
+        setCachedTasks(mappedTasks); // Update cache on success
         console.log('[refreshTasks] Set tasks from Supabase, count:', tasksCount);
       }
     } catch (error) {
@@ -1746,7 +2012,13 @@ else if (
       const isVIP1Personal = user.account_type === 'personal' && user.vip_level === 1;
       const tasksCompleted = user.tasks_completed || 0;
       if (!isVIP1Personal || (tasksCompleted !== 35 && tasksCompleted !== 70)) {
-        setTasks([]);
+        // Fall back to cached tasks if available
+        if (cachedTasks.length > 0) {
+          setTasks(cachedTasks);
+          console.log('[refreshTasks] Using cached tasks as fallback on error');
+        } else {
+          setTasks([]);
+        }
       } else {
         console.log('[refreshTasks] Error but preserving VIP1 completion state (tasks_completed:', tasksCompleted, ')');
       }
@@ -1825,9 +2097,51 @@ else if (
     }
 
     // For personal/admin accounts, load from Supabase
-    const dbUser = await SupabaseService.getUserById(user.id);
+    let dbUser: DatabaseUser | null = null;
+    try {
+      dbUser = await SupabaseService.getUserById(user.id);
+    } catch (apiError: any) {
+      // Check for 500 Internal Server Error or other critical server errors
+      const isServerError = apiError?.message?.includes('500') ||
+                           apiError?.status === 500 ||
+                           apiError?.code === '500' ||
+                           apiError?.message?.includes('Internal Server Error');
+
+      if (isServerError) {
+        console.warn('[refreshUser] Server error (500) detected, falling back to cached user data');
+        // Fall back to cached user state if available
+        if (cachedUser) {
+          setUser(cachedUser);
+          console.log('[refreshUser] Using cached user data for dashboard continuity');
+          return;
+        } else {
+          console.error('[refreshUser] No cached data available, cannot fallback');
+          return;
+        }
+      } else if (apiError?.message?.includes('Failed to fetch') || apiError?.name === 'TypeError') {
+        console.log('[refreshUser] Network connection interrupted. Waiting for network recovery...');
+        // Fall back to cached state on network errors too
+        if (cachedUser) {
+          setUser(cachedUser);
+          console.log('[refreshUser] Using cached user data during network interruption');
+          return;
+        }
+      } else {
+        console.error('[refreshUser] Unexpected API error:', apiError);
+      }
+      // For other errors, try to continue with cached data if available
+      if (cachedUser) {
+        setUser(cachedUser);
+        console.log('[refreshUser] Using cached user data as fallback');
+        return;
+      }
+      return;
+    }
+
     if (dbUser) {
-      setUser(mapDatabaseUserToUser(dbUser));
+      const mappedUser = mapDatabaseUserToUser(dbUser);
+      setUser(mappedUser);
+      setCachedUser(mappedUser); // Update cache on success
     }
   };
 

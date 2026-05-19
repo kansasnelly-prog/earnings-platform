@@ -101,7 +101,7 @@ const SimpleProductCard: React.FC<{
           </div>
         </div>
 
-        <div className="mb-4 flex items-center justify-center p-8 bg-gradient-to-br from-white/[0.03] to-transparent rounded-2xl">
+        <div className="mb-4 flex items-center justify-center p-6 bg-gradient-to-br from-white/[0.03] to-transparent rounded-2xl">
           {imageLoadFailed ? (
             <div className="flex items-center justify-center">
               <Package className="w-16 h-16 text-indigo-300/80" />
@@ -110,7 +110,7 @@ const SimpleProductCard: React.FC<{
             <img
               src={product.image}
               alt={product.name}
-              className="w-full max-w-2xl h-96 object-contain"
+              className="w-full h-full object-contain max-h-[500px]"
               crossOrigin="anonymous"
               onError={() => setImageLoadFailed(true)}
             />

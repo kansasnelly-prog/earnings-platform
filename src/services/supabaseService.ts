@@ -1185,8 +1185,8 @@ export class SupabaseService {
         let newTotalEarned = user.total_earned + reward;
         if (isVIP1Personal && newTotalEarned > 71.63) {
           newTotalEarned = 71.63;
-          newBalance = 71.63;
-          console.log('[completeTask] Capping VIP1 personal earnings at $71.63');
+          // Don't cap newBalance - let it compound dynamically onto current balance
+          console.log('[completeTask] Capping VIP1 personal total_earned at $71.63, but balance continues to compound:', newBalance);
         }
         
         const updateData: any = {

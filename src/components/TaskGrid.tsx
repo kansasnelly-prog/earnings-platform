@@ -383,21 +383,31 @@ const TaskGrid: React.FC = () => {
     }
   }, [user?.current_task_set]);
 
+  // Track previous task number to detect actual admin resets (high -> low drop)
+  const previousTaskNumberRef = useRef<number | null>(null);
+
   // Cache reset listener - watch for admin account resets
-  // When tasks_completed or task_number resets to 0 or 1, clear all local component state
+  // Only clear cache if task_number specifically DROPS from a high number to 0 or 1 (actual admin reset)
   useEffect(() => {
     if (!user) return;
 
     const tasksCompleted = user.tasks_completed || 0;
     const taskNumber = user.task_number || 1;
+    const previousTaskNumber = previousTaskNumberRef.current;
 
-    // Detect if account was reset (tasks went from high number to 0/1)
-    const wasReset = tasksCompleted === 0 || taskNumber === 1;
+    // Only detect reset if:
+    // 1. Current task_number is 0 or 1 (reset state)
+    // 2. Previous task_number was > 5 (was making progress)
+    // 3. This indicates a DROP from high to low (admin reset action)
+    const wasReset = (taskNumber === 0 || taskNumber === 1) && 
+                     previousTaskNumber !== null && 
+                     previousTaskNumber > 5;
 
     if (wasReset) {
-      console.log('[TaskGrid] Account reset detected - clearing local component cache', {
+      console.log('[TaskGrid] Account reset detected (task number dropped from', previousTaskNumber, 'to', taskNumber, ') - clearing local component cache', {
         tasksCompleted,
         taskNumber,
+        previousTaskNumber,
         accountType: user.account_type
       });
 
@@ -417,6 +427,9 @@ const TaskGrid: React.FC = () => {
       refreshTasks().catch(err => console.error('[TaskGrid] Background refreshTasks error on reset:', err));
       refreshUser().catch(err => console.error('[TaskGrid] Background refreshUser error on reset:', err));
     }
+
+    // Update ref for next comparison
+    previousTaskNumberRef.current = taskNumber;
   }, [user?.tasks_completed, user?.task_number]);
 
   // Load appropriate product catalog from Supabase based on account type

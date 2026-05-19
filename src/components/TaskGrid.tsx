@@ -591,7 +591,8 @@ const TaskGrid: React.FC = () => {
       setIsLoadingProduct(true);
     }
     // Clear optimistic task number when actual user data is available
-    if (user?.task_number && optimisticTaskNumber) {
+    // Only clear if the actual task_number matches or exceeds the optimistic number
+    if (user?.task_number && optimisticTaskNumber && user.task_number >= optimisticTaskNumber) {
       setOptimisticTaskNumber(null);
     }
   }, [pendingTask?.task_number, user?.task_number, optimisticTaskNumber]);

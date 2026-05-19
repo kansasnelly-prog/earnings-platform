@@ -986,8 +986,8 @@ export class SupabaseService {
         
         if (isVIP1Personal) {
           // Fixed commission rate for personal accounts to ensure exactly $10.25 for 35 tasks
-          // $10.25 / 35 tasks = $0.292857 per task (rounded to $0.293)
-          const FIXED_PERSONAL_COMMISSION = 0.293;
+          // $10.25 / 35 tasks = $0.292857142857... per task (exact value, not rounded)
+          const FIXED_PERSONAL_COMMISSION = 10.25 / 35;
           reward = FIXED_PERSONAL_COMMISSION;
           commissionRate = 0.005; // 0.5% for VIP1 personal
         } else {

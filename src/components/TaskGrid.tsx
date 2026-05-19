@@ -883,8 +883,8 @@ const allComplete = displayCompletedCount === totalTasks;
     }
     
     // Fallback: Fixed commission rate for personal accounts to ensure exactly $10.25 for 35 tasks
-    // $10.25 / 35 tasks = $0.292857 per task (rounded to $0.293)
-    const FIXED_PERSONAL_COMMISSION = 0.293;
+    // $10.25 / 35 tasks = $0.292857142857... per task (exact value, not rounded)
+    const FIXED_PERSONAL_COMMISSION = 10.25 / 35;
     console.log('[TaskGrid] Database reward is 0, using fixed personal commission for task', pendingTask.task_number, ':', FIXED_PERSONAL_COMMISSION);
     return FIXED_PERSONAL_COMMISSION;
   })() : 0;

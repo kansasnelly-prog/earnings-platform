@@ -97,7 +97,7 @@ const SimpleProductCard: React.FC<{
         <div className="absolute top-3 right-3">
           <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
             <Crown className="w-3 h-3" />
-            {product.vip_level || (isTraining ? 'VIP2' : `VIP${Math.ceil(taskNumber / 10)}`)}
+            {`VIP${user?.vip_level || 1}`}
           </div>
         </div>
 

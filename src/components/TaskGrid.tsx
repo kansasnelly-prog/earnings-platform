@@ -525,11 +525,18 @@ const TaskGrid: React.FC = () => {
   // Load tasks only once on mount - avoid dependency on refreshTasks which changes when user changes
   const dataLoaded = useRef(false);
   useEffect(() => {
+    // SAFETY CHECK: Wait for valid user context before fetching tasks
+    if (!user || !user.id) {
+      console.log('[TaskGrid] Waiting for valid user context before fetching tasks...');
+      return;
+    }
+    
     if (dataLoaded.current) return;
     
     // Calling refreshTasks once on mount
     const loadTasks = async () => {
       try {
+        console.log('[TaskGrid] Fetching tasks for user:', user.id);
         await refreshTasks();
         dataLoaded.current = true;
       } catch (error) {
@@ -540,7 +547,7 @@ const TaskGrid: React.FC = () => {
     };
     loadTasks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id]);
 
   const safeTasks = tasks || [];
   const calculatedCompletedCount = safeTasks.filter(t => t.status === 'completed').length;

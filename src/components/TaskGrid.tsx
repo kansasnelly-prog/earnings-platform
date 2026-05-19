@@ -434,6 +434,12 @@ const TaskGrid: React.FC = () => {
 
   // Load appropriate product catalog from Supabase based on account type
   useEffect(() => {
+    // SAFETY CHECK: Wait for valid user context before loading products
+    if (!user || !user.id) {
+      console.log('[ProductCatalog] Waiting for valid user context before loading products...');
+      return;
+    }
+
     const loadProducts = async () => {
       try {
         const isTraining = user?.account_type === 'training';
@@ -477,7 +483,7 @@ const TaskGrid: React.FC = () => {
       ProductCatalogService.unsubscribeFromTrainingProducts();
       ProductCatalogService.unsubscribeFromPersonalProducts();
     };
-  }, [user?.account_type]);
+  }, [user?.id, user?.account_type]);
 
   // Subscribe to checkpoint changes for realtime updates when admin approves
   // ONLY in Phase 2 - Phase 1 has no checkpoints

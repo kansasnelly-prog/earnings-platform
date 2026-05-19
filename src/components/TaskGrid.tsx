@@ -486,6 +486,7 @@ const TaskGrid: React.FC = () => {
     
     // Only subscribe to checkpoint changes in Phase 2
     const isPhase2 = Number(user?.training_phase) === 2;
+    const userId = user.id; // Capture user.id in local variable to avoid scope issues
     const channel = supabase
       .channel('checkpoint_changes')
       .on(
@@ -494,7 +495,7 @@ const TaskGrid: React.FC = () => {
           event: '*', 
           schema: 'public', 
           table: 'phase2_checkpoints',
-          filter: `auth_user_id=eq.${user.id}`
+          filter: `auth_user_id=eq.${userId}`
         },
         async (payload) => {
           console.log('[Checkpoint User] Checkpoint change detected:', payload.eventType, payload.new);

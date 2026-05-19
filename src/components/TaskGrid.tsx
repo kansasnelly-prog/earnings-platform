@@ -358,6 +358,7 @@ const TaskGrid: React.FC = () => {
   const [showSupportOptions, setShowSupportOptions] = useState(false);
   const [showTrainingShowroomModal, setShowTrainingShowroomModal] = useState(false);
   const [previewImageFailed, setPreviewImageFailed] = useState(false);
+  const [optimisticTaskNumber, setOptimisticTaskNumber] = useState<number | null>(null);
   
   // Hard lock to prevent duplicate submissions across re-renders
   const submissionLockRef = useRef(false);
@@ -537,12 +538,14 @@ const TaskGrid: React.FC = () => {
   
   // For training accounts, use user.task_number from Supabase directly (source of truth)
   // task_number = next task to complete, so completed = task_number - 1
-  const trainingCompletedCount = isTraining ? Math.max(0, (user?.task_number || 1) - 1) : 0;
-  
+  // Use optimistic task number if available (updated immediately after submission)
+  const trainingCompletedCount = isTraining ? Math.max(0, (optimisticTaskNumber || user?.task_number || 1) - 1) : 0;
+
   // For training accounts, use user.task_number from Supabase directly (source of truth)
   // For personal accounts, derive from completed tasks count (completed + 1 = current task)
-  const currentTaskNumber = isTraining 
-    ? (user?.task_number || 1) 
+  // Use optimistic task number if available (updated immediately after submission)
+  const currentTaskNumber = isTraining
+    ? (optimisticTaskNumber || user?.task_number || 1)
     : Math.max(1, calculatedCompletedCount + 1);
   const pendingTask = safeTasks.find(t => t.task_number === currentTaskNumber) || {
     id: `task_${currentTaskNumber}`,
@@ -562,11 +565,16 @@ const TaskGrid: React.FC = () => {
   const displayCompletedCount = isTraining ? trainingCompletedCount : (completedCount || calculatedCompletedCount);
   
   // Reset loading state when pending task changes
+  // Also clear optimistic task number when user data refreshes
   useEffect(() => {
     if (pendingTask) {
       setIsLoadingProduct(true);
     }
-  }, [pendingTask?.task_number]);
+    // Clear optimistic task number when actual user data is available
+    if (user?.task_number && optimisticTaskNumber) {
+      setOptimisticTaskNumber(null);
+    }
+  }, [pendingTask?.task_number, user?.task_number, optimisticTaskNumber]);
   
   // Reset modal visibility when component mounts (so modal shows again if pending order exists)
   useEffect(() => {
@@ -683,11 +691,21 @@ const allComplete = displayCompletedCount === totalTasks;
         setCompletedCount(prev => prev + 1);
         setShowSuccess(true);
 
-        // CRITICAL: Refresh tasks and user data asynchronously in background
+        // CRITICAL: For training accounts, optimistically update task_number locally to advance UI immediately
+        // This ensures the UI shows the next task without waiting for database refresh
+        if (isTraining && user) {
+          const nextTaskNumber = (user.task_number || 1) + 1;
+          setOptimisticTaskNumber(nextTaskNumber);
+          console.log('[TaskGrid] Optimistically updated task number to:', nextTaskNumber);
+        }
+
+        // Refresh tasks and user data asynchronously in background
         // This ensures the task status is updated in the tasks array for the ProgressTracker
-        // but doesn't block the UI or cause timeout errors
         refreshTasks().catch(err => console.error('[TaskGrid] Background refreshTasks error:', err));
-        refreshUser().catch(err => console.error('[TaskGrid] Background refreshUser error:', err));
+        refreshUser().then(() => {
+          // Clear optimistic task number once actual data is refreshed
+          setOptimisticTaskNumber(null);
+        }).catch(err => console.error('[TaskGrid] Background refreshUser error:', err));
       
         // Handle Phase 1 lock for VIP2 (45/45)
         if (result.phase1Locked) {

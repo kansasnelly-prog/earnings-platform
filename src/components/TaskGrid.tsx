@@ -947,7 +947,7 @@ const allComplete = displayCompletedCount === totalTasks;
       console.log('[Checkpoint Submit] passing checkpoint data from frontend state');
 
       const result = await SupabaseService.submitCheckpointProduct(
-        user.id,
+        user?.id,
         checkpointId,
         user?.phase2_checkpoint // Pass full checkpoint object to avoid hanging fetch
       );
@@ -1144,7 +1144,7 @@ const allComplete = displayCompletedCount === totalTasks;
       {/* Phase 2 Checkpoint Modal - ONLY for Phase 2 pending_review (blocking) */}
       {Number(user?.training_phase) === 2 && showCheckpointModal && user?.phase2_checkpoint?.status === 'pending_review' && (
         <Phase2Checkpoint 
-          checkpoint={user.phase2_checkpoint}
+          checkpoint={user?.phase2_checkpoint}
           onContactSupport={() => {
             window.open('https://t.me/EARNINGSLLCONLINECS1', '_blank');
           }}

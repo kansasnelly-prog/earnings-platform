@@ -644,16 +644,19 @@ const allComplete = displayCompletedCount === totalTasks;
     
     // TIMEOUT PROTECTION: Prevent infinite processing
     const timeoutId = setTimeout(() => {
-      console.error('[TaskGrid] Task submission timeout - resetting state');
-      setIsSubmitting(false);
-      submissionLockRef.current = false;
-      setPendingCompletionTask(null);
-      toast({
-        title: 'Submission Timeout',
-        description: 'Task submission took too long. Please refresh the page and try again.',
-        variant: 'destructive',
-      });
-    }, 30000); // 30 second timeout
+      // Only reset state if submission is still in progress (check the lock)
+      if (submissionLockRef.current) {
+        console.error('[TaskGrid] Task submission timeout - resetting state');
+        setIsSubmitting(false);
+        submissionLockRef.current = false;
+        setPendingCompletionTask(null);
+        toast({
+          title: 'Submission Timeout',
+          description: 'Task submission took too long. Please refresh the page and try again.',
+          variant: 'destructive',
+        });
+      }
+    }, 120000); // 120 second timeout (increased from 30s to handle slow network responses)
     
     try {
       // Personal VIP1 accounts now have normal workflow - no training lock blocking

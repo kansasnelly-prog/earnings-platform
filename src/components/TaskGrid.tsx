@@ -1076,9 +1076,11 @@ const allComplete = displayCompletedCount === totalTasks;
             <div>
               <p className="text-white font-semibold">Current Set</p>
               <p className={`text-sm ${currentTaskSet === 1 ? 'text-indigo-400' : 'text-emerald-400'}`}>
-                {currentTaskSet === 1
-                  ? `Set 1 (${user?.training_progress || 0}/${isTraining ? 45 : 35})`
-                  : `Set 2 (${user?.training_progress || 0}/${isTraining ? 45 : 35})`
+                {user?.account_type === 'personal' 
+                  ? `Set 2 (${user?.training_progress || 0}/${isTraining ? 45 : 35})`
+                  : currentTaskSet === 1
+                    ? `Set 1 (${user?.training_progress || 0}/${isTraining ? 45 : 35})`
+                    : `Set 2 (${user?.training_progress || 0}/${isTraining ? 45 : 35})`
                 }
               </p>
             </div>

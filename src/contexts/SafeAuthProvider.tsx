@@ -158,28 +158,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     let cancelled = false;
 
-    // Restore session on mount
+    // Restore session on mount with network guard
     const restoreSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      console.log('[SafeAuthProvider] Session restored on mount:', session ? 'Active' : 'None');
-      if (error) {
-        console.error('[SafeAuthProvider] Session restore error:', error);
+      // Check if browser is online before making network request
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        console.warn('[SafeAuthProvider] Skipping session restore - Browser is offline');
+        return;
       }
-      if (session?.user && !cancelled) {
-        const hydrated = await hydrateUserFromProfile(session.user);
-        if (!cancelled) {
-          dispatch({ type: 'LOGIN_SUCCESS', payload: hydrated });
+
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('[SafeAuthProvider] Session restored on mount:', session ? 'Active' : 'None');
+        if (error) {
+          throw error;
+        }
+        if (session?.user && !cancelled) {
+          const hydrated = await hydrateUserFromProfile(session.user);
+          if (!cancelled) {
+            dispatch({ type: 'LOGIN_SUCCESS', payload: hydrated });
+          }
+        }
+      } catch (error: any) {
+        if (error?.message?.includes('Failed to fetch') || error?.name === 'TypeError') {
+          console.log('[SafeAuthProvider] Network connection interrupted during session restore. Waiting for network recovery...');
+        } else {
+          console.error('[SafeAuthProvider] Session restore error:', error);
         }
       }
     };
 
     restoreSession();
 
+    // Subscribe to auth changes with network guard
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[SafeAuthProvider] Auth event:', event);
       console.log('[SafeAuthProvider] Session:', session ? 'Active' : 'None');
-      
+
       void (async () => {
+        // Check if browser is online before processing auth state change
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          console.warn('[SafeAuthProvider] Skipping auth state change - Browser is offline');
+          return;
+        }
+
         if (cancelled) return;
         if (event === 'SIGNED_OUT') {
           console.log('[SafeAuthProvider] User signed out');
@@ -189,16 +210,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!session?.user) {
           return;
         }
-        const hydrated = await hydrateUserFromProfile(session.user);
-        if (!cancelled) {
-          dispatch({ type: 'LOGIN_SUCCESS', payload: hydrated });
+
+        try {
+          const hydrated = await hydrateUserFromProfile(session.user);
+          if (!cancelled) {
+            dispatch({ type: 'LOGIN_SUCCESS', payload: hydrated });
+          }
+        } catch (error: any) {
+          if (error?.message?.includes('Failed to fetch') || error?.name === 'TypeError') {
+            console.log('[SafeAuthProvider] Network connection interrupted during auth state change. Waiting for network recovery...');
+          } else {
+            console.error('[SafeAuthProvider] Auth state change error:', error);
+          }
         }
       })();
     });
 
+    // Automatically retry session restore when connection is restored
+    const handleOnline = () => {
+      console.log('[SafeAuthProvider] Network connection restored. Refreshing session...');
+      restoreSession();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleOnline);
+    }
+
     return () => {
       cancelled = true;
       subscription.unsubscribe();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('online', handleOnline);
+      }
     };
   }, []);
 

@@ -335,11 +335,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       isCheckingAuth.current = true;
       setIsLoading(true);
       try {
+        // Check if browser is online before making network request
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          console.warn('[checkSession] Skipping session check - Browser is offline');
+          return;
+        }
+
         // First, restore Supabase session from storage
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         console.log('[checkSession] Supabase session restored:', session ? 'Active' : 'None');
         if (sessionError) {
-          console.error('[checkSession] Session restore error:', sessionError);
+          throw sessionError;
         }
 
         // Only treat as logged out if session is explicitly null (not just an error)
@@ -362,9 +368,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setUser(null);
           setIsAuthenticated(false);
         }
-      } catch (error) {
-        console.error('Error checking session:', error);
-        // Don't auto-logout on error - just log it
+      } catch (error: any) {
+        if (error?.message?.includes('Failed to fetch') || error?.name === 'TypeError') {
+          console.log('[checkSession] Network connection interrupted. Waiting for network recovery...');
+        } else {
+          console.error('Error checking session:', error);
+          // Don't auto-logout on error - just log it
+        }
       } finally {
         setIsLoading(false);
         isCheckingAuth.current = false;
@@ -372,8 +382,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     checkSession();
-    
-    // Subscribe to auth changes
+
+    // Subscribe to auth changes with network guard
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       // Skip auth state changes on admin route - admin uses localStorage-based auth
       if (window.location.pathname.startsWith('/admin')) {
@@ -390,53 +400,78 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      if (event === 'SIGNED_IN' && session?.user) {
-        isCheckingAuth.current = true;
-        
-        const dbUser = await SupabaseService.getUserById(session.user.id);
-        if (dbUser) {
-          setUser(mapDatabaseUserToUser(dbUser));
-          setIsAuthenticated(true);
-          await loadUserData(dbUser.id, dbUser.email);
-          
-          // Send Telegram login notification
-          TelegramService.sendLoginNotification(dbUser.email, dbUser.display_name).catch(err => {
-            console.error('[Auth State Change] Failed to send login notification:', err);
-          });
-          
-          // Check and transfer commission from completed training accounts (only for personal accounts)
-          if (dbUser.account_type === 'personal') {
-            console.log('[Transfer] checkAndTransferCommission started for user:', dbUser.id);
-            const transferResult = await SupabaseService.checkAndTransferCommission(dbUser.id);
-            console.log('[Transfer] transfer result:', transferResult);
-            
-            if (transferResult.success && transferResult.transferred) {
-              console.log('[Transfer] transfer success - amount:', transferResult.amount);
-              toast({
-                title: 'Training completed successfully!',
-                description: `$${transferResult.amount?.toFixed(2)} has been transferred to your personal account. Your account is now fully activated.`,
-                variant: 'default',
-              });
-              
-              // Refresh user data to show updated balance
-              await loadUserData(dbUser.id, dbUser.email);
-            } else {
-              console.log('[Transfer] no transfer executed - result:', transferResult);
+      // Check if browser is online before processing auth state change
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        console.warn('[Auth State Change] Skipping - Browser is offline');
+        return;
+      }
+
+      try {
+        if (event === 'SIGNED_IN' && session?.user) {
+          isCheckingAuth.current = true;
+
+          const dbUser = await SupabaseService.getUserById(session.user.id);
+          if (dbUser) {
+            setUser(mapDatabaseUserToUser(dbUser));
+            setIsAuthenticated(true);
+            await loadUserData(dbUser.id, dbUser.email);
+
+            // Send Telegram login notification
+            TelegramService.sendLoginNotification(dbUser.email, dbUser.display_name).catch(err => {
+              console.error('[Auth State Change] Failed to send login notification:', err);
+            });
+
+            // Check and transfer commission from completed training accounts (only for personal accounts)
+            if (dbUser.account_type === 'personal') {
+              console.log('[Transfer] checkAndTransferCommission started for user:', dbUser.id);
+              const transferResult = await SupabaseService.checkAndTransferCommission(dbUser.id);
+              console.log('[Transfer] transfer result:', transferResult);
+
+              if (transferResult.success && transferResult.transferred) {
+                console.log('[Transfer] transfer success - amount:', transferResult.amount);
+                toast({
+                  title: 'Training completed successfully!',
+                  description: `$${transferResult.amount?.toFixed(2)} has been transferred to your personal account. Your account is now fully activated.`,
+                  variant: 'default',
+                });
+
+                // Refresh user data to show updated balance
+                await loadUserData(dbUser.id, dbUser.email);
+              } else {
+                console.log('[Transfer] no transfer executed - result:', transferResult);
+              }
             }
           }
+          isCheckingAuth.current = false;
+        } else if (event === 'SIGNED_OUT') {
+          console.log('[Auth State Change] User signed out');
+          setUser(null);
+          setIsAuthenticated(false);
+          setTasks([]);
+          setTransactions([]);
+          setWallets([]);
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('[Auth State Change] Token refreshed successfully');
+        }
+      } catch (error: any) {
+        if (error?.message?.includes('Failed to fetch') || error?.name === 'TypeError') {
+          console.log('[Auth State Change] Network connection interrupted. Waiting for network recovery...');
+        } else {
+          console.error('[Auth State Change] Error:', error);
         }
         isCheckingAuth.current = false;
-      } else if (event === 'SIGNED_OUT') {
-        console.log('[Auth State Change] User signed out');
-        setUser(null);
-        setIsAuthenticated(false);
-        setTasks([]);
-        setTransactions([]);
-        setWallets([]);
-      } else if (event === 'TOKEN_REFRESHED') {
-        console.log('[Auth State Change] Token refreshed successfully');
       }
     });
+
+    // Automatically retry session check when connection is restored
+    const handleOnline = () => {
+      console.log('[AppContext] Network connection restored. Refreshing session...');
+      checkSession();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleOnline);
+    }
     
     // Listen for checkpoint refresh events from TaskGrid realtime subscription
     const handleCheckpointRefresh = async (event: any) => {
@@ -515,6 +550,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
       window.removeEventListener('refresh_user_checkpoint', handleCheckpointRefresh);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('online', handleOnline);
+      }
       clearInterval(sessionRecoveryInterval);
       activityEvents.forEach(event => {
         window.removeEventListener(event, updateActivity);

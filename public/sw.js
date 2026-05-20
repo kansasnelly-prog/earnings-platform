@@ -12,28 +12,39 @@ const urlsToCache = [
   '/manifest.json'
 ];
 
-// Install event - skip static precaching to avoid cache errors when asset hashes change
+// Install event - skip waiting to activate new worker immediately
 self.addEventListener('install', (event) => {
-  // Skip precaching to prevent "Cache: Request failed" errors
-  // when asset filenames change between deployments
-  event.waitUntil(self.skipWaiting());
+  console.log('[SW] Installing new service worker version:', CACHE_VERSION);
+  // Skip waiting to activate new worker immediately without page refresh
+  self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up ALL old caches aggressively
 self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating service worker version:', CACHE_VERSION);
+  
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          // Delete all old caches except the static cache
-          if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE_NAME) {
-            console.log('[SW] Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    Promise.all([
+      // Take control of all clients immediately
+      self.clients.claim(),
+      
+      // Delete ALL old caches - aggressive purge to prevent stale asset serving
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            // Delete ALL caches except the current one
+            if (cacheName !== CACHE_NAME) {
+              console.log('[SW] Aggressively deleting cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+    ])
   );
+  
+  // Skip waiting to ensure new worker takes control immediately
+  self.skipWaiting();
 });
 
 // Push event - handle incoming push notifications
@@ -105,7 +116,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Fetch event - handle network requests with safer caching strategy
+// Fetch event - handle network requests with NO caching for dynamic assets
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
@@ -114,35 +125,24 @@ self.addEventListener('fetch', (event) => {
   // 2. API requests
   // 3. Supabase requests
   // 4. WebSocket connections
+  // 5. JavaScript modules and assets (to prevent serving stale hashed chunks)
+  // 6. CSS files (to prevent serving stale styles)
   if (
     event.request.method !== 'GET' ||
     url.pathname.startsWith('/api/') ||
     url.hostname.includes('supabase') ||
     url.protocol === 'ws:' ||
-    url.protocol === 'wss:'
+    url.protocol === 'wss:' ||
+    url.pathname.match(/\.(js|css|map)$/) ||
+    url.pathname.includes('/assets/')
   ) {
-    // Pass through to network without any caching
+    // Pass through to network WITHOUT any caching
+    // This prevents serving stale hashed chunks during deployments
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Bypass service worker for JavaScript modules and assets (network-first with fallback)
-  if (
-    url.pathname.match(/\.(js|css|map)$/) ||
-    url.pathname.includes('/assets/')
-  ) {
-    // For dynamic assets, use network-first with fallback
-    event.respondWith(
-      fetch(event.request)
-        .catch(() => {
-          // If network fails, try cache as fallback
-          return caches.match(event.request);
-        })
-    );
-    return;
-  }
-
-  // For static assets (HTML, images, icons), use cache-first with network fallback
+  // For static assets (HTML, images, icons, manifest), use cache-first with network fallback
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -153,7 +153,7 @@ self.addEventListener('fetch', (event) => {
         // Cache miss - fetch from network and cache
         return fetch(event.request)
           .then((response) => {
-            // Only cache successful GET responses (Cache API doesn't support POST)
+            // Only cache successful GET responses
             if (response && response.status === 200 && event.request.method === 'GET') {
               const responseToCache = response.clone();
               caches.open(CACHE_NAME)

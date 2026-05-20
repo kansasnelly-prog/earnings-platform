@@ -6,23 +6,47 @@ import './index.css'
 // CHUNK LOAD ERROR HANDLER
 // ===========================================
 
-// Handle webpack/vite chunk loading failures
+// Handle webpack/vite chunk loading failures and module load errors
 window.addEventListener('error', (event) => {
   const error = event.error;
-  if (error && error.name === 'ChunkLoadError') {
-    console.error('[ChunkLoadError] Failed to load chunk:', error);
-    console.error('[ChunkLoadError] Forcing clean reload to fetch new assets...');
+  const errorMessage = event.message || '';
+  
+  // Catch ChunkLoadError, "Failed to load module", and related asset loading errors
+  if (
+    error && (
+      error.name === 'ChunkLoadError' ||
+      error.name === 'LoadError' ||
+      errorMessage.includes('Failed to load module') ||
+      errorMessage.includes('Loading chunk') ||
+      errorMessage.includes('Failed to fetch dynamically imported module')
+    )
+  ) {
+    console.error('[ModuleLoadError] Failed to load asset/module:', error);
+    console.error('[ModuleLoadError] Forcing clean reload to fetch new assets...');
     
-    // Clear caches to force fresh asset fetch
+    // Clear all caches to force fresh asset fetch
     try {
       localStorage.clear();
       sessionStorage.clear();
+      
+      // Clear service worker caches if registered
+      if ('serviceWorker' in navigator && navigator.serviceWorker) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          registrations.forEach(function(registration) {
+            registration.unregister();
+          });
+        }).catch(function(e) {
+          console.error('[ModuleLoadError] Failed to unregister service workers:', e);
+        });
+      }
     } catch (e) {
-      console.error('[ChunkLoadError] Failed to clear caches:', e);
+      console.error('[ModuleLoadError] Failed to clear caches:', e);
     }
     
-    // Force reload with cache bypass
-    window.location.reload();
+    // Force reload with cache bypass by adding timestamp to URL
+    const url = new URL(window.location.href);
+    url.searchParams.set('_t', Date.now().toString());
+    window.location.href = url.toString();
   }
 });
 

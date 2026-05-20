@@ -11,7 +11,7 @@
     <script>
       (function() {
         // Version-based cache busting - update this number on critical deployments
-        const CACHE_BUSTER_VERSION = '20250518-v1';
+        const CACHE_BUSTER_VERSION = '20250521-v2';
         const storedVersion = localStorage.getItem('app_version');
         
         // If version mismatch, clear caches and reload
@@ -44,8 +44,10 @@
             localStorage.setItem('app_version', CACHE_BUSTER_VERSION);
           } catch(e) {}
           
-          // Force reload with cache bypass
-          window.location.reload(true);
+          // Force reload with cache bypass using timestamp
+          const url = new URL(window.location.href);
+          url.searchParams.set('_t', Date.now().toString());
+          window.location.href = url.toString();
           return;
         }
         
@@ -61,7 +63,9 @@
               localStorage.clear();
               sessionStorage.clear();
             } catch(e) {}
-            window.location.reload(true);
+            const url = new URL(window.location.href);
+            url.searchParams.set('_t', Date.now().toString());
+            window.location.href = url.toString();
           }
         }, 15000);
         
@@ -72,22 +76,41 @@
           console.log('[Crash Handler] App mounted successfully');
         };
         
-        // Global error handler
+        // Global error handler - enhanced to catch module loading failures
         window.onerror = function(msg, url, line, col, error) {
           console.error('[Crash Handler] Global error detected:', msg, error);
           
-          // Only reload on critical errors (not minor issues)
-          const criticalErrors = ['TypeError', 'ReferenceError', 'SyntaxError'];
+          const errorMessage = msg ? msg.toString() : '';
           const errorName = error ? error.name : '';
           
-          if (criticalErrors.some(name => errorName.includes(name))) {
-            console.error('[Crash Handler] Critical error detected, clearing caches and reloading...');
+          // Reload on critical errors including module loading failures
+          const criticalErrors = ['TypeError', 'ReferenceError', 'SyntaxError', 'ChunkLoadError', 'LoadError'];
+          const moduleLoadKeywords = ['Failed to load module', 'Loading chunk', 'Failed to fetch dynamically imported module'];
+          
+          if (
+            criticalErrors.some(name => errorName.includes(name)) ||
+            moduleLoadKeywords.some(keyword => errorMessage.includes(keyword))
+          ) {
+            console.error('[Crash Handler] Critical error/module load failure detected, clearing caches and reloading...');
             try {
               localStorage.clear();
               sessionStorage.clear();
+              
+              // Clear service worker caches
+              if ('serviceWorker' in navigator && navigator.serviceWorker) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                  registrations.forEach(function(registration) {
+                    registration.unregister();
+                  });
+                }).catch(function(e) {
+                  console.error('[Crash Handler] Failed to unregister service workers:', e);
+                });
+              }
             } catch(e) {}
             setTimeout(function() {
-              window.location.reload(true);
+              const reloadUrl = new URL(window.location.href);
+              reloadUrl.searchParams.set('_t', Date.now().toString());
+              window.location.href = reloadUrl.toString();
             }, 500);
           }
           
@@ -95,23 +118,36 @@
           return false;
         };
         
-        // Unhandled promise rejection handler
+        // Unhandled promise rejection handler - enhanced for module failures
         window.addEventListener('unhandledrejection', function(event) {
           console.error('[Crash Handler] Unhandled promise rejection:', event.reason);
           
           // Only reload on critical rejections
           if (event.reason && typeof event.reason === 'object') {
             const reasonStr = event.reason.toString().toLowerCase();
-            const criticalKeywords = ['chunk', 'load', 'network', 'fetch', 'timeout'];
+            const criticalKeywords = ['chunk', 'load', 'network', 'fetch', 'timeout', 'module'];
             
             if (criticalKeywords.some(keyword => reasonStr.includes(keyword))) {
-              console.error('[Crash Handler] Critical promise rejection, clearing caches and reloading...');
+              console.error('[Crash Handler] Critical promise rejection/module load failure, clearing caches and reloading...');
               try {
                 localStorage.clear();
                 sessionStorage.clear();
+                
+                // Clear service worker caches
+                if ('serviceWorker' in navigator && navigator.serviceWorker) {
+                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    registrations.forEach(function(registration) {
+                      registration.unregister();
+                    });
+                  }).catch(function(e) {
+                    console.error('[Crash Handler] Failed to unregister service workers:', e);
+                  });
+                }
               } catch(e) {}
               setTimeout(function() {
-                window.location.reload(true);
+                const reloadUrl = new URL(window.location.href);
+                reloadUrl.searchParams.set('_t', Date.now().toString());
+                window.location.href = reloadUrl.toString();
               }, 500);
             }
           }

@@ -212,10 +212,10 @@ function mapDatabaseUserToUser(dbUser: DatabaseUser): User {
     user_status: 'active' as User['user_status'],
     training_phase: (dbUser.training_phase || 1) as 1 | 2,
     tasks_completed: dbUser.tasks_completed || 0,
-    // CRITICAL: Dynamically calculate total_tasks based on account_type to prevent data bleeding
+    // CORRECT: Dynamically calculate total_tasks based on account_type
     // Training accounts: 45 tasks per phase (Phase 1: 45, Phase 2: 45)
     // Personal accounts: 35 tasks per set (Set 1: 35, Set 2: 35)
-    total_tasks: dbUser.account_type === 'training' ? 45 : (dbUser.account_type === 'personal' ? 35 : 45),
+    total_tasks: dbUser.account_type === 'training' ? 45 : (dbUser.account_type === 'personal' ? 35 : 35),
     task_number: dbUser.task_number || 1,
     current_task_set: dbUser.current_task_set || 1,
     set_1_completed_at: dbUser.set_1_completed_at || null,

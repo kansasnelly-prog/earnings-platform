@@ -17,7 +17,8 @@ import {
   Star,
   CheckCircle,
   DollarSign,
-  Headphones
+  Headphones,
+  AlertCircle
 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { toast } from 'sonner';
@@ -71,11 +72,15 @@ const Tasks: React.FC = () => {
   const tasksCompleted = user?.tasks_completed || 0;
   const isLockedAwaitingReset = user?.tasks_completed === 35;
 
-  // CRITICAL FIX: Use account_type instead of VIP level for task count logic
+  // CORRECT: Use account_type for task count logic
   // Training accounts: 45 tasks per phase (Phase 1: 45, Phase 2: 45)
   // Personal accounts: 35 tasks per set (Set 1: 35, Set 2: 35)
   const isPersonal = user?.account_type === 'personal';
   const tasksPerSet = isPersonal ? 35 : 45;
+  
+  // TRAINING COMPLETION GATE: Personal accounts are BLOCKED until training is completed
+  const isTrainingCompleted = user?.training_completed === true;
+  const isPersonalBlocked = isPersonal && !isTrainingCompleted;
   
   // For personal accounts, handle 35/35 completion state
   // Rely primarily on user.tasks_completed from database, not local completedCount from tasks array
@@ -153,6 +158,14 @@ const Tasks: React.FC = () => {
 
   const handleCompleteTaskDirect = async (task: any) => {
     if (task.status !== 'pending') return;
+    
+    // BLOCK task submission if personal account hasn't completed training
+    if (isPersonalBlocked) {
+      toast.error('Tasks are locked! Please complete your training phase on your training account before accessing personal tasks.', {
+        duration: 5000,
+      });
+      return;
+    }
     
     // BLOCK task submission if pending order exists
     if (user?.has_pending_order) {
@@ -234,6 +247,38 @@ const Tasks: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Training Completion Gate - Lock Screen for Personal Accounts */}
+      {isPersonalBlocked && (
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="relative p-8 bg-gradient-to-r from-red-600/20 via-rose-600/15 to-orange-600/10 border border-red-500/20 rounded-2xl overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute -left-24 top-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-red-500/10 blur-3xl animate-pulse" />
+              <div className="absolute -right-20 top-0 w-72 h-72 rounded-full bg-rose-500/10 blur-3xl animate-pulse" style={{ animationDuration: '6s' }} />
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/30">
+                  <Lock size={32} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-white">Training Required</h3>
+                  <p className="text-red-300 text-sm font-medium">Personal Account Locked</p>
+                </div>
+              </div>
+              <p className="text-gray-300 text-base mb-6">
+                Your personal account is locked until you complete your training phase. Please complete your training on your training account before unlocking your personal tasks.
+              </p>
+              <div className="flex items-center gap-3 p-4 bg-slate-900/50 rounded-xl border border-slate-700">
+                <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                <p className="text-gray-400 text-sm">
+                  Contact customer service if you believe this is an error or need assistance with your training account.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* VIP1 Completion Alert Banner */}
       {isFirstSetComplete && (

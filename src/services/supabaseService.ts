@@ -280,13 +280,12 @@ export class SupabaseService {
     phone?: string | null;
     referralCode?: string | null;
   }) {
-    // CRITICAL FIX: ALL new accounts MUST start as training accounts
-    // Training accounts complete 45/45 tasks in Phase 1, then 45/45 tasks in Phase 2
-    // Only AFTER both training phases complete can account_type transition to 'personal'
-    // Personal accounts then follow 35/35 tasks in Set 1, then 35/35 tasks in Set 2 after reset
-    const account_type: 'training' | 'personal' = 'training';
-    const training_phase: 1 | 2 = 1;
-    const total_tasks = 45; // Training accounts always start with 45 tasks per phase
+    // CORRECT: ALL new registrations create 'personal' account type with 35/35 task layout
+    // Personal accounts: 35 tasks in Set 1, then 35 tasks in Set 2 after reset
+    // Training accounts (separate): 45 tasks in Phase 1, then 45 tasks in Phase 2
+    // Personal accounts are BLOCKED from tasks until training is completed
+    const account_type: 'training' | 'personal' = 'personal';
+    const total_tasks = 35; // Personal accounts always have 35 tasks per set
     
     // Only send essential fields - let database handle defaults for other fields
     return {
@@ -294,14 +293,13 @@ export class SupabaseService {
       email: params.email.trim().toLowerCase(),
       display_name: params.displayName || params.email.split('@')[0] || 'User',
       phone: params.phone || null,
-      vip_level: 1,  // Start with VIP1, can upgrade later
+      vip_level: 1,
       account_type: account_type,
-      training_phase: training_phase,
       total_tasks: total_tasks,
       tasks_completed: 0,
       training_completed: false,
       referral_code: `OPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-      referred_by: params.referralCode || null,  // Store referral code if provided
+      referred_by: params.referralCode || null,
       tasks_locked: false,
     };
   }
@@ -704,7 +702,7 @@ export class SupabaseService {
         }
       }
 
-      // CRITICAL FIX: Determine task count based on account_type, NOT VIP level
+      // Determine task count based on account_type
       // Training accounts: 45 tasks per phase (Phase 1: 45, Phase 2: 45)
       // Personal accounts: 35 tasks per set (Set 1: 35, Set 2: 35)
       const taskCount = userData.account_type === 'training' ? 45 : 35;

@@ -702,13 +702,20 @@ export class SupabaseService {
         }
       }
 
-      // Determine task count based on account_type
-      // Training accounts: 45 tasks per phase (Phase 1: 45, Phase 2: 45)
-      // Personal accounts: 35 tasks per set (Set 1: 35, Set 2: 35)
-      const taskCount = userData.account_type === 'training' ? 45 : 35;
-      const tasksCreated = await this.createTrainingTasks(authUserId, taskCount);
-      if (!tasksCreated) {
-        console.error('Failed to create training tasks');
+      // TRAINING COMPLETION GATE: Only create tasks for training accounts or personal accounts with completed training
+      // Personal accounts are BLOCKED from task generation until training is completed
+      if (userData.account_type === 'personal' && !userData.training_completed) {
+        console.log('[signUp] SAFE GATE: Personal account blocked - training not completed, skipping task creation');
+        console.log('[signUp] SAFE GATE: No tasks will be generated until training is verified as complete');
+      } else {
+        // Determine task count based on account_type
+        // Training accounts: 45 tasks per phase (Phase 1: 45, Phase 2: 45)
+        // Personal accounts: 35 tasks per set (Set 1: 35, Set 2: 35) - only if training completed
+        const taskCount = userData.account_type === 'training' ? 45 : 35;
+        const tasksCreated = await this.createTrainingTasks(authUserId, taskCount);
+        if (!tasksCreated) {
+          console.error('Failed to create training tasks');
+        }
       }
 
       // Send detailed Telegram notification for new account (don't block on failure)

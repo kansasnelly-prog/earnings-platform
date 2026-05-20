@@ -934,6 +934,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           user_status: dbUser.user_status
         });
 
+        // TRAINING COMPLETION GATE: Strict system check before task creation/loading
+        // Personal accounts are BLOCKED from task generation until training is completed
+        if (dbUser.account_type === 'personal' && !dbUser.training_completed) {
+          console.log('[loadUserData] SAFE GATE: Personal account blocked - training not completed');
+          console.log('[loadUserData] SAFE GATE: Forcing empty tasks state to prevent task generation');
+          setTasks([]);
+          return; // Abort immediately - skip all task creation/loading logic
+        }
+
         // Load tasks - create 35 tasks if none exist for personal account
         // For VIP1 accounts, check if tasks_completed equals 35 before creating fresh tasks
         const tasksCompleted = dbUser.tasks_completed || 0;
@@ -1742,6 +1751,16 @@ else if (
     
     isRefreshingTasks.current = true;
     lastRefreshTime.current = now;
+    
+    // TRAINING COMPLETION GATE: Strict system check before any task loading/generation
+    // Personal accounts are BLOCKED from task operations until training is completed
+    if (user.account_type === 'personal' && !user.training_completed) {
+      console.log('[refreshTasks] SAFE GATE: Personal account blocked - training not completed');
+      console.log('[refreshTasks] SAFE GATE: Forcing empty tasks state to prevent task generation');
+      setTasks([]);
+      isRefreshingTasks.current = false;
+      return; // Abort immediately - skip all task loading/generation logic
+    }
     
     // Add null checks with fallback values for VIP1
     const vipLevel = user.vip_level || 1;

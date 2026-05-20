@@ -2499,19 +2499,36 @@ else if (
       return { success: false, error: 'Amount must be greater than 0' };
     }
     
-    console.log('[requestWithdrawal] All validations passed, calling SupabaseService');
+    console.log('[requestWithdrawal] All validations passed, calling backend API');
     
-    // Create withdrawal request (removed task completion restrictions)
-    const result = await SupabaseService.createWithdrawalRequest({
-      userId: user.id,
-      email: user.email,
-      amount,
-      walletAddress,
-      walletType,
-      currentBalance
+    // Get current session for auth token
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      console.error('[requestWithdrawal] No session found');
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    // Create withdrawal request through backend API to avoid CORS issues
+    const response = await fetch('/api/create-withdrawal-request', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        userId: user.id,
+        email: user.email,
+        amount,
+        walletAddress,
+        walletType,
+        currentBalance
+      }),
     });
+
+    const result = await response.json();
     
-    console.log('[requestWithdrawal] SupabaseService result', result);
+    console.log('[requestWithdrawal] Backend API result', result);
     
     if (result.success) {
       console.log('[requestWithdrawal] Success, refreshing user data');

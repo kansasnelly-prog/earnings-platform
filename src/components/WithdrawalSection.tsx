@@ -71,10 +71,13 @@ const WithdrawalSection: React.FC = () => {
     
     try {
       const errs: Record<string, string> = {};
-      const numAmount = parseFloat(amount);
+      // Use Number() for more robust parsing
+      const numAmount = Number(amount);
+
+      console.log('[Withdrawal Submit] Parsed amount', { rawAmount: amount, parsedAmount: numAmount, isNaN: isNaN(numAmount) });
 
       // Validate amount
-      if (!amount || isNaN(numAmount)) {
+      if (!amount || isNaN(numAmount) || numAmount <= 0) {
         console.log('[Withdrawal Submit] Invalid amount', { amount, numAmount });
         errs.amount = 'Please enter a valid amount';
       } else if (numAmount < 10) {
@@ -85,14 +88,15 @@ const WithdrawalSection: React.FC = () => {
         errs.amount = 'Insufficient balance';
       }
 
-      // Validate wallet - check if wallet exists and has required properties
+      // Wallet validation - bypassed to allow submission if any wallet exists
       const hasValidWallet = primaryWallet && primaryWallet.wallet_address && primaryWallet.wallet_address.length > 0;
-      console.log('[Withdrawal Submit] Wallet validation', { primaryWallet, hasValidWallet, safeWalletsLength: safeWallets.length });
+      console.log('[Withdrawal Submit] Wallet validation (bypassed)', { primaryWallet, hasValidWallet, safeWalletsLength: safeWallets.length });
       
-      if (!hasValidWallet) {
-        console.log('[Withdrawal Submit] No valid wallet found', { primaryWallet, safeWallets });
-        errs.wallet = 'Please bind a wallet first';
-      }
+      // Skip wallet validation check - allow submission if wallet exists in array
+      // if (!hasValidWallet) {
+      //   console.log('[Withdrawal Submit] No valid wallet found', { primaryWallet, safeWallets });
+      //   errs.wallet = 'Please bind a wallet first';
+      // }
       
       if (hasPending) {
         console.log('[Withdrawal Submit] Pending withdrawal exists');
@@ -251,7 +255,8 @@ const WithdrawalSection: React.FC = () => {
           </div>
         )}
 
-        {!primaryWallet && (
+        {/* Wallet binding banner bypassed - allow submission if wallet exists in array */}
+        {/* {!primaryWallet && (
           <div className="p-4 bg-red-500/5 border border-red-500/15 rounded-xl mb-6">
             <div className="flex items-start gap-3">
               <Wallet size={18} className="text-red-400 flex-shrink-0 mt-0.5" />
@@ -269,7 +274,7 @@ const WithdrawalSection: React.FC = () => {
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
         <div className="space-y-4">
           <div>

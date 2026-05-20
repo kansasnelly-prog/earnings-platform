@@ -65,68 +65,75 @@ const WithdrawalSection: React.FC = () => {
     e.preventDefault();
     console.log('[Withdrawal Submit] Starting submission', { amount, balance, primaryWallet, safeWallets, hasPending });
     
-    const errs: Record<string, string> = {};
-    const numAmount = parseFloat(amount);
+    try {
+      const errs: Record<string, string> = {};
+      const numAmount = parseFloat(amount);
 
-    // Validate amount
-    if (!amount || isNaN(numAmount)) {
-      console.log('[Withdrawal Submit] Invalid amount', { amount, numAmount });
-      errs.amount = 'Please enter a valid amount';
-    } else if (numAmount < 10) {
-      console.log('[Withdrawal Submit] Amount below minimum', { numAmount });
-      errs.amount = 'Minimum withdrawal is $10.00';
-    } else if (numAmount > balance) {
-      console.log('[Withdrawal Submit] Insufficient balance', { numAmount, balance });
-      errs.amount = 'Insufficient balance';
-    }
+      // Validate amount
+      if (!amount || isNaN(numAmount)) {
+        console.log('[Withdrawal Submit] Invalid amount', { amount, numAmount });
+        errs.amount = 'Please enter a valid amount';
+      } else if (numAmount < 10) {
+        console.log('[Withdrawal Submit] Amount below minimum', { numAmount });
+        errs.amount = 'Minimum withdrawal is $10.00';
+      } else if (numAmount > balance) {
+        console.log('[Withdrawal Submit] Insufficient balance', { numAmount, balance });
+        errs.amount = 'Insufficient balance';
+      }
 
-    // Validate wallet - check if wallet exists and has required properties
-    const hasValidWallet = primaryWallet && primaryWallet.wallet_address && primaryWallet.wallet_address.length > 0;
-    console.log('[Withdrawal Submit] Wallet validation', { primaryWallet, hasValidWallet, safeWalletsLength: safeWallets.length });
-    
-    if (!hasValidWallet) {
-      console.log('[Withdrawal Submit] No valid wallet found', { primaryWallet, safeWallets });
-      errs.wallet = 'Please bind a wallet first';
-    }
-    
-    if (hasPending) {
-      console.log('[Withdrawal Submit] Pending withdrawal exists');
-      errs.amount = 'You already have a pending withdrawal request. Please wait for admin approval.';
-    }
+      // Validate wallet - check if wallet exists and has required properties
+      const hasValidWallet = primaryWallet && primaryWallet.wallet_address && primaryWallet.wallet_address.length > 0;
+      console.log('[Withdrawal Submit] Wallet validation', { primaryWallet, hasValidWallet, safeWalletsLength: safeWallets.length });
+      
+      if (!hasValidWallet) {
+        console.log('[Withdrawal Submit] No valid wallet found', { primaryWallet, safeWallets });
+        errs.wallet = 'Please bind a wallet first';
+      }
+      
+      if (hasPending) {
+        console.log('[Withdrawal Submit] Pending withdrawal exists');
+        errs.amount = 'You already have a pending withdrawal request. Please wait for admin approval.';
+      }
 
-    setErrors(errs);
-    if (Object.keys(errs).length > 0) {
-      console.log('[Withdrawal Submit] Validation failed', errs);
-      // Show toast for validation errors
-      Object.values(errs).forEach(error => {
-        console.error('[Withdrawal Submit] Error:', error);
-      });
-      return;
-    }
+      setErrors(errs);
+      if (Object.keys(errs).length > 0) {
+        console.log('[Withdrawal Submit] Validation failed', errs);
+        // Show toast for validation errors
+        Object.values(errs).forEach(error => {
+          console.error('[Withdrawal Submit] Error:', error);
+        });
+        return;
+      }
 
-    console.log('[Withdrawal Submit] Validation passed, proceeding with withdrawal');
-    setSubmitting(true);
-    
-    const result = await requestWithdrawal(
-      numAmount,
-      primaryWallet.wallet_address,
-      primaryWallet.wallet_type || 'TRC20'
-    );
-    
-    if (result.success) {
-      setAmount('');
-      // Refresh withdrawal history
-      const history = await getWithdrawalHistory();
-      setWithdrawals(history);
-      setHasPending(true);
-      // Refresh user data to update balance
-      const { refreshUser } = useAppContext();
-      await refreshUser();
-    } else {
-      setErrors({ amount: result.error || 'Failed to submit withdrawal request' });
+      console.log('[Withdrawal Submit] Validation passed, proceeding with withdrawal');
+      setSubmitting(true);
+      
+      const result = await requestWithdrawal(
+        numAmount,
+        primaryWallet.wallet_address,
+        primaryWallet.wallet_type || 'TRC20'
+      );
+      
+      if (result.success) {
+        setAmount('');
+        // Refresh withdrawal history
+        const history = await getWithdrawalHistory();
+        setWithdrawals(history);
+        setHasPending(true);
+        // Refresh user data to update balance
+        const { refreshUser } = useAppContext();
+        await refreshUser();
+      } else {
+        setErrors({ amount: result.error || 'Failed to submit withdrawal request' });
+      }
+      
+      setSubmitting(false);
+    } catch (error: any) {
+      console.error('[Withdrawal Submit] Exception caught:', error);
+      window.alert("Withdrawal Error: " + (error.message || 'Unknown error occurred'));
+      setSubmitting(false);
+      setErrors({ amount: error.message || 'An unexpected error occurred' });
     }
-    
-    setSubmitting(false);
   };
 
   const getStatusBadge = (status: string) => {

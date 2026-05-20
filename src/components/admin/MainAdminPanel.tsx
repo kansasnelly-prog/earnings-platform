@@ -7,7 +7,7 @@ import { SupabaseService } from '@/services/supabaseService';
 import {
   LayoutDashboard, Users, ArrowDownToLine, RefreshCw, Shield, ChevronLeft,
   BarChart3, Activity, LogIn, Headphones, Settings, UserPlus,
-  AlertTriangle, DollarSign, CheckCircle, Search, ShoppingBag, Sparkles
+  AlertTriangle, DollarSign, CheckCircle, Search, ShoppingBag, Sparkles, Key
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import AccountCreation from './AccountCreation';
 import EnhancedPendingOrdersManager from './EnhancedPendingOrdersManager';
 import ProductCatalogManager from './ProductCatalogManager';
 import AdminUsers from './AdminUsers';
+import AdminPasswordReset from './AdminPasswordReset';
 import { sendTelegramNotification } from '@/lib/realtime';
 
 interface RealUser {
@@ -74,7 +75,7 @@ interface RealStats {
 const MainAdminPanel: React.FC = () => {
   console.log("🚀 MainAdminPanel COMPONENT RENDERED");
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'pending-orders' | 'customer-service' | 'product-catalog' | 'admin-controls' | 'create-account'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'pending-orders' | 'customer-service' | 'product-catalog' | 'admin-controls' | 'create-account' | 'password-reset'>('overview');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -891,6 +892,7 @@ const MainAdminPanel: React.FC = () => {
               { id: 'product-catalog', label: 'Product Catalog', icon: ShoppingBag },
               { id: 'admin-controls', label: 'Admin Controls', icon: Settings },
               { id: 'create-account', label: 'Create Account', icon: UserPlus },
+              { id: 'password-reset', label: 'Password Reset', icon: Key },
               { id: 'ai-assistant', label: "KANSAS NELLY'S AI", icon: Sparkles, external: true },
             ].map((tab) => (
               <button
@@ -1527,6 +1529,11 @@ const MainAdminPanel: React.FC = () => {
             {/* Create Account Tab */}
             {activeTab === 'create-account' && (
               <AccountCreation onAccountCreated={loadData} />
+            )}
+
+            {/* Password Reset Tab */}
+            {activeTab === 'password-reset' && (
+              <AdminPasswordReset />
             )}
           </>
         )}

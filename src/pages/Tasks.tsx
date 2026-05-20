@@ -220,36 +220,37 @@ const Tasks: React.FC = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Back to Dashboard</span>
-            </button>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-xl border border-amber-500/30">
-                <Target className="w-5 h-5 text-amber-400" />
-                <span className="text-amber-200 font-semibold text-base">
-                  {!isTraining && user?.vip_level === 1 
-                    ? `${currentSetDisplay} (${displayCompletedCount}/${currentSetTotal})` 
-                    : `${completedCount}/${totalTasks} Tasks`}
-                </span>
+  // TRAINING COMPLETION GATE: Evaluate at absolute top of render lifecycle
+  // Personal accounts are BLOCKED until training is completed
+  // If blocked, immediately break rendering chain and return lock screen
+  if (isPersonalBlocked) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        {/* Header */}
+        <div className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50">
+          <div className="max-w-6xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => navigate('/')}
+                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="font-medium">Back to Dashboard</span>
+              </button>
+              
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-xl border border-amber-500/30">
+                  <Target className="w-5 h-5 text-amber-400" />
+                  <span className="text-amber-200 font-semibold text-base">
+                    {currentSetDisplay} (0/{currentSetTotal})
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Training Completion Gate - Lock Screen for Personal Accounts */}
-      {isPersonalBlocked && (
+        {/* Training Completion Gate - Lock Screen for Personal Accounts */}
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="relative p-8 bg-gradient-to-r from-red-600/20 via-rose-600/15 to-orange-600/10 border border-red-500/20 rounded-2xl overflow-hidden">
             <div className="absolute inset-0 pointer-events-none">
@@ -278,7 +279,37 @@ const Tasks: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Back to Dashboard</span>
+            </button>
+            
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-xl border border-amber-500/30">
+                <Target className="w-5 h-5 text-amber-400" />
+                <span className="text-amber-200 font-semibold text-base">
+                  {!isTraining && user?.vip_level === 1 
+                    ? `${currentSetDisplay} (${displayCompletedCount}/${currentSetTotal})` 
+                    : `${completedCount}/${totalTasks} Tasks`}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* VIP1 Completion Alert Banner */}
       {isFirstSetComplete && (

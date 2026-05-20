@@ -1682,6 +1682,7 @@ export class SupabaseService {
       console.log('[Withdrawal] Creating withdrawal request:', params);
       
       // Check if there's already a pending withdrawal for this user
+      console.log('[Withdrawal] Checking for existing pending withdrawals');
       const { data: existingPending, error: checkError } = await supabase
         .from('withdrawals')
         .select('*')
@@ -1698,6 +1699,8 @@ export class SupabaseService {
         return { success: false, error: 'You already have a pending withdrawal request. Please wait for admin approval.' };
       }
       
+      console.log('[Withdrawal] No existing pending withdrawal, proceeding with insert');
+      
       // Create the withdrawal request
       const withdrawalData = {
         user_id: params.userId,
@@ -1711,6 +1714,8 @@ export class SupabaseService {
         updated_at: new Date().toISOString()
       };
       
+      console.log('[Withdrawal] Inserting withdrawal data:', withdrawalData);
+      
       const { data, error } = await supabase
         .from('withdrawals')
         .insert(withdrawalData)
@@ -1719,23 +1724,33 @@ export class SupabaseService {
       
       if (error) {
         console.error('[Withdrawal] Error creating withdrawal:', error);
+        console.error('[Withdrawal] Error details:', { code: error.code, message: error.message, details: error.details });
         return { success: false, error: error.message };
       }
       
+      console.log('[Withdrawal] Withdrawal record created successfully:', data.id);
+      
       // Create a transaction record for this withdrawal request
-      await this.createTransaction({
-        user_id: params.userId,
-        type: 'withdrawal_request',
-        amount: params.amount,
-        description: `Withdrawal request of $${params.amount.toFixed(2)} to ${params.walletType} wallet`,
-        status: 'pending',
-        metadata: {
-          withdrawal_id: data.id,
-          wallet_address: params.walletAddress,
-          wallet_type: params.walletType,
-          balance_before: params.currentBalance
-        }
-      });
+      console.log('[Withdrawal] Creating transaction record');
+      try {
+        await this.createTransaction({
+          user_id: params.userId,
+          type: 'withdrawal_request',
+          amount: params.amount,
+          description: `Withdrawal request of $${params.amount.toFixed(2)} to ${params.walletType} wallet`,
+          status: 'pending',
+          metadata: {
+            withdrawal_id: data.id,
+            wallet_address: params.walletAddress,
+            wallet_type: params.walletType,
+            balance_before: params.currentBalance
+          }
+        });
+        console.log('[Withdrawal] Transaction record created successfully');
+      } catch (transactionError: any) {
+        console.error('[Withdrawal] Error creating transaction record:', transactionError);
+        // Don't fail the withdrawal if transaction creation fails
+      }
       
       console.log('[Withdrawal] Created successfully:', data.id);
       
@@ -1750,6 +1765,7 @@ export class SupabaseService {
       return { success: true, withdrawalId: data.id };
     } catch (error: any) {
       console.error('[Withdrawal] Exception creating request:', error);
+      console.error('[Withdrawal] Exception details:', { message: error.message, stack: error.stack });
       return { success: false, error: error.message || 'Failed to create withdrawal request' };
     }
   }

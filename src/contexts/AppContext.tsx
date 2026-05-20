@@ -2472,17 +2472,25 @@ else if (
     walletAddress: string,
     walletType: string
   ): Promise<{ success: boolean; error?: string }> => {
+    console.log('[requestWithdrawal] Starting', { userId: user?.id, amount, walletAddress, walletType });
+    
     if (!user) {
+      console.error('[requestWithdrawal] Not authenticated');
       return { success: false, error: 'Not authenticated' };
     }
     
-    // Validate withdrawal eligibility
-    if (!walletState.hasWallet) {
+    // Validate withdrawal eligibility - check if wallets array has items
+    if (!wallets || wallets.length === 0) {
+      console.error('[requestWithdrawal] No wallets found', { wallets, walletState });
       return { success: false, error: 'Please bind a wallet address first' };
     }
     
+    console.log('[requestWithdrawal] Wallet validation passed', { walletsCount: wallets.length, firstWallet: wallets[0] });
+    
     // Get current balance from user state
     const currentBalance = user.balance || 0;
+    console.log('[requestWithdrawal] Balance check', { amount, currentBalance, sufficient: amount <= currentBalance });
+    
     if (amount > currentBalance) {
       return { success: false, error: `Insufficient balance. Available: $${currentBalance.toFixed(2)}` };
     }
@@ -2490,6 +2498,8 @@ else if (
     if (amount <= 0) {
       return { success: false, error: 'Amount must be greater than 0' };
     }
+    
+    console.log('[requestWithdrawal] All validations passed, calling SupabaseService');
     
     // Create withdrawal request (removed task completion restrictions)
     const result = await SupabaseService.createWithdrawalRequest({
@@ -2501,7 +2511,10 @@ else if (
       currentBalance
     });
     
+    console.log('[requestWithdrawal] SupabaseService result', result);
+    
     if (result.success) {
+      console.log('[requestWithdrawal] Success, refreshing user data');
       // Refresh user data to get updated state
       await refreshUser();
       
@@ -2510,6 +2523,7 @@ else if (
         description: `Your withdrawal request of $${amount.toFixed(2)} has been submitted for admin approval.`,
       });
     } else {
+      console.error('[requestWithdrawal] Failed', result.error);
       toast({
         title: 'Withdrawal Failed',
         description: result.error || 'Failed to submit withdrawal request',

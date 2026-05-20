@@ -60,13 +60,8 @@ const WithdrawalSection: React.FC = () => {
   
   console.log('[WithdrawalSection] Wallet state', { safeWallets, primaryWallet, safeWalletsLength: safeWallets.length });
 
-  const handleWithdraw = async (e: React.MouseEvent) => {
-    console.log("!!! NATIVE BUTTON CLICK REGISTERED !!!");
-    window.alert("Submitting withdrawal raw data...");
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  const handleWithdraw = async (e: React.FormEvent) => {
+    e.preventDefault();
     console.log('[Withdrawal Submit] Starting submission', { amount, balance, primaryWallet, safeWallets, hasPending });
     
     try {
@@ -276,7 +271,7 @@ const WithdrawalSection: React.FC = () => {
           </div>
         )} */}
 
-        <div className="space-y-4">
+        <form onSubmit={handleWithdraw} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1.5">Withdrawal Amount (USD)</label>
             <div className="relative">
@@ -316,8 +311,7 @@ const WithdrawalSection: React.FC = () => {
               Max: ${balance.toFixed(2)}
             </button>
             <button
-              type="button"
-              onClick={handleWithdraw}
+              type="submit"
               disabled={submitting || isLoading || hasPending}
               className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -330,7 +324,7 @@ const WithdrawalSection: React.FC = () => {
               )}
             </button>
           </div>
-        </div>
+        </form>
       </div>
 
       {/* Withdrawal History */}

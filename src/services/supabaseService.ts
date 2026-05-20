@@ -284,8 +284,9 @@ export class SupabaseService {
     // Personal accounts: 35 tasks in Set 1, then 35 tasks in Set 2 after reset
     // Training accounts (separate): 45 tasks in Phase 1, then 45 tasks in Phase 2
     // Personal accounts are BLOCKED from tasks until training is completed
+    // CRITICAL: Do NOT insert total_tasks into database - it doesn't exist in schema
+    // Task count is calculated dynamically in AppContext.tsx based on account_type
     const account_type: 'training' | 'personal' = 'personal';
-    const total_tasks = 35; // Personal accounts always have 35 tasks per set
     
     // Only send essential fields - let database handle defaults for other fields
     return {
@@ -295,7 +296,6 @@ export class SupabaseService {
       phone: params.phone || null,
       vip_level: 1,
       account_type: account_type,
-      total_tasks: total_tasks,
       tasks_completed: 0,
       training_completed: false,
       referral_code: `OPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,

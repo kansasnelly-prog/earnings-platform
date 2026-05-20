@@ -280,13 +280,13 @@ export class SupabaseService {
     phone?: string | null;
     referralCode?: string | null;
   }) {
-    // Check if user was referred using a MASTER referral code (VIP2 training account)
-    // Only master codes create VIP2 training accounts
-    // Regular referral codes create VIP1 personal accounts
-    const isMasterReferralCode = params.referralCode && 
-      this.MASTER_REFERRAL_CODES.includes(params.referralCode.toUpperCase());
-    
-    const isTrainingAccount = isMasterReferralCode;
+    // CRITICAL FIX: ALL new accounts MUST start as training accounts
+    // Training accounts complete 45/45 tasks in Phase 1, then 45/45 tasks in Phase 2
+    // Only AFTER both training phases complete can account_type transition to 'personal'
+    // Personal accounts then follow 35/35 tasks in Set 1, then 35/35 tasks in Set 2 after reset
+    const account_type: 'training' | 'personal' = 'training';
+    const training_phase: 1 | 2 = 1;
+    const total_tasks = 45; // Training accounts always start with 45 tasks per phase
     
     // Only send essential fields - let database handle defaults for other fields
     return {
@@ -294,11 +294,15 @@ export class SupabaseService {
       email: params.email.trim().toLowerCase(),
       display_name: params.displayName || params.email.split('@')[0] || 'User',
       phone: params.phone || null,
-      vip_level: isTrainingAccount ? 2 : 1,  // VIP2 for training (master code only), VIP1 for personal (default)
-      account_type: isTrainingAccount ? 'training' as const : 'personal' as const,
+      vip_level: 1,  // Start with VIP1, can upgrade later
+      account_type: account_type,
+      training_phase: training_phase,
+      total_tasks: total_tasks,
+      tasks_completed: 0,
+      training_completed: false,
       referral_code: `OPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       referred_by: params.referralCode || null,  // Store referral code if provided
-      tasks_locked: false,  // Personal accounts are no longer locked - they have normal VIP1 workflow
+      tasks_locked: false,
     };
   }
 
@@ -700,10 +704,10 @@ export class SupabaseService {
         }
       }
 
-      // Determine task count based on VIP level
-      // VIP1 (personal): 35 tasks (2 sets of 35)
-      // VIP2 (training): 45 tasks (phases 1 and 2)
-      const taskCount = userData.vip_level === 2 ? 45 : 35;
+      // CRITICAL FIX: Determine task count based on account_type, NOT VIP level
+      // Training accounts: 45 tasks per phase (Phase 1: 45, Phase 2: 45)
+      // Personal accounts: 35 tasks per set (Set 1: 35, Set 2: 35)
+      const taskCount = userData.account_type === 'training' ? 45 : 35;
       const tasksCreated = await this.createTrainingTasks(authUserId, taskCount);
       if (!tasksCreated) {
         console.error('Failed to create training tasks');
@@ -977,27 +981,31 @@ export class SupabaseService {
 
   static async createTrainingTasks(userId: string, taskCount: number = 35): Promise<boolean> {
     try {
-      // Get user's VIP level and personal cycle
+      // Get user's account_type to determine task count
       const { data: user, error: userError } = await supabase
         .from('users')
-        .select('vip_level, account_type, personal_cycle')
+        .select('vip_level, account_type, personal_cycle, training_phase')
         .eq('id', userId)
         .single();
 
       if (userError) {
-        console.error('Error fetching user for VIP level:', userError);
+        console.error('Error fetching user for account_type:', userError);
         return false;
       }
 
+      const accountType = user?.account_type || 'training';
       const vipLevel = user?.vip_level || 1;
-      const isTraining = user?.account_type === 'training';
-      const isPersonal = user?.account_type === 'personal';
+      const trainingPhase = user?.training_phase || 1;
+      const isTraining = accountType === 'training';
+      const isPersonal = accountType === 'personal';
       const personalCycle = user?.personal_cycle || 1;
       const isVIP1Personal = isPersonal && vipLevel === 1;
 
-      // Use provided taskCount (default 35 for VIP1 personal accounts)
-      // Training accounts can have 45 tasks
-      const actualTaskCount = taskCount;
+      // CRITICAL: Determine task count based on account_type, NOT VIP level
+      // Training accounts: 45 tasks per phase (Phase 1: 45, Phase 2: 45)
+      // Personal accounts: 35 tasks per set (Set 1: 35, Set 2: 35)
+      const actualTaskCount = isTraining ? 45 : (isPersonal ? 35 : 45);
+      console.log(`[createTrainingTasks] Creating ${actualTaskCount} tasks for ${accountType} account (user: ${userId})`);
 
       // Define commission rate for logging (outside task loop scope)
       const commissionRate = isPersonal ? 0.005 : this.getVIPCommissionRate(vipLevel, isTraining);

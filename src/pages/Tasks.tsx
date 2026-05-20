@@ -71,11 +71,17 @@ const Tasks: React.FC = () => {
   const tasksCompleted = user?.tasks_completed || 0;
   const isLockedAwaitingReset = user?.tasks_completed === 35;
 
-  // For VIP1 personal accounts, handle 35/35 completion state
+  // CRITICAL FIX: Use account_type instead of VIP level for task count logic
+  // Training accounts: 45 tasks per phase (Phase 1: 45, Phase 2: 45)
+  // Personal accounts: 35 tasks per set (Set 1: 35, Set 2: 35)
+  const isPersonal = user?.account_type === 'personal';
+  const tasksPerSet = isPersonal ? 35 : 45;
+  
+  // For personal accounts, handle 35/35 completion state
   // Rely primarily on user.tasks_completed from database, not local completedCount from tasks array
   // This ensures correct state even when tasks array is empty after customer service reset
-  const isFirstSetComplete = !isTraining && user?.vip_level === 1 && user?.tasks_completed === 35;
-  const isSecondSetComplete = !isTraining && user?.vip_level === 1 && user?.tasks_completed === 70;
+  const isFirstSetComplete = isPersonal && user?.tasks_completed === tasksPerSet;
+  const isSecondSetComplete = isPersonal && user?.tasks_completed === tasksPerSet * 2;
   const totalReward = user?.total_earned || 0;
 
   // Training account completion state
@@ -84,16 +90,16 @@ const Tasks: React.FC = () => {
   // Show CS button when tasks are completed or reset is needed
   const showTaskCustomerService = isFirstSetComplete || isSecondSetComplete || isTrainingComplete || isLockedAwaitingReset;
 
-  // For VIP1 personal accounts, calculate current set display
-  // Only switch to Set 2 when tasks_completed > 35 (after customer service reset)
-  const currentSetDisplay = !isTraining && user?.vip_level === 1 && user?.tasks_completed > 35 ? 'Set 2' : 'Set 1';
-  const currentSetCompleted = !isTraining && user?.vip_level === 1 && user?.tasks_completed > 35 
-    ? Math.min(completedCount - 35, 35) 
+  // For personal accounts, calculate current set display
+  // Only switch to Set 2 when tasks_completed > tasksPerSet (after customer service reset)
+  const currentSetDisplay = isPersonal && user?.tasks_completed > tasksPerSet ? 'Set 2' : (isTraining ? `Phase ${user?.training_phase || 1}` : 'Set 1');
+  const currentSetCompleted = isPersonal && user?.tasks_completed > tasksPerSet 
+    ? Math.min(completedCount - tasksPerSet, tasksPerSet) 
     : completedCount;
-  const currentSetTotal = 35;
+  const currentSetTotal = tasksPerSet;
 
   // For progress display, use actual completed count to prevent 0/35 when first set complete
-  const displayCompletedCount = isFirstSetComplete ? 35 : currentSetCompleted;
+  const displayCompletedCount = isFirstSetComplete ? tasksPerSet : currentSetCompleted;
   const displayProgressPercent = currentSetTotal > 0 ? (displayCompletedCount / currentSetTotal) * 100 : 0;
 
   // VIP1 commission rate: 0.5% per task, total $10.25 across 35 tasks = $0.292857... per task

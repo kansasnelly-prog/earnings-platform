@@ -59,11 +59,14 @@ const AdminCustomerService: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'closed' | 'pending'>('all');
   const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'retrying'>('connected');
   const isFetchingRef = useRef(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const subscriptionsRef = useRef<any[]>([]);
   const processedMessageIds = useRef<Set<string>>(new Set());
+  const retryCountRef = useRef(0);
+  const maxRetries = 5;
   
   // New states for AI features
   const [selectedUserData, setSelectedUserData] = useState<UserData | null>(null);
@@ -81,6 +84,43 @@ const AdminCustomerService: React.FC = () => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  // Exponential backoff retry with jitter
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const handleNetworkError = async () => {
+    if (retryCountRef.current >= maxRetries) {
+      setConnectionStatus('disconnected');
+      toast.error('Connection lost. Please refresh the page.', {
+        duration: 10000,
+        id: 'connection-lost'
+      });
+      return;
+    }
+
+    retryCountRef.current++;
+    setConnectionStatus('retrying');
+    const delay = Math.min(1000 * Math.pow(2, retryCountRef.current) + Math.random() * 500, 30000);
+    
+    console.log(`[AdminCustomerService] Network error. Retrying in ${Math.round(delay)}ms (attempt ${retryCountRef.current}/${maxRetries})`);
+    
+    if (retryCountRef.current === 1) {
+      toast.loading('Connection lost. Retrying...', { id: 'connection-retry' });
+    }
+
+    await sleep(delay);
+    
+    // Retry the fetch
+    try {
+      await fetchConversations();
+      setConnectionStatus('connected');
+      retryCountRef.current = 0;
+      toast.success('Connection restored', { id: 'connection-retry' });
+    } catch (err) {
+      console.error('[AdminCustomerService] Retry failed:', err);
+      handleNetworkError();
+    }
   };
 
   const formatTime = (timestamp: string) => {
@@ -433,6 +473,8 @@ const AdminCustomerService: React.FC = () => {
       if (!isMounted) return;
       try {
         await fetchConversations();
+        setConnectionStatus('connected');
+        retryCountRef.current = 0;
       } catch (err) {
         console.error('Failed to load conversations:', err);
         if (isMounted) setError('Failed to load conversations');
@@ -444,7 +486,14 @@ const AdminCustomerService: React.FC = () => {
     // Poll for new conversations every 15 seconds (reduced from 5s to avoid excessive polling)
     const interval = setInterval(() => {
       if (isMounted) {
-        fetchConversations();
+        try {
+          fetchConversations();
+          setConnectionStatus('connected');
+          retryCountRef.current = 0;
+        } catch (err) {
+          console.error('[AdminCustomerService] Polling error:', err);
+          handleNetworkError();
+        }
       }
     }, 15000);
 
@@ -480,9 +529,16 @@ const AdminCustomerService: React.FC = () => {
 
     const loadAdminMessages = async () => {
       if (!isMounted) return;
-      await fetchMessages(selectedConversation.id);
-      // Fetch user data
-      await fetchUserData(selectedConversation.user_id);
+      try {
+        await fetchMessages(selectedConversation.id);
+        // Fetch user data
+        await fetchUserData(selectedConversation.user_id);
+        setConnectionStatus('connected');
+        retryCountRef.current = 0;
+      } catch (err) {
+        console.error('[AdminCustomerService] Failed to load messages:', err);
+        handleNetworkError();
+      }
     };
 
     loadAdminMessages();
@@ -490,7 +546,14 @@ const AdminCustomerService: React.FC = () => {
     // Poll for new messages every 10 seconds (minimum to avoid aggressive polling)
     pollIntervalRef.current = setInterval(() => {
       if (isMounted && selectedConversation?.id) {
-        fetchMessages(selectedConversation.id, true);
+        try {
+          fetchMessages(selectedConversation.id, true);
+          setConnectionStatus('connected');
+          retryCountRef.current = 0;
+        } catch (err) {
+          console.error('[AdminCustomerService] Message polling error:', err);
+          handleNetworkError();
+        }
       }
     }, 10000);  
 
@@ -916,7 +979,26 @@ const AdminCustomerService: React.FC = () => {
           {/* Header */}
           <div className="p-4 border-b border-white/10">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Customer Support</h2>
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-xl font-bold text-slate-900">Customer Support</h2>
+                {/* Connection Status Indicator */}
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-2 h-2 rounded-full ${
+                    connectionStatus === 'connected' ? 'bg-green-500 animate-pulse' :
+                    connectionStatus === 'retrying' ? 'bg-amber-500 animate-pulse' :
+                    'bg-red-500'
+                  }`} />
+                  <span className={`text-xs font-medium ${
+                    connectionStatus === 'connected' ? 'text-green-600' :
+                    connectionStatus === 'retrying' ? 'text-amber-600' :
+                    'text-red-600'
+                  }`}>
+                    {connectionStatus === 'connected' ? 'Connected' :
+                     connectionStatus === 'retrying' ? 'Retrying...' :
+                     'Disconnected'}
+                  </span>
+                </div>
+              </div>
               <p className="text-slate-500 text-sm">
                 {conversations.length} total • {conversations.filter(c => c.status === 'open').length} open • {conversations.filter(c => c.status === 'pending').length} pending
               </p>

@@ -1,60 +1,51 @@
-// Server-side API route for admin password reset
-// Secure backend function - requires admin authentication
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-exports.handler = async (event, context) => {
-  // Only allow POST requests
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
-  }
-
+export async function POST(request: NextRequest) {
   try {
-    const { email, newPassword } = JSON.parse(event.body);
+    const body = await request.json();
+    const { email, newPassword } = body;
 
     // Validate required fields
     if (!email || !newPassword) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Missing required fields: email, newPassword' })
-      };
+      return NextResponse.json(
+        { error: 'Missing required fields: email, newPassword' },
+        { status: 400 }
+      );
     }
 
     // Validate password strength (minimum 6 characters)
     if (newPassword.length < 6) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Password must be at least 6 characters long' })
-      };
+      return NextResponse.json(
+        { error: 'Password must be at least 6 characters long' },
+        { status: 400 }
+      );
     }
 
-    // Import supabase
-    const { createClient } = require('@supabase/supabase-js');
     const supabaseUrl = process.env.VITE_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Supabase configuration missing' })
-      };
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
     }
 
     // Verify admin using logged-in user
-    const authHeader = event.headers.authorization;
+    const authHeader = request.headers.get('authorization');
 
     if (!authHeader) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'No auth token' })
-      };
+      return NextResponse.json(
+        { error: 'No auth token' },
+        { status: 401 }
+      );
     }
 
     // Get logged-in user from token
     const userClient = createClient(
       supabaseUrl,
-      process.env.VITE_SUPABASE_ANON_KEY,
+      process.env.VITE_SUPABASE_ANON_KEY!,
       {
         global: {
           headers: {
@@ -68,18 +59,18 @@ exports.handler = async (event, context) => {
       await userClient.auth.getUser(authHeader.replace('Bearer ', ''));
 
     if (userError || !user) {
-      return {
-        statusCode: 403,
-        body: JSON.stringify({ error: 'Unauthorized user' })
-      };
+      return NextResponse.json(
+        { error: 'Unauthorized user' },
+        { status: 403 }
+      );
     }
 
     // Verify admin email
     if (user.email !== "kansasnelly@gmail.com") {
-      return {
-        statusCode: 403,
-        body: JSON.stringify({ error: 'Not admin' })
-      };
+      return NextResponse.json(
+        { error: 'Not admin' },
+        { status: 403 }
+      );
     }
 
     // Create admin client with service role key
@@ -99,10 +90,10 @@ exports.handler = async (event, context) => {
 
     if (fetchError || !userData) {
       console.error('[Admin Password Reset] User not found:', email);
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'User not found' })
-      };
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
     }
 
     // Update password using Supabase Auth Admin API
@@ -113,29 +104,26 @@ exports.handler = async (event, context) => {
 
     if (updateError) {
       console.error('[Admin Password Reset] Error updating password:', updateError);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Failed to update password: ' + updateError.message })
-      };
+      return NextResponse.json(
+        { error: 'Failed to update password: ' + updateError.message },
+        { status: 500 }
+      );
     }
 
     console.log(`[Admin Password Reset] Password updated for user: ${userData.email} (${userData.display_name})`);
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ 
-        success: true, 
-        message: 'Password updated successfully',
-        userEmail: userData.email,
-        displayName: userData.display_name
-      })
-    };
+    return NextResponse.json({
+      success: true,
+      message: 'Password updated successfully',
+      userEmail: userData.email,
+      displayName: userData.display_name
+    });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Admin Password Reset] Exception:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error', message: error.message })
-    };
+    return NextResponse.json(
+      { error: 'Internal server error', message: error.message },
+      { status: 500 }
+    );
   }
-};
+}

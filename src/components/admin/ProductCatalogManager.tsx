@@ -605,6 +605,7 @@ const ProductCatalogManager: React.FC = () => {
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       loading="lazy"
+                      crossOrigin="anonymous"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';

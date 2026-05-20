@@ -751,12 +751,14 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
                             src={checkpoint.product1_image} 
                             alt=""
                             className="w-10 h-10 rounded border border-slate-600 bg-slate-800 object-cover"
+                            crossOrigin="anonymous"
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/40x40/334155/475569?text=P1'; }}
                           />
                           <img 
                             src={checkpoint.product2_image} 
                             alt=""
                             className="w-10 h-10 rounded border border-slate-600 bg-slate-800 object-cover"
+                            crossOrigin="anonymous"
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/40x40/334155/475569?text=P2'; }}
                           />
                         </div>
@@ -812,6 +814,7 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
                         src={selectedCheckpoint.product1_image} 
                         alt=""
                         className="w-full h-20 object-cover rounded mb-2"
+                        crossOrigin="anonymous"
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x80/334155/475569?text=P1'; }}
                       />
                       <p className="text-xs text-slate-400 truncate">{selectedCheckpoint.product1_name}</p>
@@ -822,6 +825,7 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
                         src={selectedCheckpoint.product2_image} 
                         alt=""
                         className="w-full h-20 object-cover rounded mb-2"
+                        crossOrigin="anonymous"
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x80/334155/475569?text=P2'; }}
                       />
                       <p className="text-xs text-slate-400 truncate">{selectedCheckpoint.product2_name}</p>

@@ -326,6 +326,7 @@ const AdminTasksManagement: React.FC = () => {
                   src={product.image}
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  crossOrigin="anonymous"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=400';
                   }}
@@ -511,6 +512,7 @@ const AdminTasksManagement: React.FC = () => {
                         src={imagePreview}
                         alt="Preview"
                         className="w-full h-full object-contain"
+                        crossOrigin="anonymous"
                         onError={() => setImagePreview(null)}
                       />
                     </div>

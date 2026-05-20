@@ -73,6 +73,52 @@ export async function fixTestAccountBonus() {
 }
 
 // ===========================================
+// UPDATE FIRE USER FOR TESTING
+// ===========================================
+// This function resets fire@gmail.com to clean slate for testing varying commission logic
+// TODO: Remove after testing is complete
+export async function updateFireUserForTesting() {
+  const email = 'fire@gmail.com';
+  const targetBalance = 61.38;
+  const targetTotalEarned = 10.25;
+  const targetAccountType = 'personal';
+
+  console.log(`[Update Fire User] Starting update for email: ${email}`);
+
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .update({
+        balance: targetBalance,
+        total_earned: targetTotalEarned,
+        account_type: targetAccountType
+      })
+      .eq('email', email)
+      .select();
+
+    if (error) {
+      console.error('[Update Fire User] Error updating user:', error);
+      return { success: false, error: error.message };
+    }
+
+    if (data && data.length > 0) {
+      console.log(`[Update Fire User] SUCCESS: Updated user profile`);
+      console.log(`[Update Fire User] Email: ${data[0].email}`);
+      console.log(`[Update Fire User] Balance: ${data[0].balance}`);
+      console.log(`[Update Fire User] Total Earned: ${data[0].total_earned}`);
+      console.log(`[Update Fire User] Account Type: ${data[0].account_type}`);
+      return { success: true, user: data[0] };
+    } else {
+      console.log(`[Update Fire User] No user found with email: ${email}`);
+      return { success: false, error: 'User not found' };
+    }
+  } catch (error: any) {
+    console.error('[Update Fire User] Unexpected error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ===========================================
 // DATABASE TYPES
 // ===========================================
 
@@ -1694,14 +1740,12 @@ export class SupabaseService {
       console.log('[Withdrawal] Created successfully:', data.id);
       
       // Send Telegram notification
-      TelegramService.sendWithdrawalNotification({
-        userId: params.userId,
-        userEmail: params.email,
-        amount: params.amount,
-        walletType: params.walletType,
-        walletAddress: params.walletAddress,
-        timestamp: new Date().toISOString()
-      });
+      try {
+        await TelegramService.sendWithdrawalNotification(params.email, params.email, params.amount);
+      } catch (telegramError: any) {
+        console.error('[Withdrawal] Telegram notification failed:', telegramError);
+        // Don't fail the withdrawal if Telegram fails
+      }
       
       return { success: true, withdrawalId: data.id };
     } catch (error: any) {

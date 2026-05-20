@@ -2329,13 +2329,15 @@ else if (
     }
 
     try {
-      console.log('[addWallet] Checking for existing wallets');
-      // Check if wallet already exists for this user
+      // Normalize wallet address to lowercase for case-insensitive comparison
+      const normalizedWalletAddress = walletAddress.toLowerCase().trim();
+      
+      console.log('[addWallet] Checking for existing wallets (case-insensitive)');
+      // Check if wallet already exists for ANY active user (case-insensitive)
       const { data: existingWallets, error: checkError } = await supabase
         .from('wallets')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('wallet_address', walletAddress);
+        .select('id, user_id, wallet_address')
+        .ilike('wallet_address', normalizedWalletAddress);
 
       console.log('[addWallet] Existing wallet check completed', { existingWallets, checkError });
 
@@ -2346,13 +2348,23 @@ else if (
       }
 
       if (existingWallets && existingWallets.length > 0) {
-        console.log('[Wallet Duplicate] Wallet already exists', { userId: user.id, walletAddress });
-        toast({ title: 'Wallet Already Exists', description: 'This wallet address is already bound to your account', variant: 'destructive' });
-        return false;
+        // Check if any of these wallets belong to active users (not deleted/suspended)
+        const { data: activeUsers } = await supabase
+          .from('users')
+          .select('id, user_status')
+          .in('id', existingWallets.map(w => w.user_id))
+          .in('user_status', ['active']);
+        
+        // Only block if wallet is bound to an active user
+        if (activeUsers && activeUsers.length > 0) {
+          console.log('[Wallet Duplicate] Wallet already bound to active user', { userId: user.id, walletAddress });
+          toast({ title: 'Wallet Already Exists', description: 'This wallet address is already bound to an active account', variant: 'destructive' });
+          return false;
+        }
       }
 
       // Determine chain based on wallet type
-      const chain = walletType === 'USDT-TRC20' ? 'TRON' :
+      const chain = walletType === 'USDT-TRC20' ? 'TRX' :
                     walletType === 'USDT-ERC20' ? 'ETH' :
                     walletType === 'USDT-BEP20' ? 'BSC' :
                     'ETH';
@@ -2367,38 +2379,48 @@ else if (
 
       console.log('[Wallet Insert] About to insert wallet with payload', insertPayload);
 
-      const { error } = await supabase
+      // Insert wallet first
+      const { error: insertError } = await supabase
         .from('wallets')
         .insert(insertPayload);
 
-      console.log('[Wallet Insert] Insert completed', { error });
-
-      if (error) {
-        console.error('[Wallet Insert Error]', error);
-        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      if (insertError) {
+        console.error('[Wallet Insert Error]', insertError);
+        toast({ title: 'Error', description: insertError.message, variant: 'destructive' });
         return false;
       }
 
-      console.log('[Wallet Bound Success]', { userId: user.id, walletAddress, walletType, chain });
+      console.log('[Wallet Insert] Insert completed successfully');
 
+      // Update users table with wallet_address (in a separate operation, but we'll handle rollback if needed)
       console.log('[addWallet] About to update users table with wallet_address');
-      // Update wallet_address on users table (only column that exists in schema)
-      await supabase
+      const { error: updateError } = await supabase
         .from('users')
         .update({
           wallet_address: walletAddress
         })
         .eq('id', user.id);
 
+      if (updateError) {
+        console.error('[Users Table Update Error]', updateError);
+        // Rollback: delete the wallet we just inserted
+        await supabase
+          .from('wallets')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('wallet_address', walletAddress);
+        
+        toast({ title: 'Error', description: 'Failed to update user profile. Please try again.', variant: 'destructive' });
+        return false;
+      }
+
       console.log('[addWallet] Users table update completed');
+      console.log('[Wallet Bound Success]', { userId: user.id, walletAddress, walletType, chain });
 
-      console.log('[addWallet] About to refresh wallets');
+      // Refresh data to update UI
+      console.log('[addWallet] About to refresh wallets and user');
       await refreshWallets();
-
-      console.log('[addWallet] Wallets refreshed, about to refresh user');
-      await refreshUser(); // Refresh user to get updated wallet_bound status
-
-      console.log('[addWallet] User refreshed, about to show success toast');
+      await refreshUser();
 
       toast({
         title: 'Wallet Added',
@@ -2469,20 +2491,7 @@ else if (
       return { success: false, error: 'Amount must be greater than 0' };
     }
     
-    // Check if training account has completed both phases
-    const isTraining = user.account_type === 'training';
-    if (isTraining) {
-      // Get training account to check task completion
-      const training = await SupabaseService.getTrainingAccountByAuthId(user.id);
-      if (!training || training.task_number < 45) {
-        return { success: false, error: 'Please complete all training tasks before withdrawing' };
-      }
-      if (user.training_phase !== 2) {
-        return { success: false, error: 'Training not completed. Please finish Phase 2.' };
-      }
-    }
-    
-    // Create withdrawal request
+    // Create withdrawal request (removed task completion restrictions)
     const result = await SupabaseService.createWithdrawalRequest({
       userId: user.id,
       email: user.email,

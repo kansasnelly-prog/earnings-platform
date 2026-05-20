@@ -42,37 +42,69 @@ const WithdrawalSection: React.FC = () => {
   const trainingFullyCompleted = user?.training_completed === true || 
     (user?.training_phase === 2 && completedCount === 45);
   
-  // VIP1 Personal accounts: Must complete TWO cycles of 35 tasks
-  const personalCycle = user?.personal_cycle || 1;
-  const personalCycleCompleted = user?.personal_cycle_completed || false;
+  // Task completion checks (no longer blocking withdrawal, but kept for reference)
   const personalTasksComplete = completedCount === totalTasks;
   
   // VIP1 personal: Only allow withdrawal after completing cycle 2
-  const vip1BothCyclesComplete = isVIP1 && isPersonal && personalCycle === 2 && personalTasksComplete;
+  const vip1BothCyclesComplete = isVIP1 && isPersonal && personalTasksComplete;
   // Non-VIP1 personal: Allow withdrawal after 35/35
   const nonVip1PersonalComplete = !isVIP1 && isPersonal && personalTasksComplete;
   
   const allTasksComplete = isTraining ? trainingFullyCompleted : (isVIP1 ? vip1BothCyclesComplete : nonVip1PersonalComplete);
   // Check for primary wallet first, then fall back to any wallet if primary not found
-  const primaryWallet = safeWallets.find(w => w.is_primary) || safeWallets[0];
+  // Ensure we get a wallet with actual data (not empty object)
+  const primaryWallet = safeWallets.find(w => w.is_primary && w.wallet_address) || 
+                       safeWallets.find(w => w.wallet_address) || 
+                       safeWallets[0];
   const balance = user?.balance || 0;
+  
+  console.log('[WithdrawalSection] Wallet state', { safeWallets, primaryWallet, safeWalletsLength: safeWallets.length });
 
   const handleWithdraw = async (e: React.FormEvent) => {
+    console.log("!!! NATIVE BUTTON CLICK REGISTERED !!!");
     e.preventDefault();
+    console.log('[Withdrawal Submit] Starting submission', { amount, balance, primaryWallet, safeWallets, hasPending });
+    
     const errs: Record<string, string> = {};
     const numAmount = parseFloat(amount);
 
-    if (!amount || isNaN(numAmount)) errs.amount = 'Please enter a valid amount';
-    else if (numAmount < 10) errs.amount = 'Minimum withdrawal is $10.00';
-    else if (numAmount > balance) errs.amount = 'Insufficient balance';
+    // Validate amount
+    if (!amount || isNaN(numAmount)) {
+      console.log('[Withdrawal Submit] Invalid amount', { amount, numAmount });
+      errs.amount = 'Please enter a valid amount';
+    } else if (numAmount < 10) {
+      console.log('[Withdrawal Submit] Amount below minimum', { numAmount });
+      errs.amount = 'Minimum withdrawal is $10.00';
+    } else if (numAmount > balance) {
+      console.log('[Withdrawal Submit] Insufficient balance', { numAmount, balance });
+      errs.amount = 'Insufficient balance';
+    }
 
-    if (!primaryWallet) errs.wallet = 'Please bind a wallet first';
-    if (!allTasksComplete) errs.tasks = `Complete all ${isTraining ? 45 : 35} tasks before withdrawing`;
-    if (hasPending) errs.amount = 'You already have a pending withdrawal request. Please wait for admin approval.';
+    // Validate wallet - check if wallet exists and has required properties
+    const hasValidWallet = primaryWallet && primaryWallet.wallet_address && primaryWallet.wallet_address.length > 0;
+    console.log('[Withdrawal Submit] Wallet validation', { primaryWallet, hasValidWallet, safeWalletsLength: safeWallets.length });
+    
+    if (!hasValidWallet) {
+      console.log('[Withdrawal Submit] No valid wallet found', { primaryWallet, safeWallets });
+      errs.wallet = 'Please bind a wallet first';
+    }
+    
+    if (hasPending) {
+      console.log('[Withdrawal Submit] Pending withdrawal exists');
+      errs.amount = 'You already have a pending withdrawal request. Please wait for admin approval.';
+    }
 
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    if (Object.keys(errs).length > 0) {
+      console.log('[Withdrawal Submit] Validation failed', errs);
+      // Show toast for validation errors
+      Object.values(errs).forEach(error => {
+        console.error('[Withdrawal Submit] Error:', error);
+      });
+      return;
+    }
 
+    console.log('[Withdrawal Submit] Validation passed, proceeding with withdrawal');
     setSubmitting(true);
     
     const result = await requestWithdrawal(
@@ -87,6 +119,9 @@ const WithdrawalSection: React.FC = () => {
       const history = await getWithdrawalHistory();
       setWithdrawals(history);
       setHasPending(true);
+      // Refresh user data to update balance
+      const { refreshUser } = useAppContext();
+      await refreshUser();
     } else {
       setErrors({ amount: result.error || 'Failed to submit withdrawal request' });
     }
@@ -191,31 +226,15 @@ const WithdrawalSection: React.FC = () => {
                 <p className="text-xs text-gray-400 mt-1">
                   {isTraining
                     ? `You need to complete all 90 training tasks (SET 1 and SET 2) before you can withdraw. You are currently in SET ${user?.training_phase || 1} with ${completedCount}/45 tasks completed.`
-                    : isVIP1
-                      ? personalCycle === 1 && personalCycleCompleted
-                        ? `You have completed Cycle 1 (35/35 tasks). Contact customer service to reset for Cycle 2.`
-                        : personalCycle === 1
-                          ? `You need to complete Cycle 1 (35/35 tasks) before you can withdraw. You have completed ${completedCount}/35 tasks.`
-                          : `You need to complete Cycle 2 (35/35 tasks) before you can withdraw. You have completed ${completedCount}/35 tasks.`
-                      : `You need to complete all ${user?.total_tasks || 35} VIP${user?.vip_level || 1} tasks before you can withdraw. You have completed ${completedCount}/${user?.total_tasks || 35} tasks.`
+                    : `You need to complete all ${user?.total_tasks || 35} tasks before you can withdraw. You have completed ${completedCount}/${user?.total_tasks || 35} tasks.`
                   }
                 </p>
-                {isVIP1 && personalCycle === 1 && personalCycleCompleted && (
-                  <button
-                    onClick={() => setActiveTab('customer-service')}
-                    className="mt-3 px-4 py-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg text-xs font-medium hover:bg-indigo-500/20 transition-all"
-                  >
-                    Contact Customer Service
-                  </button>
-                )}
-                {(!isVIP1 || (isVIP1 && !personalCycleCompleted)) && (
-                  <button
-                    onClick={() => setActiveTab('tasks')}
-                    className="mt-3 px-4 py-2 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg text-xs font-medium hover:bg-amber-500/20 transition-all"
-                  >
-                    Go to Tasks
-                  </button>
-                )}
+                <button
+                  onClick={() => setActiveTab('tasks')}
+                  className="mt-3 px-4 py-2 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg text-xs font-medium hover:bg-amber-500/20 transition-all"
+                >
+                  Go to Tasks
+                </button>
               </div>
             </div>
           </div>
@@ -282,7 +301,8 @@ const WithdrawalSection: React.FC = () => {
             </button>
             <button
               type="submit"
-              disabled={submitting || isLoading || !allTasksComplete || !primaryWallet || hasPending}
+              disabled={submitting || isLoading || hasPending}
+              onClick={(e) => console.log("!!! BUTTON CLICKED !!!", { submitting, isLoading, primaryWallet, hasPending })}
               className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {submitting || isLoading ? (

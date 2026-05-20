@@ -968,6 +968,8 @@ export class SupabaseService {
       }
 
       // Create training tasks using actual product data or fallback to placeholders
+      // For VIP1 Personal accounts, we need to calculate commissions in two passes
+      // to ensure the total exactly equals $10.25
       const tasks = Array.from({ length: actualTaskCount }, (_, i) => {
         let productName = `Training Product ${i + 1}`;
         let productPrice = Math.floor(Math.random() * 100) + 50;
@@ -981,14 +983,35 @@ export class SupabaseService {
         }
 
         // VIP1 Personal accounts use deterministic variance for natural fluctuation
+        // with strict cap to ensure exactly $10.25 total for 35 tasks
         let reward;
         let commissionRate = isPersonal ? 0.005 : this.getVIPCommissionRate(vipLevel, isTraining);
         
         if (isVIP1Personal) {
-          // Fixed commission rate for personal accounts to ensure exactly $10.25 for 35 tasks
-          // $10.25 / 35 tasks = $0.292857142857... per task (exact value, not rounded)
-          const FIXED_PERSONAL_COMMISSION = 10.25 / 35;
-          reward = FIXED_PERSONAL_COMMISSION;
+          // Dynamic commission rate for personal accounts to ensure exactly $10.25 for 35 tasks
+          // Uses deterministic pseudorandom variance based on task number to look natural
+          const TARGET_TOTAL = 10.25;
+          const TOTAL_TASKS = 35;
+          const MIN_COMMISSION = 0.15;
+          const MAX_COMMISSION = 0.42;
+          
+          // Deterministic pseudorandom function based on task number
+          const deterministicRandom = (seed: number) => {
+            const x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
+          };
+          
+          // Calculate commission for this task
+          if (i + 1 <= 32) {
+            // Tasks 1-32: Generate varied commission between $0.15 and $0.42
+            const randomValue = deterministicRandom(i + 1);
+            reward = MIN_COMMISSION + (randomValue * (MAX_COMMISSION - MIN_COMMISSION));
+          } else {
+            // Tasks 33-35: Will be calculated after generating all 35 tasks
+            // For now, use placeholder (will be adjusted below)
+            reward = TARGET_TOTAL / TOTAL_TASKS;
+          }
+          
           commissionRate = 0.005; // 0.5% for VIP1 personal
         } else {
           // Calculate reward based on product price and VIP commission rate
@@ -1011,6 +1034,39 @@ export class SupabaseService {
           product_image: productImage
         };
       });
+
+      // For VIP1 Personal accounts, adjust final 3 tasks to ensure total exactly equals $10.25
+      if (isVIP1Personal && actualTaskCount === 35) {
+        const TARGET_TOTAL = 10.25;
+        
+        // Calculate total of first 32 tasks
+        const first32Total = tasks.slice(0, 32).reduce((sum, task) => sum + task.reward, 0);
+        
+        // Calculate remaining amount needed for tasks 33-35
+        const remainingAmount = TARGET_TOTAL - first32Total;
+        
+        // Distribute remaining amount across tasks 33, 34, 35
+        // Use deterministic distribution for consistency
+        const task33Share = remainingAmount * 0.35; // 35% of remaining
+        const task34Share = remainingAmount * 0.33; // 33% of remaining
+        const task35Share = remainingAmount * 0.32; // 32% of remaining
+        
+        // Update the final 3 tasks
+        tasks[32].reward = Math.round(task33Share * 100) / 100;
+        tasks[33].reward = Math.round(task34Share * 100) / 100;
+        tasks[34].reward = Math.round(task35Share * 100) / 100;
+        
+        // Verify total equals exactly $10.25 (accounting for rounding)
+        const finalTotal = tasks.reduce((sum, task) => sum + task.reward, 0);
+        const roundingError = TARGET_TOTAL - finalTotal;
+        
+        // If there's a rounding error, add it to the last task
+        if (Math.abs(roundingError) > 0.001) {
+          tasks[34].reward = Math.round((tasks[34].reward + roundingError) * 100) / 100;
+        }
+        
+        console.log(`[SupabaseService] VIP1 Personal commission distribution: First 32 tasks = $${first32Total.toFixed(2)}, Final 3 tasks = $${(tasks[32].reward + tasks[33].reward + tasks[34].reward).toFixed(2)}, Total = $${tasks.reduce((sum, task) => sum + task.reward, 0).toFixed(2)}`);
+      }
 
       const { error } = await supabase.from('tasks').insert(tasks);
 

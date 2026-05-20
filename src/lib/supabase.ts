@@ -26,6 +26,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   global: {
     headers: {
       'X-Client-Info': 'earnings-platform'
+    },
+    fetch: (url, options = {}) => {
+      // Avoid sending credentials for non-auth requests to prevent Cloudflare cookie issues
+      const fetchOptions = {
+        ...options,
+        credentials: 'omit' as RequestCredentials
+      };
+      return fetch(url, fetchOptions);
     }
   },
   db: {

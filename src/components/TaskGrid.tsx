@@ -715,7 +715,7 @@ const allComplete = displayCompletedCount === totalTasks;
       const isPhase2 = Number(user?.training_phase) === 2;
       
       // BLOCK task submission if Phase 2 checkpoint is pending review (Phase 2 only)
-      if (isPhase2 && user?.phase2_checkpoint?.status === 'pending_review') {
+      if (isPhase2 && user?.training_phase_2_checkpoint?.status === 'pending_review') {
         clearTimeout(timeoutId);
         toast({
           title: 'Checkpoint Review Required',
@@ -959,7 +959,7 @@ const allComplete = displayCompletedCount === totalTasks;
 
   // Checkpoint modal visibility state - ONLY show for pending_review (blocking) in Phase 2
   // Phase 1 has NO checkpoint modal
-  const isPhase2Checkpoint = Number(user?.training_phase) === 2 && user?.phase2_checkpoint?.status === 'pending_review';
+  const isPhase2Checkpoint = Number(user?.training_phase) === 2 && user?.training_phase_2_checkpoint?.status === 'pending_review';
   const [showCheckpointModal, setShowCheckpointModal] = useState(isPhase2Checkpoint);
   
   // Update modal visibility when checkpoint status changes (Phase 2 only)
@@ -967,10 +967,10 @@ const allComplete = displayCompletedCount === totalTasks;
     // Only auto-show modal for pending_review (blocking state) in Phase 2
     // Phase 1 has no checkpoint modal
     const isPhase2 = Number(user?.training_phase) === 2;
-    if (isPhase2 && user?.phase2_checkpoint?.status === 'pending_review') {
+    if (isPhase2 && user?.training_phase_2_checkpoint?.status === 'pending_review') {
       setShowCheckpointModal(true);
     }
-  }, [user?.phase2_checkpoint?.status, user?.training_phase]);
+  }, [user?.training_phase_2_checkpoint?.status, user?.training_phase]);
   
   // Handle checkpoint product submission
   const handleSubmitCheckpointProduct = async (e?: React.MouseEvent) => {
@@ -996,12 +996,12 @@ const allComplete = displayCompletedCount === totalTasks;
     console.log('[Checkpoint Submit] CALL STACK:', new Error().stack);
 
     try {
-      if (!user?.phase2_checkpoint || !user?.id) {
+      if (!user?.training_phase_2_checkpoint || !user?.id) {
         console.error('[Checkpoint Submit] Missing user or checkpoint data');
         return;
       }
 
-      const checkpointId = user?.phase2_checkpoint?.id;
+      const checkpointId = user?.training_phase_2_checkpoint?.id;
       if (!checkpointId || !user?.id) {
         console.error('[Checkpoint Submit] Missing checkpoint data or user ID');
         return;

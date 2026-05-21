@@ -45,9 +45,7 @@
           } catch(e) {}
           
           // Force reload with cache bypass using timestamp
-          const url = new URL(window.location.href);
-          url.searchParams.set('_t', Date.now().toString());
-          window.location.href = url.toString();
+          
           return;
         }
         
@@ -63,9 +61,7 @@
               localStorage.clear();
               sessionStorage.clear();
             } catch(e) {}
-            const url = new URL(window.location.href);
-            url.searchParams.set('_t', Date.now().toString());
-            window.location.href = url.toString();
+            
           }
         }, 15000);
         
@@ -108,9 +104,7 @@
               }
             } catch(e) {}
             setTimeout(function() {
-              const reloadUrl = new URL(window.location.href);
-              reloadUrl.searchParams.set('_t', Date.now().toString());
-              window.location.href = reloadUrl.toString();
+              
             }, 500);
           }
           
@@ -145,9 +139,7 @@
                 }
               } catch(e) {}
               setTimeout(function() {
-                const reloadUrl = new URL(window.location.href);
-                reloadUrl.searchParams.set('_t', Date.now().toString());
-                window.location.href = reloadUrl.toString();
+                
               }, 500);
             }
           }

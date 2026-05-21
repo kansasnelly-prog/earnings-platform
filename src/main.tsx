@@ -43,10 +43,7 @@ window.addEventListener('error', (event) => {
       console.error('[ModuleLoadError] Failed to clear caches:', e);
     }
     
-    // Force reload with cache bypass by adding timestamp to URL
-    const url = new URL(window.location.href);
-    url.searchParams.set('_t', Date.now().toString());
-    window.location.href = url.toString();
+    
   }
 });
 

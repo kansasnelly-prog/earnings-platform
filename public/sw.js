@@ -116,7 +116,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Fetch event - handle network requests with NO caching for dynamic assets
+// Fetch event - handle network requests with safe fallback logic
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
@@ -138,23 +138,61 @@ self.addEventListener('fetch', (event) => {
   ) {
     // Pass through to network WITHOUT any caching
     // This prevents serving stale hashed chunks during deployments
-    event.respondWith(fetch(event.request));
+    event.respondWith(
+      fetch(event.request).catch((error) => {
+        console.error('[SW] Network fetch failed, returning error response:', error);
+        return new Response('Network error', { status: 503, statusText: 'Service Unavailable' });
+      })
+    );
     return;
   }
 
-  // For static assets (HTML, images, icons, manifest), use cache-first with network fallback
+  // For navigation requests (HTML pages), use network-first with cache fallback
+  // This ensures users always get the latest version of the app
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Cache the successful response for offline use
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Network failed, try cache
+          return caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) {
+              console.log('[SW] Serving from cache due to network failure');
+              return cachedResponse;
+            }
+            // No cache available, return offline fallback
+            console.log('[SW] No cache available, returning offline page');
+            return caches.match('/index.html').then((indexResponse) => {
+              return indexResponse || new Response('Offline - No cached version available', { status: 503 });
+            });
+          });
+        })
+    );
+    return;
+  }
+
+  // For static assets (images, icons, manifest), use cache-first with network fallback
   event.respondWith(
     caches.match(event.request)
-      .then((response) => {
-        if (response) {
+      .then((cachedResponse) => {
+        if (cachedResponse) {
           // Cache hit - return response
-          return response;
+          return cachedResponse;
         }
         // Cache miss - fetch from network and cache
         return fetch(event.request)
           .then((response) => {
             // Only cache successful GET responses
-            if (response && response.status === 200 && event.request.method === 'GET') {
+            if (response && response.status === 200) {
               const responseToCache = response.clone();
               caches.open(CACHE_NAME)
                 .then((cache) => {
@@ -164,8 +202,9 @@ self.addEventListener('fetch', (event) => {
             return response;
           })
           .catch((error) => {
-            console.error('[SW] Fetch failed:', error);
-            throw error;
+            console.error('[SW] Fetch failed for static asset:', error);
+            // Never reject FetchEvent without Response - return error response
+            return new Response('Network error', { status: 503, statusText: 'Service Unavailable' });
           });
       })
   );

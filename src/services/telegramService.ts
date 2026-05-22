@@ -72,26 +72,52 @@ export class TelegramService {
 
       console.log('[TelegramService] Sending notification:', data.type);
 
-      const response = await fetch(this.API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ message })
-      });
+      // Add timeout to prevent hanging on SSL/network errors
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-      const result = await response.json();
+      try {
+        const response = await fetch(this.API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ message }),
+          signal: controller.signal
+        });
 
-      if (!response.ok) {
-        console.error('[TelegramService] Failed to send notification:', result);
+        clearTimeout(timeoutId);
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          console.error('[TelegramService] Failed to send notification:', result);
+          return false;
+        }
+
+        console.log('[TelegramService] Notification sent successfully');
+        return true;
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        
+        // Log specific error types for debugging
+        if (fetchError instanceof Error) {
+          if (fetchError.name === 'AbortError') {
+            console.warn('[TelegramService] Notification request timed out (5s)');
+          } else if (fetchError.message.includes('SSL') || fetchError.message.includes('ERR_SSL')) {
+            console.warn('[TelegramService] SSL/TLS error - notification skipped:', fetchError.message);
+          } else {
+            console.warn('[TelegramService] Network error - notification skipped:', fetchError.message);
+          }
+        }
+        
+        // Gracefully return false without throwing - don't block app logic
         return false;
       }
 
-      console.log('[TelegramService] Notification sent successfully');
-      return true;
-
     } catch (error) {
       console.error('[TelegramService] Exception sending notification:', error);
+      // Gracefully return false without throwing - don't block app logic
       return false;
     }
   }

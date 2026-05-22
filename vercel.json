@@ -9,6 +9,10 @@
       "destination": "/api/telegram-webhook.js"
     },
     {
+      "source": "/api/send-telegram-notification",
+      "destination": "/api/send-telegram-notification.js"
+    },
+    {
       "source": "/((?!api|assets|.*\\.js|.*\\.css|.*\\.woff|.*\\.woff2|.*\\.ttf|.*\\.otf|.*\\.eot|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.svg|.*\\.ico).*)",
       "destination": "/index.html"
     }

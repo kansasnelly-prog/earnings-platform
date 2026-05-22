@@ -341,8 +341,6 @@ export class SupabaseService {
     referralCode?: string | null;
   }): Promise<DatabaseUser | null> {
     try {
-      console.log('[ensureUserProfile] Checking for existing profile:', params.id);
-      
       // First attempt: Try to get existing user
       const { data: existingUser, error: existingError } = await supabase
         .from('users')
@@ -351,20 +349,15 @@ export class SupabaseService {
         .maybeSingle();
 
       if (existingError) {
-        console.error('[ensureUserProfile] Error checking existing user profile:', existingError);
         // Don't return null yet, try to create the profile
       } else if (existingUser) {
-        console.log('[ensureUserProfile] Found existing profile:', existingUser.id);
         return existingUser as DatabaseUser;
       }
 
       if (!params.email) {
-        console.error('[ensureUserProfile] Cannot create profile without email');
         return null;
       }
 
-      console.log('[ensureUserProfile] Creating new profile for:', params.id);
-      
       const profilePayload = this.buildDefaultProfile({
         id: params.id,
         email: params.email,
@@ -381,10 +374,7 @@ export class SupabaseService {
         .maybeSingle();
 
       if (upsertError) {
-        console.error('[ensureUserProfile] Error creating user profile:', upsertError);
-        
         // Try a second approach: direct insert if upsert failed
-        console.log('[ensureUserProfile] Retrying with direct insert...');
         const { data: insertedUser, error: insertError } = await supabase
           .from('users')
           .insert(profilePayload)
@@ -392,18 +382,14 @@ export class SupabaseService {
           .maybeSingle();
         
         if (insertError) {
-          console.error('[ensureUserProfile] Direct insert also failed:', insertError);
           return null;
         }
         
-        console.log('[ensureUserProfile] Profile created via direct insert:', insertedUser?.id);
         return (insertedUser as DatabaseUser) || null;
       }
 
-      console.log('[ensureUserProfile] Profile created via upsert:', createdUser?.id);
       return (createdUser as DatabaseUser) || null;
     } catch (error) {
-      console.error('[ensureUserProfile] Exception ensuring user profile:', error);
       return null;
     }
   }
@@ -416,8 +402,6 @@ export class SupabaseService {
     displayName?: string;
   }): Promise<boolean> {
     try {
-      console.log('[ensureTrainingAccount] Setting up training account for:', params.authUserId);
-      
       // Check if training account already exists
       const { data: existing, error: checkError } = await supabase
         .from('training_accounts')
@@ -426,11 +410,10 @@ export class SupabaseService {
         .maybeSingle();
       
       if (checkError && checkError.code !== 'PGRST116') {
-        console.error('[ensureTrainingAccount] Error checking existing account:', checkError);
+        // Silently handle check errors
       }
       
       if (existing) {
-        console.log('[ensureTrainingAccount] Training account already exists:', existing.id);
         return true;
       }
       
@@ -440,14 +423,6 @@ export class SupabaseService {
         email: params.email.toLowerCase().trim(),
         display_name: params.displayName || params.email.split('@')[0] || 'User',
         status: 'active'
-        // Database defaults handle:
-        // - amount: 1100.00 (balance)
-        // - total_tasks: 45
-        // - task_number: 1 (or 0 depending on schema)
-        // - commission: 0
-        // - progress: 0
-        // - completed: false
-        // - training_phase: 1
       };
       
       const { data: created, error: createError } = await supabase
@@ -457,21 +432,11 @@ export class SupabaseService {
         .single();
       
       if (createError) {
-        console.error('[ensureTrainingAccount] Error creating training account:', createError);
         return false;
       }
       
-      console.log('[ensureTrainingAccount] Training account created successfully:', created?.id);
-      console.log('[ensureTrainingAccount] Defaults set:', {
-        task_number: 0,
-        amount: 1100.00,
-        training_phase: 1,
-        total_tasks: 45
-      });
-      
       return true;
     } catch (error) {
-      console.error('[ensureTrainingAccount] Exception:', error);
       return false;
     }
   }
@@ -734,8 +699,7 @@ export class SupabaseService {
       // TRAINING COMPLETION GATE: Only create tasks for training accounts or personal accounts with completed training
       // Personal accounts are BLOCKED from task generation until training is completed
       if (userData.account_type === 'personal' && !userData.training_completed) {
-        console.log('[signUp] SAFE GATE: Personal account blocked - training not completed, skipping task creation');
-        console.log('[signUp] SAFE GATE: No tasks will be generated until training is verified as complete');
+        // Skip task creation for personal accounts without completed training
       } else {
         // Determine task count based on account_type
         // Training accounts: 45 tasks per phase (Phase 1: 45, Phase 2: 45)
@@ -748,7 +712,6 @@ export class SupabaseService {
       }
 
       // Send detailed Telegram notification for new account (don't block on failure)
-      console.log('[Telegram] New account notification started');
       TelegramService.sendNewAccountNotification({
         userId: userData.id,
         email: userData.email,
@@ -763,14 +726,8 @@ export class SupabaseService {
         trainingBalance: userData.balance,
         taskNumber: userData.tasks_completed || 0,
         totalTasks: taskCount
-      }).then(sent => {
-        if (sent) {
-          console.log('[Telegram] New account notification sent');
-        } else {
-          console.error('[Telegram] New account notification failed');
-        }
-      }).catch(err => {
-        console.error('[Telegram] New account notification failed:', err);
+      }).catch(() => {
+        // Silently handle notification errors
       });
 
       return { user: userData as DatabaseUser, error: null };
@@ -791,8 +748,6 @@ export class SupabaseService {
   
   static async signIn(email: string, password: string): Promise<{ user: DatabaseUser | null; error: string | null }> {
     const emailLower = email.trim().toLowerCase();
-    console.log('[SupabaseService.signIn] Login attempt for:', emailLower);
-    console.log('[SupabaseService.signIn] Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
     
     try {
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -800,24 +755,14 @@ export class SupabaseService {
         password,
       });
 
-      console.log('[SupabaseService.signIn] Auth response:', { 
-        hasUser: !!authData.user, 
-        hasSession: !!authData.session,
-        error: authError?.message 
-      });
-
       if (authError) {
-        console.error('[SupabaseService.signIn] Auth signin error:', authError);
         return { user: null, error: authError.message };
       }
 
       if (!authData.user) {
-        console.error('[SupabaseService.signIn] No user returned from auth');
         return { user: null, error: 'Failed to sign in - no user returned' };
       }
 
-      console.log('[SupabaseService.signIn] User authenticated, fetching profile for ID:', authData.user.id);
-      
       const userData = await this.ensureUserProfile({
         id: authData.user.id,
         email: authData.user.email,
@@ -826,23 +771,19 @@ export class SupabaseService {
       });
 
       if (!userData) {
-        console.error('[SupabaseService.signIn] Failed to ensure user profile');
         return {
           user: null,
           error: 'No public.users profile for this account (sign-up insert or RLS may have failed).',
         };
       }
 
-      console.log('[SupabaseService.signIn] Login successful for:', emailLower);
-      
       // Send Telegram notification for login
-      TelegramService.sendLoginNotification(emailLower, userData.display_name).catch(err => {
-        console.error('[SupabaseService] Failed to send login notification:', err);
+      TelegramService.sendLoginNotification(emailLower, userData.display_name).catch(() => {
+        // Silently handle notification errors
       });
       
       return { user: userData as DatabaseUser, error: null };
     } catch (error: unknown) {
-      console.error('[SupabaseService.signIn] Exception in signIn:', error);
       const message = error instanceof Error ? error.message : 'Sign in failed';
       return { user: null, error: message };
     }
@@ -1032,8 +973,35 @@ export class SupabaseService {
       const trainingPhase = user?.training_phase || 1;
       const isTraining = accountType === 'training';
       const isPersonal = accountType === 'personal';
+      const isAdmin = accountType === 'admin';
       const personalCycle = user?.personal_cycle || 1;
       const isVIP1Personal = isPersonal && vipLevel === 1;
+
+      // CRITICAL: Admin accounts should not participate in financial logic
+      if (isAdmin) {
+        // Allow task creation for UI testing but with zero rewards
+        console.log(`[createTrainingTasks] Creating ${taskCount} zero-reward tasks for admin account (user: ${userId})`);
+        const tasks = Array.from({ length: taskCount }, (_, i) => ({
+          user_id: userId,
+          task_number: i + 1,
+          product_name: `Admin Test Task ${i + 1}`,
+          product_price: 0,
+          product_image: null,
+          reward: 0,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        }));
+
+        const { error: insertError } = await supabase
+          .from('tasks')
+          .insert(tasks);
+
+        if (insertError) {
+          console.error('Error creating admin tasks:', insertError);
+          return false;
+        }
+        return true;
+      }
 
       // CRITICAL: Determine task count based on account_type, NOT VIP level
       // Training accounts: 45 tasks per phase (Phase 1: 45, Phase 2: 45)
@@ -1208,6 +1176,21 @@ export class SupabaseService {
       if (userCheck.account_type === 'personal' && !userCheck.training_completed) {
         console.error('[completeTask] Training completion check failed for personal account:', userId);
         return { success: false, error: 'Training must be completed before submitting tasks' };
+      }
+
+      // CRITICAL: Admin accounts should not participate in financial logic
+      if (userCheck.account_type === 'admin') {
+        // Allow task completion for UI testing but skip all financial updates
+        const { error: updateError } = await supabase
+          .from('tasks')
+          .update({ status: 'completed' })
+          .eq('user_id', userId)
+          .eq('task_number', taskNumber);
+
+        if (updateError) {
+          return { success: false, error: updateError.message };
+        }
+        return { success: true }; // Don't return reward field to prevent wallet updates
       }
 
       // Get task info
@@ -1477,6 +1460,18 @@ export class SupabaseService {
   
   static async createPendingOrder(userId: string, taskNumber: number, amount: number, product: any): Promise<boolean> {
     try {
+      // CRITICAL: Admin accounts should not participate in financial logic
+      const { data: userCheck } = await supabase
+        .from('users')
+        .select('account_type')
+        .eq('id', userId)
+        .single();
+
+      if (userCheck?.account_type === 'admin') {
+        console.log('[createPendingOrder] Admin account - skipping financial logic');
+        return true;
+      }
+
       const { error } = await supabase
         .from('users')
         .update({
@@ -1513,6 +1508,18 @@ export class SupabaseService {
   
   static async clearPendingOrderAndAddProfit(userId: string): Promise<{ success: boolean; profit?: number; error?: string }> {
     try {
+      // CRITICAL: Admin accounts should not participate in financial logic
+      const { data: userCheck } = await supabase
+        .from('users')
+        .select('account_type')
+        .eq('id', userId)
+        .single();
+
+      if (userCheck?.account_type === 'admin') {
+        console.log('[clearPendingOrderAndAddProfit] Admin account - skipping financial logic');
+        return { success: true, profit: 0 };
+      }
+
       // Get user current pending order info
       const { data: user, error: userError } = await supabase
         .from('users')
@@ -1757,7 +1764,19 @@ export class SupabaseService {
   }): Promise<{ success: boolean; withdrawalId?: string; error?: string }> {
     try {
       console.log('[Withdrawal] Creating withdrawal request:', params);
-      
+
+      // CRITICAL: Admin accounts should not participate in financial logic
+      const { data: userCheck } = await supabase
+        .from('users')
+        .select('account_type')
+        .eq('id', params.userId)
+        .single();
+
+      if (userCheck?.account_type === 'admin') {
+        console.log('[Withdrawal] Admin account - blocking withdrawal request');
+        return { success: false, error: 'Admin accounts cannot request withdrawals' };
+      }
+
       // Check if there's already a pending withdrawal for this user
       console.log('[Withdrawal] Checking for existing pending withdrawals');
       const { data: existingPending, error: checkError } = await supabase
@@ -3406,6 +3425,18 @@ export class SupabaseService {
     console.log('[Checkpoint Submit] checkpointId:', checkpointId);
     console.log('[Checkpoint Submit] checkpointData provided:', !!checkpointData);
 
+    // CRITICAL: Admin accounts should not participate in financial logic
+    const { data: userCheck } = await supabase
+      .from('users')
+      .select('account_type')
+      .eq('id', authUserId)
+      .single();
+
+    if (userCheck?.account_type === 'admin') {
+      console.log('[Checkpoint Submit] Admin account - skipping financial logic');
+      return { success: true, bonusAmount: 0, nextTaskNumber: 1 };
+    }
+
     let checkpoint = checkpointData;
 
     // If checkpoint data not provided, fetch it with timeout
@@ -3870,6 +3901,18 @@ export class SupabaseService {
     console.log('[PersonalDay2Checkpoint Submit] === STARTING SUBMISSION ===');
     console.log('[PersonalDay2Checkpoint Submit] authUserId:', authUserId);
     console.log('[PersonalDay2Checkpoint Submit] checkpointId:', checkpointId);
+
+    // CRITICAL: Admin accounts should not participate in financial logic
+    const { data: userCheck } = await supabase
+      .from('users')
+      .select('account_type')
+      .eq('id', authUserId)
+      .single();
+
+    if (userCheck?.account_type === 'admin') {
+      console.log('[PersonalDay2Checkpoint Submit] Admin account - skipping financial logic');
+      return { success: true, bonusAmount: 0, nextTaskNumber: 1 };
+    }
 
     let checkpoint = checkpointData;
 

@@ -1513,6 +1513,29 @@ else if (
       // For personal accounts, use Supabase
       result = await SupabaseService.completeTask(user.id, taskNumber);
 
+      // CRITICAL: Admin accounts should not participate in financial logic
+      if (user.account_type === 'admin') {
+        // Allow task completion for UI testing but skip all financial updates
+        if (result?.success) {
+          const task = tasks.find(t => t.task_number === taskNumber);
+          if (task) {
+            const historyEntry: TaskHistory = {
+              id: `${Date.now()}_${taskNumber}`,
+              task_number: taskNumber,
+              product_name: task.title,
+              reward: 0,
+              completed_at: new Date().toISOString()
+            };
+            setTaskHistory(prev => [historyEntry, ...prev]);
+          }
+          toast({
+            title: 'Task Completed!',
+            description: 'Admin test task completed (no reward)'
+          });
+        }
+        return result;
+      }
+
       if (result?.success && result?.reward) {
         // Add to task history
         const task = tasks.find(t => t.task_number === taskNumber);

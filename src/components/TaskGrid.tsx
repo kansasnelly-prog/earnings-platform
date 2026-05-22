@@ -943,6 +943,10 @@ const allComplete = displayCompletedCount === totalTasks;
   
   // For personal/admin accounts, use task.reward from database (NOT product-based calculation)
   const currentTaskCommission = pendingTask ? (() => {
+    // CRITICAL: Admin accounts should not participate in financial logic
+    if (user?.account_type === 'admin') {
+      return 0;
+    }
     if (isTraining) {
       // Use scaled product-based commission for training accounts
       const product = safeCatalog[(pendingTask.task_number - 1) % safeCatalog.length];

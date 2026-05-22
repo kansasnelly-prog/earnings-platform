@@ -1007,7 +1007,8 @@ export class SupabaseService {
       // Training accounts: 45 tasks per phase (Phase 1: 45, Phase 2: 45)
       // Personal accounts: 35 tasks per set (Set 1: 35, Set 2: 35)
       const actualTaskCount = isTraining ? 45 : (isPersonal ? 35 : 45);
-      console.log(`[createTrainingTasks] Creating ${actualTaskCount} tasks for ${accountType} account (user: ${userId})`);
+      const cycleLabel = isPersonal ? ` (Cycle ${personalCycle})` : '';
+      console.log(`[createTrainingTasks] Creating ${actualTaskCount} tasks for ${accountType} account${cycleLabel} (user: ${userId})`);
 
       // Define commission rate for logging (outside task loop scope)
       const commissionRate = isPersonal ? 0.005 : this.getVIPCommissionRate(vipLevel, isTraining);
@@ -1441,6 +1442,23 @@ export class SupabaseService {
         } else {
           console.log('[completeTask] Auto-reset to Set 2 successful:', resetData);
           autoResetTriggered = true;
+          
+          // SAFETY CHECK: Ensure personal_cycle is set to 2 (Day 2) after Set 1→Set 2 transition
+          // This is a critical fix to prevent users from staying on Day 1 in Set 2
+          const { error: cycleUpdateError } = await supabase
+            .from('users')
+            .update({ 
+              personal_cycle: 2,
+              personal_cycle_completed: false,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', userId);
+          
+          if (cycleUpdateError) {
+            console.error('[completeTask] Failed to set personal_cycle to 2:', cycleUpdateError);
+          } else {
+            console.log('[completeTask] Safety check passed: personal_cycle set to 2 (Day 2)');
+          }
           
           // Create 35 new tasks for Set 2
           await this.createTrainingTasks(userId, 35);
@@ -4811,6 +4829,129 @@ export class SupabaseService {
     } catch (error) {
       console.error('[processSingleTrainingTransfer] Exception:', error);
       return { success: false, amount: 0 };
+    }
+  }
+
+  // ===========================================
+  // LEGACY USER REPAIR FUNCTIONS
+  // ===========================================
+
+  /**
+   * Repair legacy users who are in Set 2 but have personal_cycle = 1 (broken state)
+   * This fixes users who transitioned before the auto_reset_to_set_2() fix was applied
+   * @param userId - The user ID to repair
+   * @returns Result object with success status and details
+   */
+  static async repairPersonalDay2State(userId: string): Promise<{ success: boolean; message: string; needsTaskCreation?: boolean }> {
+    try {
+      // Get current user state
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('id, email, current_task_set, personal_cycle, personal_cycle_completed, account_type')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !user) {
+        console.error('[repairPersonalDay2State] Error fetching user:', userError);
+        return { success: false, message: 'User not found' };
+      }
+
+      // Check if user is in broken state (Set 2 but personal_cycle = 1)
+      if (user.current_task_set === 2 && user.personal_cycle === 1 && user.account_type === 'personal') {
+        console.log('[repairPersonalDay2State] Found user in broken state - fixing:', user.email);
+
+        // Fix the cycle state
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            personal_cycle: 2,
+            personal_cycle_completed: false,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('[repairPersonalDay2State] Error updating user:', updateError);
+          return { success: false, message: 'Failed to update personal_cycle' };
+        }
+
+        // Check if user has tasks
+        const { data: tasks, error: tasksError } = await supabase
+          .from('tasks')
+          .select('id')
+          .eq('user_id', userId)
+          .limit(1);
+
+        const hasTasks = !tasksError && tasks && tasks.length > 0;
+
+        console.log('[repairPersonalDay2State] Successfully repaired user:', user.email, 'hasTasks:', hasTasks);
+        return { 
+          success: true, 
+          message: 'Repaired personal_cycle to 2 (Day 2)', 
+          needsTaskCreation: !hasTasks 
+        };
+      } else {
+        console.log('[repairPersonalDay2State] User not in broken state - no repair needed:', user.email);
+        return { 
+          success: true, 
+          message: 'No repair needed - user not in broken state',
+          needsTaskCreation: false
+        };
+      }
+    } catch (error: any) {
+      console.error('[repairPersonalDay2State] Exception:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * Repair all legacy users in the system who are in broken state
+   * This should be run once after the fix is deployed
+   * @returns Summary of repairs performed
+   */
+  static async repairAllLegacyUsers(): Promise<{ success: boolean; repaired: number; errors: string[] }> {
+    try {
+      console.log('[repairAllLegacyUsers] Starting bulk repair of legacy users...');
+
+      // Find all users in broken state (Set 2 but personal_cycle = 1)
+      const { data: brokenUsers, error: findError } = await supabase
+        .from('users')
+        .select('id, email')
+        .eq('current_task_set', 2)
+        .eq('personal_cycle', 1)
+        .eq('account_type', 'personal');
+
+      if (findError) {
+        console.error('[repairAllLegacyUsers] Error finding broken users:', findError);
+        return { success: false, repaired: 0, errors: [findError.message] };
+      }
+
+      if (!brokenUsers || brokenUsers.length === 0) {
+        console.log('[repairAllLegacyUsers] No broken users found');
+        return { success: true, repaired: 0, errors: [] };
+      }
+
+      console.log(`[repairAllLegacyUsers] Found ${brokenUsers.length} users in broken state`);
+
+      let repairedCount = 0;
+      const errors: string[] = [];
+
+      for (const user of brokenUsers) {
+        const result = await this.repairPersonalDay2State(user.id);
+        if (result.success) {
+          repairedCount++;
+          console.log(`[repairAllLegacyUsers] Repaired: ${user.email}`);
+        } else {
+          errors.push(`${user.email}: ${result.message}`);
+          console.error(`[repairAllLegacyUsers] Failed to repair: ${user.email} - ${result.message}`);
+        }
+      }
+
+      console.log(`[repairAllLegacyUsers] Repair complete: ${repairedCount}/${brokenUsers.length} repaired, ${errors.length} errors`);
+      return { success: true, repaired: repairedCount, errors };
+    } catch (error: any) {
+      console.error('[repairAllLegacyUsers] Exception:', error);
+      return { success: false, repaired: 0, errors: [error.message] };
     }
   }
 }

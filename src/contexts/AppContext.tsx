@@ -60,6 +60,10 @@ export interface User {
   commission_transferred_at: string | null;
   training_phase_1_locked: boolean;
   training_phase_1_locked_at: string | null;
+  // Personal Day 2 checkpoint fields
+  personal_day2_checkpoint?: any;
+  personal_cycle?: number;
+  personal_cycle_completed?: boolean;
 }
 
 export interface Product {
@@ -330,13 +334,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const checkSession = async () => {
       // Skip auth check on admin route - admin uses localStorage-based auth
       if (window.location.pathname.startsWith('/admin')) {
-        console.log('[checkSession] Skipping auth check on /admin route');
         return;
       }
 
       // Prevent concurrent auth checks
       if (isCheckingAuth.current) {
-        console.log('[checkSession] Auth check already in progress, skipping...');
         return;
       }
 
@@ -351,14 +353,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         // First, restore Supabase session from storage
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        console.log('[checkSession] Supabase session restored:', session ? 'Active' : 'None');
         if (sessionError) {
           throw sessionError;
         }
 
         // Only treat as logged out if session is explicitly null (not just an error)
         if (session === null) {
-          console.log('[checkSession] No session found, user is logged out');
           setUser(null);
           setIsAuthenticated(false);
           return;
@@ -370,41 +370,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         } catch (apiError: any) {
           // Check for 500 Internal Server Error or other critical server errors
           const isServerError = apiError?.message?.includes('500') ||
-                               apiError?.status === 500 ||
                                apiError?.code === '500' ||
                                apiError?.message?.includes('Internal Server Error');
 
           if (isServerError) {
-            console.warn('[checkSession] Server error (500) detected, falling back to cached user data');
             // Fall back to cached user state if available
             if (cachedUser) {
               setUser(cachedUser);
               setIsAuthenticated(true);
-              console.log('[checkSession] Using cached user data for dashboard continuity');
               return;
             } else {
-              console.error('[checkSession] No cached data available, cannot fallback');
               setUser(null);
               setIsAuthenticated(false);
               return;
             }
           } else if (apiError?.message?.includes('Failed to fetch') || apiError?.name === 'TypeError') {
-            console.log('[checkSession] Network connection interrupted. Waiting for network recovery...');
             // Fall back to cached state on network errors too
             if (cachedUser) {
               setUser(cachedUser);
               setIsAuthenticated(true);
-              console.log('[checkSession] Using cached user data during network interruption');
               return;
             }
-          } else {
-            console.error('[checkSession] Unexpected API error:', apiError);
           }
           // For other errors, try to continue with cached data if available
           if (cachedUser) {
             setUser(cachedUser);
             setIsAuthenticated(true);
-            console.log('[checkSession] Using cached user data as fallback');
             return;
           }
           setUser(null);
@@ -415,22 +406,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (dbUser) {
           const mappedUser = mapDatabaseUserToUser(dbUser);
           setUser(mappedUser);
-          setCachedUser(mappedUser); // Update cache on success
+          setCachedUser(mappedUser);
           setIsAuthenticated(true);
-
-          // Load user data
           await loadUserData(dbUser.id, dbUser.email);
         } else {
           setUser(null);
           setIsAuthenticated(false);
         }
       } catch (error: any) {
-        if (error?.message?.includes('Failed to fetch') || error?.name === 'TypeError') {
-          console.log('[checkSession] Network connection interrupted. Waiting for network recovery...');
-        } else {
-          console.error('Error checking session:', error);
-          // Don't auto-logout on error - just log it
-        }
+        // Silently handle network errors
       } finally {
         setIsLoading(false);
         isCheckingAuth.current = false;
@@ -443,22 +427,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       // Skip auth state changes on admin route - admin uses localStorage-based auth
       if (window.location.pathname.startsWith('/admin')) {
-        console.log('[Auth State Change] Skipping on /admin route');
         return;
       }
 
-      console.log('[Auth State Change] Event:', event);
-      console.log('[Auth State Change] Session:', session ? 'Active' : 'None');
-
       // Skip if we're already checking auth (prevent concurrent operations)
       if (isCheckingAuth.current) {
-        console.log('[authStateChange] Auth check in progress, skipping...');
         return;
       }
 
       // Check if browser is online before processing auth state change
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        console.warn('[Auth State Change] Skipping - Browser is offline');
         return;
       }
 
@@ -472,42 +450,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           } catch (apiError: any) {
             // Check for 500 Internal Server Error or other critical server errors
             const isServerError = apiError?.message?.includes('500') ||
-                                 apiError?.status === 500 ||
                                  apiError?.code === '500' ||
                                  apiError?.message?.includes('Internal Server Error');
 
             if (isServerError) {
-              console.warn('[Auth State Change] Server error (500) detected, falling back to cached user data');
               // Fall back to cached user state if available
               if (cachedUser) {
                 setUser(cachedUser);
                 setIsAuthenticated(true);
-                console.log('[Auth State Change] Using cached user data for dashboard continuity');
                 isCheckingAuth.current = false;
                 return;
               } else {
-                console.error('[Auth State Change] No cached data available, cannot fallback');
                 isCheckingAuth.current = false;
                 return;
               }
             } else if (apiError?.message?.includes('Failed to fetch') || apiError?.name === 'TypeError') {
-              console.log('[Auth State Change] Network connection interrupted. Waiting for network recovery...');
               // Fall back to cached state on network errors too
               if (cachedUser) {
                 setUser(cachedUser);
                 setIsAuthenticated(true);
-                console.log('[Auth State Change] Using cached user data during network interruption');
                 isCheckingAuth.current = false;
                 return;
               }
-            } else {
-              console.error('[Auth State Change] Unexpected API error:', apiError);
             }
             // For other errors, try to continue with cached data if available
             if (cachedUser) {
               setUser(cachedUser);
               setIsAuthenticated(true);
-              console.log('[Auth State Change] Using cached user data as fallback');
               isCheckingAuth.current = false;
               return;
             }
@@ -524,17 +493,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
             // Send Telegram login notification
             TelegramService.sendLoginNotification(dbUser.email, dbUser.display_name).catch(err => {
-              console.error('[Auth State Change] Failed to send login notification:', err);
+              // Silently handle notification errors
             });
 
             // Check and transfer commission from completed training accounts (only for personal accounts)
             if (dbUser.account_type === 'personal') {
-              console.log('[Transfer] checkAndTransferCommission started for user:', dbUser.id);
               const transferResult = await SupabaseService.checkAndTransferCommission(dbUser.id);
-              console.log('[Transfer] transfer result:', transferResult);
 
               if (transferResult.success && transferResult.transferred) {
-                console.log('[Transfer] transfer success - amount:', transferResult.amount);
                 toast({
                   title: 'Training completed successfully!',
                   description: `$${transferResult.amount?.toFixed(2)} has been transferred to your personal account. Your account is now fully activated.`,
@@ -543,38 +509,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
                 // Refresh user data to show updated balance
                 await loadUserData(dbUser.id, dbUser.email);
-              } else {
-                console.log('[Transfer] no transfer executed - result:', transferResult);
               }
             }
           }
           isCheckingAuth.current = false;
         } else if (event === 'SIGNED_OUT') {
-          console.log('[Auth State Change] User signed out');
           setUser(null);
-          setCachedUser(null); // Clear cache on sign out
+          setCachedUser(null);
           setIsAuthenticated(false);
           setTasks([]);
-          setCachedTasks([]); // Clear cache on sign out
+          setCachedTasks([]);
           setTransactions([]);
-          setCachedTransactions([]); // Clear cache on sign out
+          setCachedTransactions([]);
           setWallets([]);
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log('[Auth State Change] Token refreshed successfully');
         }
       } catch (error: any) {
-        if (error?.message?.includes('Failed to fetch') || error?.name === 'TypeError') {
-          console.log('[Auth State Change] Network connection interrupted. Waiting for network recovery...');
-        } else {
-          console.error('[Auth State Change] Error:', error);
-        }
+        // Silently handle auth state errors
         isCheckingAuth.current = false;
       }
     });
 
     // Automatically retry session check when connection is restored
     const handleOnline = () => {
-      console.log('[AppContext] Network connection restored. Refreshing session...');
       checkSession();
     };
 
@@ -584,9 +540,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     
     // Listen for checkpoint refresh events from TaskGrid realtime subscription
     const handleCheckpointRefresh = async (event: any) => {
-      console.log('[AppContext] Checkpoint refresh event received:', event.detail);
       if (user?.id) {
-        console.log('[AppContext] Refreshing user data after checkpoint update');
         await refreshUser();
       }
     };
@@ -595,13 +549,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Handle tab visibility change - auto-refresh when user returns to inactive tab
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible' && isAuthenticated && user) {
-        console.log('[AppContext] Tab became visible, refreshing app state...');
         // Only refresh if tab was hidden for more than 30 seconds to avoid unnecessary refreshes
         const lastHiddenTime = sessionStorage.getItem('lastTabHiddenTime');
         if (lastHiddenTime) {
           const hiddenDuration = Date.now() - parseInt(lastHiddenTime);
           if (hiddenDuration > 30000) { // 30 seconds
-            console.log('[AppContext] Tab was hidden for', hiddenDuration / 1000, 'seconds, triggering refresh');
             await refreshApp();
           }
           sessionStorage.removeItem('lastTabHiddenTime');
@@ -692,45 +644,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (userError) {
         // Check for 500 Internal Server Error
         const isServerError = userError?.message?.includes('500') ||
-                             userError?.status === 500 ||
                              userError?.code === '500' ||
                              userError?.message?.includes('Internal Server Error');
 
         if (isServerError) {
-          console.warn('[loadUserData] Server error (500) fetching user, falling back to cached user data');
           if (cachedUser) {
             setUser(cachedUser);
-            console.log('[loadUserData] Using cached user data for dashboard continuity');
             return;
           }
         }
-        console.error('[loadUserData] Error fetching user from public.users:', userError);
         return;
       }
 
       if (!userData) {
-        console.error('[loadUserData] User not found in public.users');
         return;
       }
 
-      console.log('[loadUserData] Loaded user from public.users - account_type:', userData.account_type);
       dbUser = userData;
     } catch (error: any) {
       // Check for 500 Internal Server Error or network errors
       const isServerError = error?.message?.includes('500') ||
-                           error?.status === 500 ||
                            error?.code === '500' ||
                            error?.message?.includes('Internal Server Error');
 
       if (isServerError || error?.message?.includes('Failed to fetch') || error?.name === 'TypeError') {
-        console.warn('[loadUserData] Server or network error fetching user, falling back to cached user data');
         if (cachedUser) {
           setUser(cachedUser);
-          console.log('[loadUserData] Using cached user data for dashboard continuity');
           return;
         }
       }
-      console.error('[loadUserData] Exception fetching user from public.users:', error);
       return;
     }
 
@@ -739,7 +681,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const isTraining = dbUser.account_type === 'training';
 
     if (isTrainingCompleted && isTraining) {
-      console.log('[loadUserData] Training completed - skipping ALL localStorage wallet loading, using Supabase only');
       // Clear any localStorage wallet data for completed training
       const userEmail = dbUser.email || email;
       const emailKey = userEmail?.toLowerCase();
@@ -756,7 +697,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         transactions: []
       };
       setWalletState(completedWallet);
-      console.log('[loadUserData] Set walletState for completed training from Supabase:', completedWallet);
 
       // Update user state
       setUser(prev => prev ? {
@@ -774,19 +714,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const totalTasks = dbUser.total_tasks || 45; // Default to 45 for training, database should provide this
     const taskNumber = dbUser.task_number || 1;
 
-    console.log('[loadUserData] Null checks applied - vipLevel:', vipLevel, 'currentTaskSet:', currentTaskSet, 'totalTasks:', totalTasks, 'taskNumber:', taskNumber);
-
     // Set accountType from the fetched user
     const actualAccountType = dbUser.account_type as 'training' | 'personal' | 'admin';
     const userEmail = dbUser.email || email;
 
-    console.log('[loadUserData] accountType from DB:', actualAccountType, 'isTraining:', isTraining, 'userEmail:', userEmail);
-
     // For training accounts, fetch from training_accounts table directly
     if (isTraining && userId) {
       try {
-        console.log('[loadUserData] Fetching training account data for user ID:', userId);
-
         // Fetch training account data from Supabase using auth_user_id
         const { data: trainingAccount, error: trainingError } = await supabase
           .from('training_accounts')
@@ -794,17 +728,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           .eq('auth_user_id', userId)
           .single();
 
-        console.log('[DEBUG] Training account data:', trainingAccount);
-
         if (trainingAccount && !trainingError) {
-          console.log('[loadUserData] Training account found:', trainingAccount);
 
           // Use users.balance for total balance (includes initial + earned), but total_earned should only be earned rewards
           const trainingTaskNumber = trainingAccount.task_number || 1; // Next task to complete
           const completedTasks = Math.max(0, trainingTaskNumber - 1);
           const earnedRewards = trainingAccount.amount || 0; // Only earned rewards, not including initial capital
-
-          console.log('[loadUserData] Training data from DB - Balance from users table:', dbUser.balance, 'Earned rewards:', earnedRewards, 'Next task:', trainingTaskNumber, 'Completed:', completedTasks);
 
           // Update user state with training account data
           setUser(prev => prev ? {
@@ -825,11 +754,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             transactions: []
           };
           setWalletState(trainingWallet);
-          console.log('[loadUserData] Set walletState for training account:', trainingWallet);
 
           // Tasks will be loaded by refreshTasks using Supabase task_number as source of truth
           // Don't set tasks here to avoid stale data - refreshTasks will handle it
-          console.log('[loadUserData] Skipping task creation - refreshTasks will rebuild from Supabase task_number');
           
           // Check for Phase 2 checkpoint - ONLY in Phase 2
           // Use getAnyPhase2Checkpoint to find ANY existing checkpoint (regardless of task_number)
@@ -837,21 +764,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           // AND ensures we know if checkpoint was already processed even when past task 31/32
           const isPhase2 = Number(dbUser?.training_phase) === 2;
           if (isPhase2) {
-            console.log('[Checkpoint] loadUserData - Phase 2 detected, checking for ANY existing checkpoint');
             const checkpoint = await SupabaseService.getAnyPhase2Checkpoint(userId);
             if (checkpoint) {
-              console.log('[Checkpoint] loadUserData - Found checkpoint:', checkpoint.id, 'status:', checkpoint.status, 'created_at_task:', checkpoint.task_number);
-              
               // If checkpoint already processed, don't show modal again
               if (checkpoint.status === 'completed' || checkpoint.status === 'bonus_paid' || checkpoint.status === 'submitted') {
-                console.log('[Checkpoint] loadUserData - Checkpoint already processed - hiding modal');
                 setUser(prev => prev ? {
                   ...prev,
                   phase2_checkpoint: null,
                   has_pending_checkpoint: false
                 } : null);
               } else if (checkpoint.status === 'pending_review') {
-                console.log('[Checkpoint] loadUserData - Task will be blocked until admin approval');
                 setUser(prev => prev ? {
                   ...prev,
                   phase2_checkpoint: checkpoint,
@@ -864,11 +786,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 const checkpointTaskNum = checkpoint.task_number || 0;
                 
                 if (currentTaskNum > checkpointTaskNum) {
-                  console.log('[Checkpoint] loadUserData - RECOVERY: Checkpoint approved but task_number advanced (' + 
-                    checkpointTaskNum + ' -> ' + currentTaskNum + '). Treating as completed.');
+                  // Recovery: checkpoint approved but task_number advanced
                   // Auto-update checkpoint status to completed in background
-                  SupabaseService.updateCheckpointStatus(checkpoint.id, 'completed').catch(err => {
-                    console.error('[Checkpoint] Auto-recovery failed:', err);
+                  SupabaseService.updateCheckpointStatus(checkpoint.id, 'completed').catch(() => {
+                    // Silently handle recovery errors
                   });
                   // Clear checkpoint from state so tasks can render
                   setUser(prev => prev ? {
@@ -877,7 +798,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                     has_pending_checkpoint: false
                   } : null);
                 } else {
-                  console.log('[Checkpoint] loadUserData - Checkpoint approved - user must submit premium product');
                   setUser(prev => prev ? {
                     ...prev,
                     phase2_checkpoint: checkpoint,
@@ -885,27 +805,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                   } : null);
                 }
               }
-            } else {
-              console.log('[Checkpoint] loadUserData - No existing checkpoint found for this user');
             }
           }
         } else {
-          console.log('[loadUserData] No training account found in Supabase');
           // Don't reset wallet state to 0 - this causes flash of 0 balance on refresh
           // Keep existing state or set to loading state instead
-          console.log('[loadUserData] Training account not found, keeping existing wallet state');
         }
       } catch (error) {
-        console.error('[loadUserData] Error loading training data:', error);
-        // Don't reset wallet state to 0 - this causes flash of 0 balance on refresh
-        // Keep existing state or set to loading state instead
-        console.log('[loadUserData] Error loading training data, keeping existing wallet state');
+        // Silently handle training data errors
       }
     } else {
       // For personal/admin accounts, load from Supabase
       try {
-        console.log('[loadUserData] Loading personal account data from database');
-        
         // Update user state with fresh data from database (including balance and tasks_locked)
         setUser(prev => prev ? {
           ...prev,
@@ -921,24 +832,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // Update wallet state with fresh balance from database
         setWalletState(prev => ({
           ...prev,
-          available_balance: dbUser.balance, // Use fresh balance from database
-          total_earned: dbUser.total_earned, // Use fresh total_earned from database
+          available_balance: dbUser.balance,
+          total_earned: dbUser.total_earned,
         }));
-
-        console.log('[loadUserData] Updated user state with fresh DB data:', {
-          balance: dbUser.balance,
-          tasks_locked: dbUser.tasks_locked,
-          linked_training_account_id: dbUser.linked_training_account_id,
-          training_completed: dbUser.training_completed,
-          commission_transferred: dbUser.commission_transferred,
-          user_status: dbUser.user_status
-        });
 
         // TRAINING COMPLETION GATE: Strict system check before task creation/loading
         // Personal accounts are BLOCKED from task generation until training is completed
         if (dbUser.account_type === 'personal' && !dbUser.training_completed) {
-          console.log('[loadUserData] SAFE GATE: Personal account blocked - training not completed');
-          console.log('[loadUserData] SAFE GATE: Forcing empty tasks state to prevent task generation');
           setTasks([]);
           return; // Abort immediately - skip all task creation/loading logic
         }
@@ -951,28 +851,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (!dbTasks || dbTasks.length === 0) {
           // Only create fresh tasks if user hasn't completed any tasks yet
           if (tasksCompleted === 0) {
-            console.log('[loadUserData] No tasks found and tasks_completed is 0, creating 35 tasks');
             const tasksCreated = await SupabaseService.createTrainingTasks(userId, 35);
-            console.log('[loadUserData] Task creation result:', tasksCreated);
             
             if (tasksCreated) {
               const newTasks = await SupabaseService.getUserTasks(userId);
-              console.log('[loadUserData] Loaded new tasks after creation:', newTasks?.length);
               setTasks((newTasks || []).map(mapDatabaseTaskToTask));
             } else {
-              console.error('[loadUserData] Failed to create tasks');
               setTasks([]);
             }
           } else {
-            console.log('[loadUserData] No tasks found but tasks_completed is', tasksCompleted, '- not creating fresh tasks to preserve completed state');
             setTasks([]);
           }
         } else {
-          console.log('[loadUserData] Loaded existing tasks:', dbTasks.length);
           setTasks(dbTasks.map(mapDatabaseTaskToTask));
         }
       } catch (error) {
-        console.error('Error loading personal account data:', error);
         setTasks([]);
       }
     }
@@ -980,33 +873,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // For personal/admin accounts, load transactions and wallets from Supabase
     if (!isTraining) {
       try {
-        // Load transactions
         const dbTransactions = await SupabaseService.getUserTransactions(userId);
         setTransactions((dbTransactions || []).map(mapDatabaseTransactionToTransaction));
       } catch (error) {
-        console.error('Error loading transactions:', error);
         setTransactions([]);
       }
 
       try {
-        // Load wallets - pass userId directly to avoid race condition
         const { data, error } = await supabase
           .from('wallets')
           .select('*')
           .eq('user_id', userId);
 
         if (error) {
-          console.error('Error loading wallets:', error);
           setWallets([]);
         } else {
           setWallets(data as Wallet[]);
         }
       } catch (error) {
-        console.error('Error loading wallets:', error);
         setWallets([]);
       }
     } else {
-      // For training accounts, clear Supabase-based state
       setTransactions([]);
       setWallets([]);
     }
@@ -1019,18 +906,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setAuthLoading(true);
     try {
-      console.log('[AppContext.login] Attempting login for email:', email);
-      
-      // Try Supabase auth for personal accounts
-      console.log('[AppContext.login] Trying Supabase auth...');
       const { user: dbUser, error } = await SupabaseService.signIn(email, password);
       
       if (error || !dbUser) {
         setAuthLoading(false);
-        // Provide clearer error message - do NOT reset app state on failed login
         const errorMsg = error || 'Login failed';
-        console.log('[AppContext.login] Supabase auth failed:', errorMsg);
-        // Failed login should NOT trigger logout - just return error
         return { success: false, error: errorMsg };
       }
       
@@ -1085,6 +965,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loginTrainingAccount = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    let trainingUser: User;
     try {
       console.log('[loginTrainingAccount] Attempting Supabase auth for training account:', email);
       
@@ -1113,7 +994,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!trainingAccount || trainingError) {
         console.log('[loginTrainingAccount] No training account found for this auth user');
         // User exists in auth but no training account record - create minimal user state
-        const trainingUser: User = {
+        trainingUser = {
           id: authData.user.id,
           email: authData.user.email || email,
           phone: null,
@@ -1172,7 +1053,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           : (userData?.total_earned || 0); // Use users table for in-progress
 
         // Use training account data from database
-        const trainingUser: User = {
+        trainingUser = {
           id: authData.user.id,
           email: trainingAccount.email,
           phone: null,
@@ -1785,7 +1666,6 @@ else if (
           if (fetchError) {
             // Check for 500 Internal Server Error
             const isServerError = fetchError?.message?.includes('500') ||
-                                 fetchError?.status === 500 ||
                                  fetchError?.code === '500' ||
                                  fetchError?.message?.includes('Internal Server Error');
 
@@ -1805,7 +1685,6 @@ else if (
         } catch (apiError: any) {
           // Check for 500 Internal Server Error or other critical server errors
           const isServerError = apiError?.message?.includes('500') ||
-                               apiError?.status === 500 ||
                                apiError?.code === '500' ||
                                apiError?.message?.includes('Internal Server Error');
 
@@ -1855,7 +1734,6 @@ else if (
           } catch (tasksError: any) {
             // Check for 500 Internal Server Error
             const isServerError = tasksError?.message?.includes('500') ||
-                                 tasksError?.status === 500 ||
                                  tasksError?.code === '500' ||
                                  tasksError?.message?.includes('Internal Server Error');
 
@@ -1979,7 +1857,6 @@ else if (
       } catch (tasksError: any) {
         // Check for 500 Internal Server Error
         const isServerError = tasksError?.message?.includes('500') ||
-                             tasksError?.status === 500 ||
                              tasksError?.code === '500' ||
                              tasksError?.message?.includes('Internal Server Error');
 
@@ -2125,7 +2002,6 @@ else if (
     } catch (apiError: any) {
       // Check for 500 Internal Server Error or other critical server errors
       const isServerError = apiError?.message?.includes('500') ||
-                           apiError?.status === 500 ||
                            apiError?.code === '500' ||
                            apiError?.message?.includes('Internal Server Error');
 

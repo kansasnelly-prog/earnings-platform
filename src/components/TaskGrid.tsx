@@ -373,6 +373,9 @@ const TaskGrid: React.FC = () => {
   const [showPhase1LockModal, setShowPhase1LockModal] = useState(false);
   const [showPhase2CheckpointModal, setShowPhase2CheckpointModal] = useState(false);
   
+  // Personal Day 2 checkpoint modal
+  const [showPersonalDay2CheckpointModal, setShowPersonalDay2CheckpointModal] = useState(false);
+  
   // Two-set structure loading state
   const [isTransitioningToSet2, setIsTransitioningToSet2] = useState(false);
   const [currentTaskSet, setCurrentTaskSet] = useState<number>(1);
@@ -414,6 +417,7 @@ const TaskGrid: React.FC = () => {
 
       // Clear all local state caches
       setCompletedCount(0);
+      setShowPersonalDay2CheckpointModal(false);
       setShowSuccess(false);
       setCompletedReward(0);
       setIsLoadingProduct(true);
@@ -423,6 +427,7 @@ const TaskGrid: React.FC = () => {
       setCurrentTaskSet(1);
       setShowPhase1LockModal(false);
       setShowPhase2CheckpointModal(false);
+      setShowPersonalDay2CheckpointModal(false);
 
       // Force refresh tasks and user data from server (background, non-blocking)
       refreshTasks().catch(err => console.error('[TaskGrid] Background refreshTasks error on reset:', err));
@@ -529,6 +534,57 @@ const TaskGrid: React.FC = () => {
     };
   }, [user?.id, user?.training_phase]);
 
+  // Subscribe to personal Day 2 checkpoint changes for realtime updates when admin approves
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    // Only subscribe to personal Day 2 checkpoint changes
+    const isPersonal = user?.account_type === 'personal';
+    const personalCycle = user?.personal_cycle || 1;
+    const userId = user.id; // Capture user.id in local variable to avoid scope issues
+    
+    if (isPersonal && personalCycle === 2 && userId) {
+      const channelName = `personal_day2_checkpoint_${userId}`; // Unique channel name per user
+      const channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'personal_day2_checkpoints',
+            filter: `auth_user_id=eq.${userId}`
+          },
+          async (payload) => {
+            console.log('[PersonalDay2Checkpoint User] Checkpoint change detected:', payload.eventType, payload.new);
+            
+            // Refresh user data to get updated checkpoint state
+            const updatedCheckpoint = payload.new as any;
+            if (updatedCheckpoint?.status === 'approved') {
+              console.log('[PersonalDay2Checkpoint User] approved checkpoint detected via realtime');
+            }
+            
+            // Trigger a user refresh to get latest checkpoint data
+            window.dispatchEvent(new CustomEvent('refresh_user_checkpoint', { 
+              detail: { checkpointId: updatedCheckpoint?.id, status: updatedCheckpoint?.status }
+            }));
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('[PersonalDay2Checkpoint User] Realtime subscription established');
+          } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+            console.error('[PersonalDay2Checkpoint User] Realtime subscription error:', status);
+          }
+        });
+      
+      return () => {
+        console.log('[PersonalDay2Checkpoint User] Cleaning up realtime subscription');
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user?.id, user?.account_type, user?.personal_cycle]);
+
   // Load tasks only once on mount - avoid dependency on refreshTasks which changes when user changes
   const dataLoaded = useRef(false);
   useEffect(() => {
@@ -613,6 +669,29 @@ const TaskGrid: React.FC = () => {
       setShowCombinationModal(true);
     }
   }, [user?.has_pending_order]);
+
+  // Show personal Day 2 checkpoint modal when checkpoint is triggered
+  useEffect(() => {
+    const isPersonal = user?.account_type === 'personal';
+    const personalCycle = user?.personal_cycle || 1;
+    const checkpointStatus = user?.personal_day2_checkpoint?.status;
+    
+    if (isPersonal && personalCycle === 2) {
+      if (checkpointStatus === 'pending_review') {
+        setShowPersonalDay2CheckpointModal(true);
+      } else if (checkpointStatus === 'rejected') {
+        // Show rejected state message and close modal
+        setShowPersonalDay2CheckpointModal(false);
+        console.log('[PersonalDay2Checkpoint] Checkpoint rejected, showing error message');
+      } else if (checkpointStatus === 'completed' || checkpointStatus === 'submitted') {
+        // Close modal when checkpoint is completed or submitted
+        setShowPersonalDay2CheckpointModal(false);
+      } else if (checkpointStatus === 'approved') {
+        // Close modal when approved (user will see submit UI instead)
+        setShowPersonalDay2CheckpointModal(false);
+      }
+    }
+  }, [user?.account_type, user?.personal_cycle, user?.personal_day2_checkpoint?.status]);
   
   // Use user.total_earned from database as the single source of truth
   const totalReward = user?.total_earned || 0;
@@ -1064,6 +1143,75 @@ const allComplete = displayCompletedCount === totalTasks;
     }
   };
 
+  const handleSubmitPersonalDay2CheckpointProduct = async (e?: React.MouseEvent) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    
+    if (submissionLockRef.current) {
+      console.log('[PersonalDay2Checkpoint Submit] Already submitting, skipping...');
+      return;
+    }
+    
+    submissionLockRef.current = true;
+    
+    console.log('[PersonalDay2Checkpoint Submit] button clicked');
+
+    try {
+      if (!user?.personal_day2_checkpoint || !user?.id) {
+        console.error('[PersonalDay2Checkpoint Submit] Missing user or checkpoint data');
+        return;
+      }
+
+      const checkpointId = user?.personal_day2_checkpoint?.id;
+      if (!checkpointId || !user?.id) {
+        console.error('[PersonalDay2Checkpoint Submit] Missing checkpoint data or user ID');
+        return;
+      }
+      console.log('[PersonalDay2Checkpoint Submit] checkpoint id:', checkpointId);
+
+      const result = await SupabaseService.submitPersonalDay2CheckpointProduct(
+        user?.id,
+        checkpointId
+      );
+      
+      if (result.success) {
+        console.log('[PersonalDay2Checkpoint Submit] checkpoint completed');
+        
+        toast({
+          title: 'Premium product submitted. 6x profit added.',
+          description: `Reward of $${result.bonusAmount?.toFixed(2)} has been added to your balance. Task advanced to ${result.nextTaskNumber}.`,
+          variant: 'default',
+        });
+        
+        setShowPersonalDay2CheckpointModal(false);
+
+        refreshTasks().catch(err => console.error('[PersonalDay2Checkpoint] Background refreshTasks error:', err));
+        refreshUser().catch(err => console.error('[PersonalDay2Checkpoint] Background refreshUser error:', err));
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } else {
+        console.error('[PersonalDay2Checkpoint Submit] Submission failed:', result.error);
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to submit checkpoint product',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('[PersonalDay2Checkpoint Submit] Exception during submission:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      submissionLockRef.current = false;
+      console.log('[PersonalDay2Checkpoint Submit] Finished - lock reset');
+    }
+  };
+
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Set Transition Loading State */}
@@ -1204,6 +1352,105 @@ const allComplete = displayCompletedCount === totalTasks;
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Personal Day 2 Checkpoint Modal (task #21) */}
+      {showPersonalDay2CheckpointModal && user?.personal_day2_checkpoint?.status === 'pending_review' && (
+        <Dialog open={showPersonalDay2CheckpointModal} onOpenChange={setShowPersonalDay2CheckpointModal}>
+          <DialogContent className="bg-[#1a1f2e] border-white/[0.06] text-white max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-white">Day 2 Checkpoint</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                You have reached task #21 in Day 2. Admin review required for 6x multiplier.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                  <Trophy className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-emerald-400 font-bold">6x Multiplier Available</h3>
+                  <p className="text-emerald-300/60 text-sm">Contact Customer Service to claim your reward</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <Button
+                onClick={() => {
+                  window.open('https://t.me/EARNINGSLLCONLINECS1', '_blank');
+                }}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold"
+              >
+                Contact Customer Service
+              </Button>
+              <Button
+                onClick={() => setShowPersonalDay2CheckpointModal(false)}
+                variant="outline"
+                className="w-full border-white/[0.06] text-white hover:bg-white/[0.05]"
+              >
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Personal Day 2 Checkpoint Approved - Combination Product Review with Submit Button */}
+      {user?.account_type === 'personal' && 
+       user?.personal_cycle === 2 &&
+       user?.personal_day2_checkpoint?.status === 'approved' &&
+       Number(user?.tasks_completed) <= Number(user?.personal_day2_checkpoint?.task_number || 21) && (
+        <div className="space-y-4">
+          <div className="bg-[#1a1f2e] border border-white/[0.06] rounded-2xl p-6">
+            <div className="text-center mb-4">
+              <h2 className="text-2xl font-bold text-white mb-2">Combination Product Review Required</h2>
+              <p className="text-gray-400">Day 2 • Task {user?.personal_day2_checkpoint?.task_number || 21}</p>
+            </div>
+            
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-amber-400 font-bold">Manual Review Required</h3>
+                  <p className="text-amber-300/60 text-sm">Admin approved - Submit now to claim your 6x checkpoint reward</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-amber-400 font-bold text-lg">6x Profit Bonus</p>
+                    <p className="text-amber-300/60 text-sm">Commission Reward</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-amber-400">$186.00</p>
+                </div>
+              </div>
+            </div>
+            
+            <Button 
+              onClick={(e) => { 
+                e?.stopPropagation?.(); 
+                handleSubmitPersonalDay2CheckpointProduct(e); 
+              }}
+              className="w-full py-6 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-amber-500/30"
+            >
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Submit Premium Product
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Phase 2 Checkpoint Modal - ONLY for Phase 2 pending_review (blocking) */}

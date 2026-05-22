@@ -219,7 +219,7 @@ export interface Phase2Checkpoint {
   email: string;
   phase: number;
   task_number: number;
-  status: 'pending_review' | 'approved' | 'rejected' | 'completed' | 'submitted' | 'bonus_paid';
+  status: 'pending' | 'pending_review' | 'approved' | 'rejected' | 'completed' | 'submitted' | 'bonus_paid';
   product1_name: string;
   product1_image: string;
   product1_price: number;
@@ -230,6 +230,35 @@ export interface Phase2Checkpoint {
   bonus_amount: number;
   reviewed_by?: string;
   reviewed_at?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ===========================================
+// PERSONAL DAY 2 CHECKPOINT TYPES
+// ===========================================
+
+export interface PersonalDay2Checkpoint {
+  id: string;
+  user_id: string;
+  auth_user_id: string;
+  email: string;
+  cycle: number; // Day 2 = cycle 2
+  task_number: number;
+  status: 'pending' | 'pending_review' | 'approved' | 'rejected' | 'completed' | 'submitted' | 'bonus_paid';
+  product1_name: string;
+  product1_image: string;
+  product1_price: number;
+  product2_name: string;
+  product2_image: string;
+  product2_price: number;
+  combination_value: number;
+  bonus_amount: number;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  submitted_at?: string;
+  approved_at?: string;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -1337,6 +1366,41 @@ export class SupabaseService {
             .eq('id', userId);
             
           console.log('[completeTask] Set personal_cycle_completed to true for cycle', personalCycle);
+        }
+        
+        // Check for Personal Day 2 checkpoint at task #21 (cycle 2)
+        let personalDay2Checkpoint = false;
+        if (isVIP1Personal && personalCycle === 2 && newTasksCompleted >= 21) {
+          // Check if checkpoint already exists
+          const existingCheckpoint = await this.getUserPendingPersonalDay2Checkpoint(userId);
+          if (!existingCheckpoint) {
+            console.log('[completeTask] Personal Day 2 checkpoint triggered at task #21 for personal account');
+            
+            // Get products for the checkpoint
+            const ProductCatalogService = (await import('@/services/productCatalogService')).default;
+            const product1 = ProductCatalogService.getProductForTask(21, 'personal');
+            const product2 = ProductCatalogService.getProductForTask(22, 'personal');
+            
+            // Create checkpoint
+            await this.createPersonalDay2Checkpoint(
+              userId,
+              user.email,
+              21,
+              {
+                name: product1.name,
+                image: product1.image,
+                price: product1.price
+              },
+              {
+                name: product2.name,
+                image: product2.image,
+                price: product2.price
+              },
+              186.00 // 6X bonus
+            );
+            
+            personalDay2Checkpoint = true;
+          }
         }
       }
 
@@ -3599,6 +3663,343 @@ export class SupabaseService {
       console.error('[updateCheckpointStatus] Exception:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
+  }
+  
+  // ===========================================
+  // PERSONAL DAY 2 CHECKPOINT OPERATIONS
+  // ===========================================
+  
+  static async createPersonalDay2Checkpoint(
+    authUserId: string,
+    email: string,
+    taskNumber: number,
+    product1: { name: string; image: string; price: number },
+    product2: { name: string; image: string; price: number },
+    bonusAmount: number = 186.00 // 6X of ~$31 combination value
+  ): Promise<PersonalDay2Checkpoint | null> {
+    try {
+      // Check if checkpoint already exists for this user in cycle 2
+      const { data: existing } = await supabase
+        .from('personal_day2_checkpoints')
+        .select('*')
+        .eq('auth_user_id', authUserId)
+        .eq('cycle', 2)
+        .in('status', ['pending', 'pending_review', 'approved', 'completed', 'submitted', 'bonus_paid'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (existing) {
+        console.log('[PersonalDay2Checkpoint] Checkpoint already exists:', existing.id, 'status:', existing.status);
+        return existing as PersonalDay2Checkpoint;
+      }
+      
+      // Calculate combination value
+      const combinationValue = product1.price + product2.price;
+      
+      console.log('[PersonalDay2Checkpoint] Creating checkpoint for task', taskNumber, 'user:', email);
+      console.log('[PersonalDay2Checkpoint] Product 1:', product1.name, '$' + product1.price);
+      console.log('[PersonalDay2Checkpoint] Product 2:', product2.name, '$' + product2.price);
+      console.log('[PersonalDay2Checkpoint] Combination value:', combinationValue);
+      console.log('[PersonalDay2Checkpoint] Bonus amount (6X):', bonusAmount);
+      
+      const { data, error } = await supabase
+        .from('personal_day2_checkpoints')
+        .insert({
+          user_id: authUserId,
+          auth_user_id: authUserId,
+          email,
+          cycle: 2,
+          task_number: taskNumber,
+          status: 'pending_review',
+          product1_name: product1.name,
+          product1_image: product1.image,
+          product1_price: product1.price,
+          product2_name: product2.name,
+          product2_image: product2.image,
+          product2_price: product2.price,
+          combination_value: combinationValue,
+          bonus_amount: bonusAmount,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('[PersonalDay2Checkpoint] Error creating checkpoint:', error);
+        return null;
+      }
+      
+      console.log('[PersonalDay2Checkpoint] Created checkpoint for task', taskNumber, 'user:', email);
+      return data as PersonalDay2Checkpoint;
+    } catch (error) {
+      console.error('[PersonalDay2Checkpoint] Exception creating checkpoint:', error);
+      return null;
+    }
+  }
+  
+  static async getUserPendingPersonalDay2Checkpoint(authUserId: string): Promise<PersonalDay2Checkpoint | null> {
+    try {
+      console.log('[PersonalDay2Checkpoint] Fetching pending checkpoint for user:', authUserId);
+      
+      const { data, error } = await supabase
+        .from('personal_day2_checkpoints')
+        .select('*')
+        .eq('auth_user_id', authUserId)
+        .eq('cycle', 2)
+        .eq('status', 'pending_review')
+        .maybeSingle();
+      
+      if (error) {
+        console.error('[PersonalDay2Checkpoint] Error fetching checkpoint:', error);
+        return null;
+      }
+      
+      if (data) {
+        console.log('[PersonalDay2Checkpoint] Found pending checkpoint:', data.id, 'at task', data.task_number);
+      } else {
+        console.log('[PersonalDay2Checkpoint] No pending checkpoint found');
+      }
+      
+      return data as PersonalDay2Checkpoint | null;
+    } catch (error) {
+      console.error('[PersonalDay2Checkpoint] Exception fetching checkpoint:', error);
+      return null;
+    }
+  }
+  
+  static async getAllPendingPersonalDay2Checkpoints(): Promise<PersonalDay2Checkpoint[]> {
+    try {
+      const { data, error } = await supabase
+        .from('personal_day2_checkpoints')
+        .select('*')
+        .eq('status', 'pending_review')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('[PersonalDay2Checkpoint] Error fetching checkpoints:', error);
+        return [];
+      }
+      
+      return data as PersonalDay2Checkpoint[];
+    } catch (error) {
+      console.error('[PersonalDay2Checkpoint] Exception fetching checkpoints:', error);
+      return [];
+    }
+  }
+  
+  static async approvePersonalDay2Checkpoint(
+    checkpointId: string,
+    adminId: string,
+    notes?: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Get checkpoint details
+      const { data: checkpoint, error: fetchError } = await supabase
+        .from('personal_day2_checkpoints')
+        .select('*')
+        .eq('id', checkpointId)
+        .single();
+      
+      if (fetchError || !checkpoint) {
+        return { success: false, error: 'Checkpoint not found' };
+      }
+      
+      // Update checkpoint status
+      const { error: updateError } = await supabase
+        .from('personal_day2_checkpoints')
+        .update({
+          status: 'approved',
+          reviewed_by: adminId,
+          reviewed_at: new Date().toISOString(),
+          approved_at: new Date().toISOString(),
+          notes: notes || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', checkpointId);
+      
+      if (updateError) {
+        console.error('[PersonalDay2Checkpoint] Error approving checkpoint:', updateError);
+        return { success: false, error: updateError.message };
+      }
+      
+      // Update user's personal_day2_checkpoint field
+      const { error: userUpdateError } = await supabase
+        .from('users')
+        .update({
+          personal_day2_checkpoint: jsonb_build_object(
+            'status', 'approved',
+            'triggered_at', (checkpoint.created_at),
+            'cleared_at', null,
+            'multiplier_applied', false,
+            'task_number', checkpoint.task_number,
+            'id', checkpoint.id,
+            'approved_at', NOW()
+          )
+        })
+        .eq('id', checkpoint.auth_user_id);
+      
+      if (userUpdateError) {
+        console.error('[PersonalDay2Checkpoint] Error updating user checkpoint status:', userUpdateError);
+      }
+      
+      // Create transaction record for checkpoint approval
+      await this.createTransaction({
+        user_id: checkpoint.auth_user_id,
+        type: 'personal_day2_checkpoint_approved',
+        amount: 0,
+        description: `Personal Day 2 checkpoint approved at task ${checkpoint.task_number}. User must submit product to receive 6x bonus.`,
+        status: 'completed',
+        metadata: { checkpoint_id: checkpointId, admin_id: adminId, pending_bonus: checkpoint.bonus_amount }
+      });
+      
+      console.log('[PersonalDay2Checkpoint] Approved checkpoint', checkpointId, 'Bonus:', checkpoint.bonus_amount);
+      return { success: true };
+    } catch (error) {
+      console.error('[PersonalDay2Checkpoint] Exception approving checkpoint:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+  
+  static async submitPersonalDay2CheckpointProduct(
+    authUserId: string,
+    checkpointId: string,
+    checkpointData?: any
+  ): Promise<{ success: boolean; bonusAmount?: number; oldBalance?: number; newBalance?: number; nextTaskNumber?: number; error?: string }> {
+    console.log('[PersonalDay2Checkpoint Submit] === STARTING SUBMISSION ===');
+    console.log('[PersonalDay2Checkpoint Submit] authUserId:', authUserId);
+    console.log('[PersonalDay2Checkpoint Submit] checkpointId:', checkpointId);
+
+    let checkpoint = checkpointData;
+
+    // If checkpoint data not provided, fetch it
+    if (!checkpoint) {
+      console.log('[PersonalDay2Checkpoint Submit] Fetching checkpoint from database...');
+      try {
+        const { data: checkpointResult, error: fetchError } = await supabase
+          .from('personal_day2_checkpoints')
+          .select('*')
+          .eq('id', checkpointId)
+          .eq('auth_user_id', authUserId)
+          .maybeSingle();
+
+        if (fetchError || !checkpointResult) {
+          console.error('[PersonalDay2Checkpoint Submit] ERROR fetching checkpoint:', fetchError);
+          return { success: false, error: 'Checkpoint not found' };
+        }
+
+        checkpoint = checkpointResult;
+        console.log('[PersonalDay2Checkpoint Submit] Checkpoint fetched successfully:', checkpoint.id);
+      } catch (error) {
+        console.error('[PersonalDay2Checkpoint Submit] EXCEPTION during checkpoint fetch:', error);
+        return { success: false, error: 'Checkpoint fetch failed' };
+      }
+    }
+
+    console.log('[PersonalDay2Checkpoint Submit] checkpoint status:', checkpoint.status);
+    console.log('[PersonalDay2Checkpoint Submit] checkpoint bonus_amount:', checkpoint.bonus_amount);
+
+    // Prevent duplicate bonus payment
+    if (checkpoint.status === 'completed' || checkpoint.status === 'bonus_paid' || checkpoint.status === 'submitted' || checkpoint.status === 'pending') {
+      console.log('[PersonalDay2Checkpoint Submit] Checkpoint already processed. Status:', checkpoint.status);
+      return { success: true, bonusAmount: 0, nextTaskNumber: checkpoint.task_number + 1 };
+    }
+
+    if (checkpoint.status !== 'approved' && checkpoint.status !== 'pending_review') {
+      console.error('[PersonalDay2Checkpoint Submit] ERROR: Checkpoint not approved. Status:', checkpoint.status);
+      return { success: false, error: 'Checkpoint must be approved before submitting' };
+    }
+
+    // Get current user balance
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('balance, tasks_completed')
+      .eq('id', authUserId)
+      .single();
+
+    if (userError || !user) {
+      console.error('[PersonalDay2Checkpoint Submit] ERROR fetching user:', userError);
+      return { success: false, error: 'User not found' };
+    }
+
+    // Calculate values
+    const bonusAmount = checkpoint.bonus_amount || 186.00;
+    const oldBalance = user.balance || 0;
+    const newBalance = oldBalance + bonusAmount;
+    const currentTaskNumber = user.tasks_completed || 1;
+    const nextTaskNumber = currentTaskNumber + 1;
+
+    console.log('[PersonalDay2Checkpoint Submit] calculated values:');
+    console.log('[PersonalDay2Checkpoint Submit]   old balance:', oldBalance);
+    console.log('[PersonalDay2Checkpoint Submit]   bonus amount:', bonusAmount);
+    console.log('[PersonalDay2Checkpoint Submit]   new balance:', newBalance);
+    console.log('[PersonalDay2Checkpoint Submit]   current task:', currentTaskNumber);
+    console.log('[PersonalDay2Checkpoint Submit]   next task:', nextTaskNumber);
+
+    // Update user balance
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({
+        balance: newBalance,
+        tasks_completed: nextTaskNumber,
+        personal_day2_checkpoint: jsonb_build_object(
+          'status', 'completed',
+          'triggered_at', checkpoint.created_at,
+          'cleared_at', NOW(),
+          'multiplier_applied', true,
+          'task_number', checkpoint.task_number,
+          'id', checkpoint.id
+        ),
+        is_negative_balance: false
+      })
+      .eq('id', authUserId);
+
+    if (updateError) {
+      console.error('[PersonalDay2Checkpoint Submit] ERROR updating user:', updateError);
+      return { success: false, error: 'Failed to update balance' };
+    }
+
+    // Update checkpoint status to completed
+    const { error: checkpointUpdateError } = await supabase
+      .from('personal_day2_checkpoints')
+      .update({ 
+        status: 'completed',
+        submitted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', checkpointId);
+
+    if (checkpointUpdateError) {
+      console.error('[PersonalDay2Checkpoint Submit] ERROR updating checkpoint:', checkpointUpdateError);
+      return { success: false, error: 'Failed to complete checkpoint' };
+    }
+
+    // Create transaction record
+    try {
+      await this.createTransaction({
+        user_id: authUserId,
+        type: 'personal_day2_checkpoint_bonus',
+        amount: bonusAmount,
+        description: '6x premium checkpoint bonus (Personal Day 2)',
+        status: 'completed',
+        metadata: {
+          checkpoint_id: checkpointId,
+          old_amount: oldBalance,
+          new_amount: newBalance,
+          bonus_amount: bonusAmount,
+          old_task: currentTaskNumber,
+          new_task: nextTaskNumber
+        }
+      });
+    } catch (transactionError) {
+      console.error('[PersonalDay2Checkpoint Submit] ERROR creating transaction:', transactionError);
+    }
+
+    console.log('[PersonalDay2Checkpoint Submit] === SUBMISSION COMPLETED SUCCESSFULLY ===');
+    console.log('[PersonalDay2Checkpoint Submit] Returning:', { success: true, bonusAmount, oldBalance, newBalance, nextTaskNumber });
+
+    return { success: true, bonusAmount, oldBalance, newBalance, nextTaskNumber };
   }
   
   // ===========================================

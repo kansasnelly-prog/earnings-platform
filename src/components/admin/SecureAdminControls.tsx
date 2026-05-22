@@ -23,7 +23,10 @@ import {
   Award,
   X
 } from 'lucide-react';
-import { Phase2Checkpoint, fixTestAccountBonus } from '@/services/supabaseService';
+import { Phase2Checkpoint, PersonalDay2Checkpoint, fixTestAccountBonus, SupabaseService } from '@/services/supabaseService';
+
+// Union type for both checkpoint types
+type AdminCheckpoint = Phase2Checkpoint | (PersonalDay2Checkpoint & { checkpoint_type: 'personal_day2' });
 import { TelegramService } from '@/services/telegramService';
 import { sendTelegramNotification } from '@/lib/realtime';
 
@@ -39,9 +42,9 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
   const [profitMultiplier] = useState(6);
   
   // Phase 2 checkpoint state
-  const [pendingCheckpoints, setPendingCheckpoints] = useState<Phase2Checkpoint[]>([]);
+  const [pendingCheckpoints, setPendingCheckpoints] = useState<(Phase2Checkpoint & { checkpoint_type?: string })[]>([]);
   const [loadingCheckpoints, setLoadingCheckpoints] = useState(false);
-  const [selectedCheckpoint, setSelectedCheckpoint] = useState<Phase2Checkpoint | null>(null);
+  const [selectedCheckpoint, setSelectedCheckpoint] = useState<(Phase2Checkpoint & { checkpoint_type?: string }) | null>(null);
   const [checkpointNotes, setCheckpointNotes] = useState('');
   const [processingCheckpoint, setProcessingCheckpoint] = useState<string | null>(null);
   const [isFixingBonus, setIsFixingBonus] = useState(false);
@@ -363,7 +366,7 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
       
       console.log('[Admin Pending Order] User found, auth_user_id:', authUserId);
       
-      // Find latest pending checkpoint for this user
+      // Find latest pending checkpoint for this user (check both phase2_checkpoints and personal_day2_checkpoints)
       const { data: pendingCheckpoint, error: checkpointError } = await supabase
         .from('phase2_checkpoints')
         .select('*')
@@ -373,27 +376,50 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
         .limit(1)
         .maybeSingle();
       
+      // If no phase2 checkpoint found, check for personal Day 2 checkpoint
+      let finalCheckpoint = pendingCheckpoint;
+      if (!pendingCheckpoint) {
+        const { data: personalCheckpoint, error: personalCheckpointError } = await supabase
+          .from('personal_day2_checkpoints')
+          .select('*')
+          .or(`email.eq.${email},auth_user_id.eq.${authUserId}`)
+          .eq('status', 'pending_review')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (!personalCheckpointError && personalCheckpoint) {
+          finalCheckpoint = personalCheckpoint;
+          console.log('[Admin Pending Order] Personal Day 2 checkpoint found:', personalCheckpoint.id);
+        }
+      }
+      
       if (checkpointError) {
         console.error('[Admin Pending Order] Error fetching checkpoint:', checkpointError);
         toast.error('Error checking for pending order');
         return;
       }
       
-      if (!pendingCheckpoint) {
+      if (!finalCheckpoint) {
         console.log('[Admin Pending Order] No pending checkpoint found for email:', email);
         toast.error('No pending order found for this user.');
         return;
       }
       
-      console.log('[Admin Pending Order] Pending checkpoint found:', pendingCheckpoint.id);
+      console.log('[Admin Pending Order] Pending checkpoint found:', finalCheckpoint.id);
       
       // Get current admin user
       const { data: { user: adminUser } } = await supabase.auth.getUser();
       const adminId = adminUser?.id || 'admin';
       
+      // Determine which table to update based on checkpoint type
+      const isPersonalCheckpoint = finalCheckpoint.cycle !== undefined; // personal checkpoints have 'cycle' field
+      const tableName = isPersonalCheckpoint ? 'personal_day2_checkpoints' : 'phase2_checkpoints';
+      const checkpointType = isPersonalCheckpoint ? 'Personal Day 2' : 'Phase 2';
+      
       // Update checkpoint to approved status (do NOT add bonus yet)
       const { error: updateError } = await supabase
-        .from('phase2_checkpoints')
+        .from(tableName)
         .update({
           status: 'approved',
           reviewed_at: new Date().toISOString(),
@@ -401,7 +427,7 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
           notes: 'Pending order removed by admin',
           updated_at: new Date().toISOString()
         })
-        .eq('id', pendingCheckpoint.id);
+        .eq('id', finalCheckpoint.id);
       
       if (updateError) {
         console.error('[Admin Pending Order] Error approving checkpoint:', updateError);
@@ -414,37 +440,37 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
         .from('transactions')
         .insert({
           user_id: authUserId,
-          type: 'phase2_checkpoint_approved',
+          type: isPersonalCheckpoint ? 'personal_day2_checkpoint_approved' : 'phase2_checkpoint_approved',
           amount: 0,
-          description: `Phase 2 checkpoint approved via Remove Pending Order at task ${pendingCheckpoint.task_number}`,
+          description: `${checkpointType} checkpoint approved via Remove Pending Order at task ${finalCheckpoint.task_number}`,
           status: 'completed',
           metadata: { 
-            checkpoint_id: pendingCheckpoint.id, 
+            checkpoint_id: finalCheckpoint.id, 
             admin_id: adminId, 
-            pending_bonus: pendingCheckpoint.bonus_amount,
+            pending_bonus: finalCheckpoint.bonus_amount,
             method: 'remove_pending_order_button'
           },
           created_at: new Date().toISOString()
         });
       
-      console.log('[Admin Pending Order] Checkpoint approved:', pendingCheckpoint.id);
+      console.log('[Admin Pending Order] Checkpoint approved:', finalCheckpoint.id);
       
       // Send Telegram notification (don't block on failure)
       try {
-        const combinationValue = pendingCheckpoint.combination_value || 
-          (pendingCheckpoint.product1_price + pendingCheckpoint.product2_price);
+        const combinationValue = finalCheckpoint.combination_value || 
+          (finalCheckpoint.product1_price + finalCheckpoint.product2_price);
         
         const telegramMessage = `✅ <b>Pending Order Removed Successfully</b>\n\n` +
           `👤 <b>User Details:</b>\n` +
           `📧 Email: ${email}\n` +
           `🆔 Auth User ID: <code>${authUserId}</code>\n\n` +
           `📋 <b>Checkpoint Details:</b>\n` +
-          `🎯 Phase: ${pendingCheckpoint.phase}\n` +
-          `🔢 Task Number: ${pendingCheckpoint.task_number}\n` +
-          `📦 Product 1: ${pendingCheckpoint.product1_name} ($${pendingCheckpoint.product1_price.toFixed(2)})\n` +
-          `📦 Product 2: ${pendingCheckpoint.product2_name} ($${pendingCheckpoint.product2_price.toFixed(2)})\n` +
+          `🎯 Type: ${checkpointType}\n` +
+          `🔢 Task Number: ${finalCheckpoint.task_number}\n` +
+          `📦 Product 1: ${finalCheckpoint.product1_name} ($${finalCheckpoint.product1_price.toFixed(2)})\n` +
+          `📦 Product 2: ${finalCheckpoint.product2_name} ($${finalCheckpoint.product2_price.toFixed(2)})\n` +
           `💰 Combination Value: $${combinationValue.toFixed(2)}\n` +
-          `💵 Pending Bonus: $${pendingCheckpoint.bonus_amount.toFixed(2)}\n` +
+          `💵 Pending Bonus: $${finalCheckpoint.bonus_amount.toFixed(2)}\n` +
           `✅ Status: APPROVED\n\n` +
           `⚙️ <b>Admin Action:</b>\n` +
           `🕐 Time: ${new Date().toLocaleString()}\n` +
@@ -528,9 +554,21 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
   const loadPendingCheckpoints = async () => {
     setLoadingCheckpoints(true);
     try {
-      const checkpoints = await SupabaseService.getAllPendingCheckpoints();
-      setPendingCheckpoints(checkpoints);
-      console.log('[Admin] Loaded pending checkpoints:', checkpoints.length);
+      const phase2Checkpoints = await SupabaseService.getAllPendingCheckpoints();
+      const personalDay2Checkpoints = await SupabaseService.getAllPendingPersonalDay2Checkpoints();
+      
+      // Combine both checkpoint types with proper typing
+      const allCheckpoints: (Phase2Checkpoint & { checkpoint_type?: string })[] = [
+        ...phase2Checkpoints.map(cp => ({ ...cp, checkpoint_type: 'phase2' as const })),
+        ...personalDay2Checkpoints.map(cp => ({ 
+          ...cp, 
+          checkpoint_type: 'personal_day2' as const,
+          phase: cp.cycle as number // Map cycle to phase for compatibility
+        } as Phase2Checkpoint & { checkpoint_type?: string }))
+      ];
+      
+      setPendingCheckpoints(allCheckpoints);
+      console.log('[Admin] Loaded pending checkpoints:', allCheckpoints.length, '(Phase 2:', phase2Checkpoints.length, ', Personal Day 2:', personalDay2Checkpoints.length, ')');
     } catch (error) {
       console.error('[Admin] Error loading checkpoints:', error);
       toast.error('Failed to load pending checkpoints');
@@ -539,14 +577,20 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
     }
   };
   
-  const handleApproveCheckpoint = async (checkpointId: string) => {
+  const handleApproveCheckpoint = async (checkpointId: string, checkpointType: string = 'phase2') => {
     setProcessingCheckpoint(checkpointId);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const result = await SupabaseService.approveCheckpoint(checkpointId, user?.id || 'admin', checkpointNotes);
+      
+      let result;
+      if (checkpointType === 'personal_day2') {
+        result = await SupabaseService.approvePersonalDay2Checkpoint(checkpointId, user?.id || 'admin', checkpointNotes);
+      } else {
+        result = await SupabaseService.approveCheckpoint(checkpointId, user?.id || 'admin', checkpointNotes);
+      }
       
       if (result.success) {
-        toast.success('Checkpoint approved! Bonus has been added to user balance.');
+        toast.success('Checkpoint approved! User can now submit product for 6x bonus.');
         setSelectedCheckpoint(null);
         setCheckpointNotes('');
         await loadPendingCheckpoints();
@@ -871,7 +915,7 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
                 
                 <div className="flex gap-3">
                   <Button
-                    onClick={() => handleApproveCheckpoint(selectedCheckpoint.id)}
+                    onClick={() => handleApproveCheckpoint(selectedCheckpoint.id, selectedCheckpoint.checkpoint_type || 'phase2')}
                     disabled={processingCheckpoint === selectedCheckpoint.id}
                     className="flex-1 bg-green-600 hover:bg-green-700"
                   >

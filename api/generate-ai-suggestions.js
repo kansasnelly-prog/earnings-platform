@@ -1,9 +1,9 @@
 // Server-side API route for generating AI-powered customer support suggestions
 // Integrates with OpenAI API for intelligent, context-aware response generation
 
-const { createClient } = require('@supabase/supabase-js');
-
 export default async function handler(req, res) {
+  console.log('[AI Suggestions] Handler invoked, method:', req.method);
+
   // Set CORS headers for all responses
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -12,39 +12,53 @@ export default async function handler(req, res) {
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
+    console.log('[AI Suggestions] CORS preflight request');
     return res.status(200).json({ success: true });
   }
 
   // Only allow POST requests
   if (req.method !== 'POST') {
+    console.log('[AI Suggestions] Invalid method:', req.method);
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
   try {
+    console.log('[AI Suggestions] Parsing request body...');
     const { message, conversationHistory } = req.body;
 
     // Validate required fields
     if (!message) {
+      console.log('[AI Suggestions] Missing message field');
       return res.status(400).json({ success: false, error: 'Message is required' });
     }
 
-    // Get environment variables
-    const env = req?.env || process.env;
-    const openaiApiKey = env.OPENAI_API_KEY;
+    console.log('[AI Suggestions] Message received, length:', message.length);
+
+    // Get environment variables - use process.env directly for Vercel
+    const openaiApiKey = process.env.OPENAI_API_KEY;
 
     if (!openaiApiKey) {
-      console.error('[AI Suggestions] OPENAI_API_KEY not configured');
+      console.error('[AI Suggestions] OPENAI_API_KEY not configured in environment');
       return res.status(500).json({ success: false, error: 'AI service not configured' });
     }
+
+    console.log('[AI Suggestions] OpenAI API key found (length:', openaiApiKey.length, ')');
 
     // Build conversation context
     let context = '';
     if (conversationHistory && conversationHistory.length > 0) {
-      const recentMessages = conversationHistory.slice(-5).map(msg => {
-        const role = msg.sender === 'customer' ? 'Customer' : 'Support';
-        return `${role}: ${msg.message}`;
-      }).join('\n');
-      context = `\n\nRECENT CONVERSATION HISTORY:\n${recentMessages}`;
+      console.log('[AI Suggestions] Processing conversation history, count:', conversationHistory.length);
+      try {
+        const recentMessages = conversationHistory.slice(-5).map(msg => {
+          const role = msg.sender === 'customer' ? 'Customer' : 'Support';
+          return `${role}: ${msg.message}`;
+        }).join('\n');
+        context = `\n\nRECENT CONVERSATION HISTORY:\n${recentMessages}`;
+      } catch (contextError) {
+        console.error('[AI Suggestions] Error processing conversation history:', contextError);
+        // Continue without context if processing fails
+        context = '';
+      }
     }
 
     // Super Pro AI System Prompt with Tasks Reward Hub business rules
@@ -116,6 +130,7 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
         }),
         signal: controller.signal
       });
+      console.log('[AI Suggestions] OpenAI API response status:', openaiResponse.status);
     } catch (fetchError) {
       clearTimeout(timeoutId);
       console.error('[AI Suggestions] OpenAI API fetch error:', fetchError);
@@ -126,38 +141,72 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
 
     if (!openaiResponse.ok) {
       const errorText = await openaiResponse.text();
-      console.error('[AI Suggestions] OpenAI API error:', errorText);
+      console.error('[AI Suggestions] OpenAI API error status:', openaiResponse.status, 'error:', errorText);
       return res.status(503).json({ success: false, error: 'AI service temporarily unavailable' });
     }
 
-    const openaiData = await openaiResponse.json();
+    let openaiData;
+    try {
+      openaiData = await openaiResponse.json();
+      console.log('[AI Suggestions] OpenAI response parsed successfully');
+    } catch (jsonError) {
+      console.error('[AI Suggestions] Failed to parse OpenAI JSON response:', jsonError);
+      return res.status(500).json({ success: false, error: 'Invalid response from AI service' });
+    }
+
+    // Defensive check for response structure
+    if (!openaiData.choices || !openaiData.choices[0] || !openaiData.choices[0].message) {
+      console.error('[AI Suggestions] Invalid OpenAI response structure:', JSON.stringify(openaiData));
+      return res.status(500).json({ success: false, error: 'Invalid response format from AI service' });
+    }
+
     const aiResponse = openaiData.choices[0].message.content;
 
-    console.log('[AI Suggestions] AI response received');
+    if (!aiResponse) {
+      console.error('[AI Suggestions] AI response content is empty');
+      return res.status(500).json({ success: false, error: 'AI returned empty response' });
+    }
+
+    console.log('[AI Suggestions] AI response received, length:', aiResponse.length);
 
     // Parse the JSON response
     let parsedResponse;
     try {
       parsedResponse = JSON.parse(aiResponse);
+      console.log('[AI Suggestions] AI response JSON parsed successfully');
     } catch (parseError) {
-      console.error('[AI Suggestions] Failed to parse AI response:', parseError);
-      // Fallback: try to extract suggestions manually
+      console.error('[AI Suggestions] Failed to parse AI response as JSON:', parseError, 'raw response:', aiResponse.substring(0, 200));
       return res.status(500).json({ success: false, error: 'Failed to parse AI response' });
     }
 
     // Validate the response structure
     if (!parsedResponse.suggestions || !Array.isArray(parsedResponse.suggestions)) {
-      console.error('[AI Suggestions] Invalid response structure:', parsedResponse);
+      console.error('[AI Suggestions] Invalid response structure, missing suggestions array:', parsedResponse);
       return res.status(500).json({ success: false, error: 'Invalid response format from AI' });
     }
 
-    // Ensure all suggestions are in uppercase as per the critical rule
-    const uppercaseSuggestions = parsedResponse.suggestions.map(suggestion => ({
-      type: suggestion.type,
-      content: suggestion.content.toUpperCase()
-    }));
+    console.log('[AI Suggestions] Suggestions array found, count:', parsedResponse.suggestions.length);
 
-    console.log('[AI Suggestions] Successfully generated 5 suggestions');
+    // Ensure all suggestions are in uppercase as per the critical rule
+    let uppercaseSuggestions;
+    try {
+      uppercaseSuggestions = parsedResponse.suggestions.map(suggestion => {
+        if (!suggestion || !suggestion.content) {
+          console.error('[AI Suggestions] Invalid suggestion item:', suggestion);
+          throw new Error('Invalid suggestion format');
+        }
+        return {
+          type: suggestion.type || 'UNKNOWN',
+          content: String(suggestion.content).toUpperCase()
+        };
+      });
+      console.log('[AI Suggestions] All suggestions converted to uppercase');
+    } catch (mapError) {
+      console.error('[AI Suggestions] Error processing suggestions:', mapError);
+      return res.status(500).json({ success: false, error: 'Failed to process suggestions' });
+    }
+
+    console.log('[AI Suggestions] Successfully generated', uppercaseSuggestions.length, 'suggestions');
 
     return res.status(200).json({
       success: true,
@@ -165,7 +214,8 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
     });
 
   } catch (error) {
-    console.error('[AI Suggestions] Exception:', error);
+    console.error('[AI Suggestions] Unhandled exception:', error);
+    console.error('[AI Suggestions] Error stack:', error?.stack);
     return res.status(500).json({ success: false, error: 'Failed to generate suggestions: ' + (error?.message || 'Unknown error') });
   }
 }

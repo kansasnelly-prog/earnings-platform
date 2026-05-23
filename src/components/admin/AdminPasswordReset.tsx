@@ -111,6 +111,17 @@ const AdminPasswordReset: React.FC = () => {
         }),
       });
 
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Failed to reset password');
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        throw new Error('Server returned invalid response format');
+      }
+
       const result = await response.json();
 
       if (!response.ok) {

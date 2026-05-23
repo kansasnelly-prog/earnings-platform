@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { ArrowLeft, Sparkles, Copy, CheckCircle2, Info } from 'lucide-react';
 
 interface AISuggestion {
@@ -38,6 +38,21 @@ const AIAssistantWorkspace = () => {
           conversationHistory: []
         })
       });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[AIAssistantWorkspace] API error:', text);
+        toast.error(text || 'Failed to generate suggestions');
+        return;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        console.error('[AIAssistantWorkspace] Non-JSON response:', text);
+        toast.error('Server returned invalid response format');
+        return;
+      }
 
       const data = await response.json();
 

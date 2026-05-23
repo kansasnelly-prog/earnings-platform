@@ -88,6 +88,19 @@ export class TelegramService {
 
         clearTimeout(timeoutId);
 
+        if (!response.ok) {
+          const text = await response.text();
+          console.error('[TelegramService] Failed to send notification:', text);
+          return false;
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType?.includes('application/json')) {
+          const text = await response.text();
+          console.error('[TelegramService] Non-JSON response:', text);
+          return false;
+        }
+
         const result = await response.json();
 
         if (!response.ok) {
@@ -169,6 +182,19 @@ export class TelegramService {
         body: JSON.stringify({ message })
       });
 
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[Telegram] Withdrawal approval notification failed:', text);
+        return false;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        console.error('[Telegram] Non-JSON response:', text);
+        return false;
+      }
+
       const result = await response.json();
 
       if (!response.ok) {
@@ -231,6 +257,19 @@ export class TelegramService {
         body: JSON.stringify({ message })
       });
 
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[Telegram] New account notification failed:', text);
+        return false;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        console.error('[Telegram] Non-JSON response:', text);
+        return false;
+      }
+
       const result = await response.json();
 
       if (!response.ok) {
@@ -265,6 +304,19 @@ export class TelegramService {
         },
         body: JSON.stringify({ message })
       });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[Telegram] Checkpoint approval notification failed:', text);
+        return false;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        console.error('[Telegram] Non-JSON response:', text);
+        return false;
+      }
 
       const result = await response.json();
 
@@ -311,6 +363,19 @@ export class TelegramService {
         },
         body: JSON.stringify({ message })
       });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[Telegram] Training completion transfer notification failed:', text);
+        return false;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        console.error('[Telegram] Non-JSON response:', text);
+        return false;
+      }
 
       const result = await response.json();
 

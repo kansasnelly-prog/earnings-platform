@@ -288,6 +288,25 @@ const AdminCustomerService: React.FC = () => {
         })
       });
 
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[AdminCustomerService] AI suggestion API error:', text);
+        // Fallback to rule-based suggestions if API fails
+        const fallbackSuggestions = generateAISuggestions(lastCustomerMessage.content);
+        setAiSuggestions(fallbackSuggestions);
+        return;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        console.error('[AdminCustomerService] AI suggestion API returned non-JSON:', text);
+        // Fallback to rule-based suggestions if API returns non-JSON
+        const fallbackSuggestions = generateAISuggestions(lastCustomerMessage.content);
+        setAiSuggestions(fallbackSuggestions);
+        return;
+      }
+
       const data = await response.json();
 
       if (data.success && data.suggestions) {

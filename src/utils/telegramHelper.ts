@@ -86,6 +86,19 @@ export async function sendTelegramNotification(options: TelegramNotificationOpti
       })
     });
 
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('[TelegramHelper] Failed to send notification:', text);
+      return false;
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      const text = await response.text();
+      console.error('[TelegramHelper] Non-JSON response:', text);
+      return false;
+    }
+
     const data = await response.json();
 
     if (!response.ok) {

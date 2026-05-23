@@ -86,35 +86,48 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
 
     console.log('[AI Suggestions] Calling OpenAI API...');
 
-    // Call OpenAI API
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiApiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo', // Can be upgraded to gpt-4 for better quality
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: userPrompt
-          }
-        ],
-        temperature: 0.6, // Balanced creativity and factual accuracy (0.5-0.7 range)
-        max_tokens: 1500,
-        response_format: { type: 'json_object' }
-      })
-    });
+    // Call OpenAI API with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+    let openaiResponse;
+    try {
+      openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openaiApiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo', // Can be upgraded to gpt-4 for better quality
+          messages: [
+            {
+              role: 'system',
+              content: systemPrompt
+            },
+            {
+              role: 'user',
+              content: userPrompt
+            }
+          ],
+          temperature: 0.6, // Balanced creativity and factual accuracy (0.5-0.7 range)
+          max_tokens: 1500,
+          response_format: { type: 'json_object' }
+        }),
+        signal: controller.signal
+      });
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      console.error('[AI Suggestions] OpenAI API fetch error:', fetchError);
+      return res.status(503).json({ success: false, error: 'AI service temporarily unavailable' });
+    }
+
+    clearTimeout(timeoutId);
 
     if (!openaiResponse.ok) {
       const errorText = await openaiResponse.text();
       console.error('[AI Suggestions] OpenAI API error:', errorText);
-      return res.status(500).json({ success: false, error: 'Failed to generate suggestions from OpenAI' });
+      return res.status(503).json({ success: false, error: 'AI service temporarily unavailable' });
     }
 
     const openaiData = await openaiResponse.json();

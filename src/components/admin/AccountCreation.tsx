@@ -47,6 +47,19 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
 
       clearTimeout(timeoutId);
 
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[Telegram] API returned error:', text);
+        throw new Error(text || 'Failed to send Telegram notification');
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        console.error('[Telegram] Non-JSON response:', text);
+        throw new Error('Server returned invalid response format');
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -117,6 +130,31 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
           referralCode: normalizedTrainingReferral
         })
       });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[AccountCreation] API error:', text);
+        toast({
+          title: 'Error',
+          description: text || 'Failed to create training account',
+          variant: 'destructive'
+        });
+        setIsCreating(false);
+        return;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        console.error('[AccountCreation] Non-JSON response:', text);
+        toast({
+          title: 'Error',
+          description: 'Server returned invalid response format',
+          variant: 'destructive'
+        });
+        setIsCreating(false);
+        return;
+      }
 
       const data = await response.json();
 

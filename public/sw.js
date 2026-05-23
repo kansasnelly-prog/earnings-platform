@@ -1,8 +1,9 @@
 // Service Worker for Web Push Notifications
 // This service worker handles push notifications and notification clicks
 
-// Use timestamp-based cache version to force cache invalidation on each deployment
-const CACHE_VERSION = new Date().toISOString().split('T')[0];
+// Use date-based cache version to force cache invalidation on deployment (not per refresh)
+// This ensures cache only invalidates when the service worker file changes (deployment)
+const CACHE_VERSION = '2025-05-23-v3';
 const CACHE_NAME = `earnings-ink-${CACHE_VERSION}`;
 const STATIC_CACHE_NAME = 'earnings-ink-static-v1';
 

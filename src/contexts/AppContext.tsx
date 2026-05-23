@@ -2447,8 +2447,31 @@ else if (
       }),
     });
 
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('[requestWithdrawal] API error:', text);
+      toast({
+        title: 'Withdrawal Failed',
+        description: text || 'Failed to submit withdrawal request',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      const text = await response.text();
+      console.error('[requestWithdrawal] Non-JSON response:', text);
+      toast({
+        title: 'Withdrawal Failed',
+        description: 'Server returned invalid response format',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     const result = await response.json();
-    
+
     console.log('[requestWithdrawal] Backend API result', result);
     
     if (result.success) {

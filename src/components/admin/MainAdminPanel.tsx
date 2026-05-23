@@ -491,6 +491,17 @@ const MainAdminPanel: React.FC = () => {
         body: JSON.stringify({ userId, action: 'freeze' })
       });
 
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Failed to freeze user');
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        throw new Error('Server returned invalid response format');
+      }
+
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.error || 'Failed to freeze user');
@@ -519,6 +530,17 @@ const MainAdminPanel: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, action: 'unfreeze' })
       });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Failed to unfreeze user');
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        throw new Error('Server returned invalid response format');
+      }
 
       const result = await response.json();
 
@@ -566,6 +588,17 @@ const MainAdminPanel: React.FC = () => {
         })
       });
 
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Failed to update balance');
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        throw new Error('Server returned invalid response format');
+      }
+
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.error || 'Failed to update balance');
@@ -607,6 +640,17 @@ const MainAdminPanel: React.FC = () => {
         })
       });
 
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Failed to update VIP level');
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        throw new Error('Server returned invalid response format');
+      }
+
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.error || 'Failed to update VIP level');
@@ -644,6 +688,17 @@ const MainAdminPanel: React.FC = () => {
           userId: selectedUser.id
         })
       });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Failed to delete user');
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        throw new Error('Server returned invalid response format');
+      }
 
       const result = await response.json();
 

@@ -106,6 +106,23 @@ const SupabaseAccountCreation: React.FC<SupabaseAccountCreationProps> = ({
         })
       });
 
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[createTrainingAccount] API route error:', text);
+        toast.error(text || 'Failed to create training account');
+        setIsCreating(false);
+        return;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        console.error('[createTrainingAccount] Non-JSON response:', text);
+        toast.error('Server returned invalid response format');
+        setIsCreating(false);
+        return;
+      }
+
       const result = await response.json();
 
       if (!response.ok) {

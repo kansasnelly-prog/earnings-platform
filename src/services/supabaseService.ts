@@ -1179,6 +1179,31 @@ export class SupabaseService {
         return { success: false, error: 'Training must be completed before submitting tasks' };
       }
 
+      // CRITICAL: Block task submission if Day 2 checkpoint is pending review
+      const { data: checkpointCheck } = await supabase
+        .from('personal_day2_checkpoints')
+        .select('status')
+        .eq('user_id', userId)
+        .eq('status', 'pending_review')
+        .single();
+      
+      if (checkpointCheck) {
+        console.error('[completeTask] Day 2 checkpoint pending review - blocking task submission:', userId);
+        return { success: false, error: 'Day 2 checkpoint requires admin approval before continuing tasks' };
+      }
+
+      // CRITICAL: Block task submission if Phase 2 checkpoint is pending review (VIP2)
+      const { data: phase2CheckpointCheck } = await supabase
+        .from('users')
+        .select('training_phase_2_checkpoint')
+        .eq('id', userId)
+        .single();
+      
+      if (phase2CheckpointCheck?.training_phase_2_checkpoint?.status === 'pending_review') {
+        console.error('[completeTask] Phase 2 checkpoint pending review - blocking task submission:', userId);
+        return { success: false, error: 'Phase 2 checkpoint requires admin approval before continuing tasks' };
+      }
+
       // CRITICAL: Admin accounts should not participate in financial logic
       if (userCheck.account_type === 'admin') {
         // Allow task completion for UI testing but skip all financial updates

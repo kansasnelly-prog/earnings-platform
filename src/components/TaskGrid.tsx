@@ -710,7 +710,15 @@ const allComplete = displayCompletedCount === totalTasks;
   const isPersonal = user?.account_type === 'personal';
   const trainingCompleted = user?.training_completed === true;
   const needsTraining = isPersonal && !trainingCompleted; // Lock personal accounts until training completes
-  const canSubmitTasks = !needsTraining; // Can submit if not locked
+  
+  // CRITICAL: Block task submission if Day 2 checkpoint is pending review
+  const day2CheckpointPending = isPersonal && user?.personal_cycle === 2 && user?.personal_day2_checkpoint?.status === 'pending_review';
+  
+  // CRITICAL: Block task submission if Phase 2 checkpoint is pending review (VIP2)
+  const isPhase2 = Number(user?.training_phase) === 2;
+  const phase2CheckpointPending = isPhase2 && user?.training_phase_2_checkpoint?.status === 'pending_review';
+  
+  const canSubmitTasks = !needsTraining && !day2CheckpointPending && !phase2CheckpointPending; // Can submit if not locked
 
   // SAFETY CHECK: Separate account flows - handle new/reset accounts vs active accounts
   const isNewAccount = !user || !user?.tasks_completed;
@@ -751,6 +759,28 @@ const allComplete = displayCompletedCount === totalTasks;
     
     // STATE CHECK: Also check isSubmitting state
     if (!pendingTask || isSubmitting) {
+      return;
+    }
+
+    // CRITICAL: Block task submission if Day 2 checkpoint is pending review
+    if (day2CheckpointPending) {
+      clearTimeout(timeoutId);
+      toast({
+        title: 'Checkpoint Review Required',
+        description: 'Day 2 checkpoint requires admin approval before continuing tasks. Contact Customer Service.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // CRITICAL: Block task submission if Phase 2 checkpoint is pending review (VIP2)
+    if (phase2CheckpointPending) {
+      clearTimeout(timeoutId);
+      toast({
+        title: 'Checkpoint Review Required',
+        description: 'Phase 2 checkpoint requires admin approval before continuing tasks. Contact Customer Service.',
+        variant: 'destructive'
+      });
       return;
     }
 
@@ -997,7 +1027,8 @@ const allComplete = displayCompletedCount === totalTasks;
   })() : 0;
 
   // When pending order exists and we're at the trigger task, show pending product
-  const currentProduct = pendingTask 
+  // CRITICAL: Block product loading if checkpoint is pending
+  const currentProduct = pendingTask && !day2CheckpointPending && !phase2CheckpointPending
     ? (user?.has_pending_order && pendingTask.task_number === user?.trigger_task_number && user?.pending_product)
       ? user?.pending_product  // Show the pending order product
       : safeCatalog.length > 0 
@@ -1270,6 +1301,31 @@ const allComplete = displayCompletedCount === totalTasks;
         </div>
       )}
 
+      {/* Checkpoint Locked State Display */}
+      {(day2CheckpointPending || phase2CheckpointPending) && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+              <Lock className="w-5 h-5 text-red-400" />
+            </div>
+            <div>
+              <p className="text-white font-semibold">Account Locked</p>
+              <p className="text-sm text-red-400">
+                {day2CheckpointPending ? 'Day 2 checkpoint pending admin approval' : 'Phase 2 checkpoint pending admin approval'}
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => {
+              window.open('https://t.me/EARNINGSLLCONLINECS1', '_blank');
+            }}
+            className="bg-red-500 hover:bg-red-600 text-white font-semibold"
+          >
+            Contact CS
+          </Button>
+        </div>
+      )}
+
       {/* Phase 1 Lock Modal for VIP2 (45/45 completed) */}
       {showPhase1LockModal && (
         <Dialog open={showPhase1LockModal} onOpenChange={setShowPhase1LockModal}>
@@ -1358,10 +1414,21 @@ const allComplete = displayCompletedCount === totalTasks;
         </Dialog>
       )}
 
-      {/* Personal Day 2 Checkpoint Modal (task #21) */}
+      {/* Personal Day 2 Checkpoint Modal (task #21) - NON-DISMISSIBLE */}
       {showPersonalDay2CheckpointModal && user?.personal_day2_checkpoint?.status === 'pending_review' && (
-        <Dialog open={showPersonalDay2CheckpointModal} onOpenChange={setShowPersonalDay2CheckpointModal}>
-          <DialogContent className="bg-[#1a1f2e] border-white/[0.06] text-white max-w-md">
+        <Dialog open={showPersonalDay2CheckpointModal} onOpenChange={(open) => {
+          // Prevent closing the modal - it's a hard lock
+          if (!open) {
+            toast({
+              title: 'Checkpoint Review Required',
+              description: 'You must contact Customer Service for admin approval before continuing.',
+              variant: 'destructive'
+            });
+            return;
+          }
+          setShowPersonalDay2CheckpointModal(open);
+        }}>
+          <DialogContent className="bg-[#1a1f2e] border-white/[0.06] text-white max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-white">Day 2 Checkpoint</DialogTitle>
               <DialogDescription className="text-gray-400">
@@ -1381,6 +1448,18 @@ const allComplete = displayCompletedCount === totalTasks;
               </div>
             </div>
             
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                  <Lock className="w-5 h-5 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-red-400 font-bold">Account Locked</h3>
+                  <p className="text-red-300/60 text-sm">Task progression is blocked until admin approval</p>
+                </div>
+              </div>
+            </div>
+            
             <div className="space-y-4">
               <Button
                 onClick={() => {
@@ -1389,13 +1468,6 @@ const allComplete = displayCompletedCount === totalTasks;
                 className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold"
               >
                 Contact Customer Service
-              </Button>
-              <Button
-                onClick={() => setShowPersonalDay2CheckpointModal(false)}
-                variant="outline"
-                className="w-full border-white/[0.06] text-white hover:bg-white/[0.05]"
-              >
-                Close
               </Button>
             </div>
           </DialogContent>

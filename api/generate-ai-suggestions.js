@@ -1,5 +1,24 @@
 // Server-side API route for generating AI-powered customer support suggestions
-// Integrates with OpenAI API for intelligent, context-aware response generation
+// Integrates with Gemini API for intelligent, context-aware response generation
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Initialize Gemini client at module level for better performance
+const geminiApiKey = process.env.GEMINI_API_KEY;
+console.log('[AI Suggestions] Startup configuration check:');
+console.log('[AI Suggestions] - GEMINI_API_KEY configured:', !!geminiApiKey);
+console.log('[AI Suggestions] - GEMINI_API_KEY length:', geminiApiKey?.length || 0);
+
+let genAI = null;
+if (geminiApiKey) {
+  try {
+    genAI = new GoogleGenerativeAI(geminiApiKey);
+    console.log('[AI Suggestions] Gemini client initialized successfully');
+  } catch (initError) {
+    console.error('[AI Suggestions] Failed to initialize Gemini client:', initError);
+  }
+} else {
+  console.error('[AI Suggestions] CRITICAL: GEMINI_API_KEY not found in environment');
+}
 
 export default async function handler(req, res) {
   console.log('[AI Suggestions] Handler invoked, method:', req.method);
@@ -34,15 +53,16 @@ export default async function handler(req, res) {
 
     console.log('[AI Suggestions] Message received, length:', message.length);
 
-    // Get environment variables - use process.env directly for Vercel
-    const openaiApiKey = process.env.OPENAI_API_KEY;
-
-    if (!openaiApiKey) {
-      console.error('[AI Suggestions] OPENAI_API_KEY not configured in environment');
-      return res.status(500).json({ success: false, error: 'AI service not configured' });
+    // Check if Gemini client is initialized
+    if (!genAI) {
+      console.error('[AI Suggestions] CRITICAL: Gemini client not initialized');
+      console.error('[AI Suggestions] Available env vars:', Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('AI')));
+      return res.status(500).json({
+        success: false,
+        error: 'AI service not configured',
+        details: 'Gemini client failed to initialize - check GEMINI_API_KEY environment variable'
+      });
     }
-
-    console.log('[AI Suggestions] OpenAI API key found (length:', openaiApiKey.length, ')');
 
     // Build conversation context
     let context = '';
@@ -98,76 +118,46 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
   ]
 }`;
 
-    console.log('[AI Suggestions] Calling OpenAI API...');
+   console.log('[AI Suggestions] Calling Gemini API with SDK...');
+    console.log('[AI Suggestions] Request details:');
+    console.log('[AI Suggestions] - Model: Gemini 1.5 Flash');
+    console.log('[AI Suggestions] - Temperature: 0.6');
+    console.log('[AI Suggestions] - Max tokens: 1500');
+    console.log('[AI Suggestions] - System prompt length:', systemPrompt.length);
+    console.log('[AI Suggestions] - User prompt length:', userPrompt.length);
 
-    // Call OpenAI API with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    // Get the model and configure generation
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      generationConfig: {
+        temperature: 0.6,
+        maxOutputTokens: 1500
+      }
+    });
 
-    let openaiResponse;
+    const startTime = Date.now();
+    let aiResponse;
     try {
-      openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openaiApiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo', // Can be upgraded to gpt-4 for better quality
-          messages: [
-            {
-              role: 'system',
-              content: systemPrompt
-            },
-            {
-              role: 'user',
-              content: userPrompt
-            }
-          ],
-          temperature: 0.6, // Balanced creativity and factual accuracy (0.5-0.7 range)
-          max_tokens: 1500,
-          response_format: { type: 'json_object' }
-        }),
-        signal: controller.signal
+      console.log('[AI Suggestions] Sending request to Gemini API...');
+      const result = await model.generateContent(`${systemPrompt}\n\n${userPrompt}`);
+      const responseTime = Date.now() - startTime;
+      console.log('[AI Suggestions] Gemini API response received in', responseTime, 'ms');
+
+      aiResponse = result.response.text();
+      console.log('[AI Suggestions] AI response received, length:', aiResponse.length);
+    } catch (geminiError) {
+      const responseTime = Date.now() - startTime;
+      console.error('[AI Suggestions] Gemini API error after', responseTime, 'ms:', geminiError);
+      console.error('[AI Suggestions] Error name:', geminiError?.name);
+      console.error('[AI Suggestions] Error message:', geminiError?.message);
+      console.error('[AI Suggestions] Error stack:', geminiError?.stack);
+
+      return res.status(503).json({
+        success: false,
+        error: 'AI service error',
+        details: geminiError?.message || 'Unknown Gemini API error'
       });
-      console.log('[AI Suggestions] OpenAI API response status:', openaiResponse.status);
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      console.error('[AI Suggestions] OpenAI API fetch error:', fetchError);
-      return res.status(503).json({ success: false, error: 'AI service temporarily unavailable' });
     }
-
-    clearTimeout(timeoutId);
-
-    if (!openaiResponse.ok) {
-      const errorText = await openaiResponse.text();
-      console.error('[AI Suggestions] OpenAI API error status:', openaiResponse.status, 'error:', errorText);
-      return res.status(503).json({ success: false, error: 'AI service temporarily unavailable' });
-    }
-
-    let openaiData;
-    try {
-      openaiData = await openaiResponse.json();
-      console.log('[AI Suggestions] OpenAI response parsed successfully');
-    } catch (jsonError) {
-      console.error('[AI Suggestions] Failed to parse OpenAI JSON response:', jsonError);
-      return res.status(500).json({ success: false, error: 'Invalid response from AI service' });
-    }
-
-    // Defensive check for response structure
-    if (!openaiData.choices || !openaiData.choices[0] || !openaiData.choices[0].message) {
-      console.error('[AI Suggestions] Invalid OpenAI response structure:', JSON.stringify(openaiData));
-      return res.status(500).json({ success: false, error: 'Invalid response format from AI service' });
-    }
-
-    const aiResponse = openaiData.choices[0].message.content;
-
-    if (!aiResponse) {
-      console.error('[AI Suggestions] AI response content is empty');
-      return res.status(500).json({ success: false, error: 'AI returned empty response' });
-    }
-
-    console.log('[AI Suggestions] AI response received, length:', aiResponse.length);
 
     // Parse the JSON response
     let parsedResponse;
@@ -215,7 +205,16 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
 
   } catch (error) {
     console.error('[AI Suggestions] Unhandled exception:', error);
+    console.error('[AI Suggestions] Error name:', error?.name);
+    console.error('[AI Suggestions] Error message:', error?.message);
     console.error('[AI Suggestions] Error stack:', error?.stack);
-    return res.status(500).json({ success: false, error: 'Failed to generate suggestions: ' + (error?.message || 'Unknown error') });
+    console.error('[AI Suggestions] Full error object:', JSON.stringify(error, null, 2));
+    
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error',
+      details: error?.message || 'Unknown error',
+      stack: error?.stack
+    });
   }
 }

@@ -127,13 +127,13 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
     console.log('[AI Suggestions] - User prompt length:', userPrompt.length);
 
     // Get the model and configure generation
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      generationConfig: {
-        temperature: 0.6,
-        maxOutputTokens: 1500
-      }
-    });
+    const model = genAI.getGenerativeModel({
+  model: "gemini-1.5-flash-latest",
+  generationConfig: {
+    temperature: 0.6,
+    maxOutputTokens: 1500
+  }
+});
 
     const startTime = Date.now();
     let aiResponse;

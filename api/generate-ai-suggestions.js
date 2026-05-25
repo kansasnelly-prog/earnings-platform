@@ -128,7 +128,7 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
 
     // Get the model and configure generation
     const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash-latest",
+  model: "gemini-1.5-flash-8b",
   generationConfig: {
     temperature: 0.6,
     maxOutputTokens: 1500

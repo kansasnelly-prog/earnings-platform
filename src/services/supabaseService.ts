@@ -2062,9 +2062,12 @@ export class SupabaseService {
       // Update personal account - preserve Day 2 state, only reset task/set state
       console.log(`[SupabaseService] [ADMIN] Updating personal account (preserving Day 2 balance)...`);
       
-      // Check if user is in Day 2 (personal_cycle === 2)
-      const isDay2 = personalUser.personal_cycle === 2;
-      console.log(`[SupabaseService] [ADMIN] User is in Day ${isDay2 ? '2' : '1'} (personal_cycle: ${personalUser.personal_cycle})`);
+      // Check if user is in Day 2 by examining actual balance/total_earned values
+      // This is more reliable than checking personal_cycle field which may be incorrect
+      const hasDay2Progress = personalUser.balance > 61.38 || personalUser.total_earned > 10.25;
+      const isDay2 = hasDay2Progress || personalUser.personal_cycle === 2;
+      console.log(`[SupabaseService] [ADMIN] Balance: ${personalUser.balance}, Total earned: ${personalUser.total_earned}`);
+      console.log(`[SupabaseService] [ADMIN] personal_cycle: ${personalUser.personal_cycle}, Detected Day 2: ${isDay2}`);
       
       // For Day 2 accounts: preserve balance, total_earned, and personal_cycle
       // For Day 1 accounts: restore to checkpoint values (original behavior)
@@ -2155,6 +2158,8 @@ export class SupabaseService {
         email,
         updated_training_account: !!trainingUser,
         is_day2: isDay2,
+        has_day2_progress: hasDay2Progress,
+        personal_cycle: personalUser.personal_cycle,
         preserved_balance: isDay2 ? personalUser.balance : 61.38,
         preserved_total_earned: isDay2 ? personalUser.total_earned : 10.25
       });

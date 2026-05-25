@@ -2059,30 +2059,49 @@ export class SupabaseService {
         }
       }
       
-      // Update personal account - reset to checkpoint values after first 35-task cycle completion
-      console.log(`[SupabaseService] [ADMIN] Updating personal account to checkpoint values...`);
+      // Update personal account - preserve Day 2 state, only reset task/set state
+      console.log(`[SupabaseService] [ADMIN] Updating personal account (preserving Day 2 balance)...`);
+      
+      // Check if user is in Day 2 (personal_cycle === 2)
+      const isDay2 = personalUser.personal_cycle === 2;
+      console.log(`[SupabaseService] [ADMIN] User is in Day ${isDay2 ? '2' : '1'} (personal_cycle: ${personalUser.personal_cycle})`);
+      
+      // For Day 2 accounts: preserve balance, total_earned, and personal_cycle
+      // For Day 1 accounts: restore to checkpoint values (original behavior)
+      const updateData: any = {
+        tasks_completed: 0,
+        training_progress: 0,
+        training_phase: 1,
+        current_task_set: 0,
+        set_1_completed_at: null,
+        set_2_completed_at: null,
+        has_pending_order: false,
+        pending_amount: 0,
+        is_negative_balance: false,
+        trigger_task_number: 1,
+        profit_added: false,
+        updated_at: new Date().toISOString()
+      };
+      
+      if (isDay2) {
+        // Day 2: preserve current balance, total_earned, and cycle state
+        updateData.personal_cycle = 2;
+        updateData.personal_cycle_completed = false;
+        updateData.balance = personalUser.balance;
+        updateData.total_earned = personalUser.total_earned;
+        console.log(`[SupabaseService] [ADMIN] Day 2 account - preserving balance: ${personalUser.balance}, total_earned: ${personalUser.total_earned}`);
+      } else {
+        // Day 1: restore to checkpoint values (original behavior)
+        updateData.personal_cycle = 1;
+        updateData.personal_cycle_completed = true;
+        updateData.balance = 61.38;
+        updateData.total_earned = 10.25;
+        console.log(`[SupabaseService] [ADMIN] Day 1 account - restoring checkpoint balance: 61.38, total_earned: 10.25`);
+      }
+      
       const { error: updatePersonalError } = await supabase
         .from('users')
-        .update({
-          tasks_completed: 0,
-          training_progress: 0,
-          training_phase: 1,
-          current_task_set: 0,
-          personal_cycle: 1,
-          personal_cycle_completed: true,
-          set_1_completed_at: null,
-          set_2_completed_at: null,
-          has_pending_order: false,
-          pending_amount: 0,
-          is_negative_balance: false,
-          trigger_task_number: 1,
-          profit_added: false,
-          // CRITICAL: Restore checkpoint balance and total_earned after first 35-task cycle
-          // Do NOT preserve latest balance - rollback to phase 1 completion state
-          balance: 61.38,
-          total_earned: 10.25,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', personalUser.id);
       
       if (updatePersonalError) {
@@ -2135,11 +2154,14 @@ export class SupabaseService {
       await this.logAdminAction('RESET_PERSONAL_ACCOUNT', personalUser.id, {
         email,
         updated_training_account: !!trainingUser,
-        restored_balance: 61.38,
-        restored_total_earned: 10.25
+        is_day2: isDay2,
+        preserved_balance: isDay2 ? personalUser.balance : 61.38,
+        preserved_total_earned: isDay2 ? personalUser.total_earned : 10.25
       });
       
-      const message = `Personal account reset to 0/35 (Cycle 1). Training account marked as completed (35/35). Balance restored to checkpoint ($61.38, total_earned: $10.25).`;
+      const message = isDay2 
+        ? `Personal account reset to 0/35 (Day 2). Training account marked as completed (35/35). Balance preserved ($${personalUser.balance}, total_earned: $${personalUser.total_earned}).`
+        : `Personal account reset to 0/35 (Cycle 1). Training account marked as completed (35/35). Balance restored to checkpoint ($61.38, total_earned: $10.25).`;
       
       console.log(`[SupabaseService] [ADMIN] ==========================================`);
       console.log(`[SupabaseService] [ADMIN] RESET SUCCESSFUL`);

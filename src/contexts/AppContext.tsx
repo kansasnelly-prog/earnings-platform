@@ -248,6 +248,10 @@ function mapDatabaseUserToUser(dbUser: DatabaseUser): User {
     commission_transferred_at: (dbUser as any).commission_transferred_at || null,
     training_phase_1_locked: (dbUser as any).training_phase_1_locked || false,
     training_phase_1_locked_at: (dbUser as any).training_phase_1_locked_at || null,
+    // Personal Day 2 checkpoint fields
+    personal_day2_checkpoint: (dbUser as any).personal_day2_checkpoint || null,
+    personal_cycle: (dbUser as any).personal_cycle || 1,
+    personal_cycle_completed: (dbUser as any).personal_cycle_completed || false,
   };
 }
 

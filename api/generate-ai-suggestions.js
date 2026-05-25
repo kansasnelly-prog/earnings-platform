@@ -1,27 +1,11 @@
 // Server-side API route for generating AI-powered customer support suggestions
 // Integrates with Gemini API for intelligent, context-aware response generation
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Initialize Gemini client at module level for better performance
-const geminiApiKey = process.env.GEMINI_API_KEY;
-console.log('[AI Suggestions] Startup configuration check:');
-console.log('[AI Suggestions] - GEMINI_API_KEY configured:', !!geminiApiKey);
-console.log('[AI Suggestions] - GEMINI_API_KEY length:', geminiApiKey?.length || 0);
-
-let genAI = null;
-if (geminiApiKey) {
-  try {
-    genAI = new GoogleGenerativeAI(geminiApiKey);
-    console.log('[AI Suggestions] Gemini client initialized successfully');
-  } catch (initError) {
-    console.error('[AI Suggestions] Failed to initialize Gemini client:', initError);
-  }
-} else {
-  console.error('[AI Suggestions] CRITICAL: GEMINI_API_KEY not found in environment');
-}
-
-export default async function handler(req, res) {
-  console.log('[AI Suggestions] Handler invoked, method:', req.method);
+module.exports = async function handler(req, res) {
+  console.log('[AI Suggestions] API route hit');
+  console.log('[AI Suggestions] method:', req.method);
+  console.log('[AI Suggestions] body:', JSON.stringify(req.body));
+  console.log('[AI Suggestions] env key exists:', !!process.env.GEMINI_API_KEY);
 
   // Set CORS headers for all responses
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -43,7 +27,7 @@ export default async function handler(req, res) {
 
   try {
     console.log('[AI Suggestions] Parsing request body...');
-    const { message, conversationHistory } = req.body;
+    const { message, conversationHistory } = req.body || {};
 
     // Validate required fields
     if (!message) {
@@ -53,16 +37,26 @@ export default async function handler(req, res) {
 
     console.log('[AI Suggestions] Message received, length:', message.length);
 
-    // Check if Gemini client is initialized
-    if (!genAI) {
-      console.error('[AI Suggestions] CRITICAL: Gemini client not initialized');
-      console.error('[AI Suggestions] Available env vars:', Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('AI')));
+    // Import and initialize Gemini client inside handler to catch startup errors
+    console.log('[AI Suggestions] Loading Gemini SDK...');
+    const { GoogleGenerativeAI } = require("@google/generative-ai");
+    console.log('[AI Suggestions] Gemini SDK loaded successfully');
+    
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    console.log('[AI Suggestions] env key exists:', !!geminiApiKey);
+    console.log('[AI Suggestions] env key length:', geminiApiKey?.length || 0);
+    
+    if (!geminiApiKey) {
+      console.error('[AI Suggestions] CRITICAL: GEMINI_API_KEY missing');
       return res.status(500).json({
         success: false,
-        error: 'AI service not configured',
-        details: 'Gemini client failed to initialize - check GEMINI_API_KEY environment variable'
+        error: 'Missing GEMINI_API_KEY environment variable'
       });
     }
+    
+    console.log('[AI Suggestions] Initializing Gemini client...');
+    const genAI = new GoogleGenerativeAI(geminiApiKey);
+    console.log('[AI Suggestions] Gemini client initialized successfully');
 
     // Build conversation context
     let context = '';
@@ -120,7 +114,7 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
 
    console.log('[AI Suggestions] Calling Gemini API with SDK...');
     console.log('[AI Suggestions] Request details:');
-    console.log('[AI Suggestions] - Model: Gemini 1.5 Flash');
+    console.log('[AI Suggestions] - Model: gemini-1.5-flash');
     console.log('[AI Suggestions] - Temperature: 0.6');
     console.log('[AI Suggestions] - Max tokens: 1500');
     console.log('[AI Suggestions] - System prompt length:', systemPrompt.length);
@@ -128,7 +122,7 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
 
     // Get the model and configure generation
     const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash-8b",
+  model: "gemini-1.5-flash",
   generationConfig: {
     temperature: 0.6,
     maxOutputTokens: 1500
@@ -143,7 +137,15 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
       const responseTime = Date.now() - startTime;
       console.log('[AI Suggestions] Gemini API response received in', responseTime, 'ms');
 
-      aiResponse = result.response.text();
+      // Use optional chaining to safely access response
+      aiResponse = result?.response?.text();
+      if (!aiResponse) {
+        console.error('[AI Suggestions] Gemini response is empty or invalid');
+        return res.status(500).json({
+          success: false,
+          error: 'AI returned empty response'
+        });
+      }
       console.log('[AI Suggestions] AI response received, length:', aiResponse.length);
     } catch (geminiError) {
       const responseTime = Date.now() - startTime;
@@ -204,10 +206,10 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
     });
 
   } catch (error) {
-    console.error('[AI Suggestions] Unhandled exception:', error);
+    console.error('[AI Suggestions] FULL API ERROR:', error);
     console.error('[AI Suggestions] Error name:', error?.name);
     console.error('[AI Suggestions] Error message:', error?.message);
-    console.error('[AI Suggestions] Error stack:', error?.stack);
+    console.error('[AI Suggestions] STACK:', error?.stack);
     console.error('[AI Suggestions] Full error object:', JSON.stringify(error, null, 2));
     
     return res.status(500).json({ 

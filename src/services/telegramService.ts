@@ -74,7 +74,7 @@ export class TelegramService {
 
       // Add timeout to prevent hanging on SSL/network errors
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
       try {
         const response = await fetch(this.API_URL, {
@@ -116,7 +116,7 @@ export class TelegramService {
         // Log specific error types for debugging
         if (fetchError instanceof Error) {
           if (fetchError.name === 'AbortError') {
-            console.warn('[TelegramService] Notification request timed out (5s)');
+            console.warn('[TelegramService] Notification request timed out (15s)');
           } else if (fetchError.message.includes('SSL') || fetchError.message.includes('ERR_SSL')) {
             console.warn('[TelegramService] SSL/TLS error - notification skipped:', fetchError.message);
           } else {

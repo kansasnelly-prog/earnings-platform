@@ -1419,9 +1419,9 @@ const allComplete = displayCompletedCount === totalTasks;
         <Dialog open={showPersonalDay2CheckpointModal} onOpenChange={setShowPersonalDay2CheckpointModal}>
           <DialogContent className="bg-[#1a1f2e] border-white/[0.06] text-white max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-white">Day 2 Checkpoint</DialogTitle>
+              <DialogTitle className="text-2xl font-bold text-white">Review Required for 6x Multiplier</DialogTitle>
               <DialogDescription className="text-gray-400">
-                You have reached task #21 in Day 2. Admin review required for 6x multiplier.
+                Your reward is ready. Please contact Customer Service to complete verification.
               </DialogDescription>
             </DialogHeader>
             

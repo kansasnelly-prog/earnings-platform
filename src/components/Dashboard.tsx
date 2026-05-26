@@ -41,7 +41,11 @@ const Dashboard: React.FC = () => {
 
   // Load data ONCE when user is available - no retry loop
   useEffect(() => {
-    if (!user || dataLoaded) return;
+    if (!user) {
+      setDataLoaded(false);
+      return;
+    }
+    if (dataLoaded) return;
     
     let cancelled = false;
     let timeoutId: NodeJS.Timeout;

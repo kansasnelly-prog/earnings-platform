@@ -46,6 +46,7 @@ const AuthModal: React.FC = () => {
       if (!result.success) {
         setSubmitError(result.error || 'Login failed');
       } else {
+        resetForm();
         setAuthModalOpen(false);
       }
     } else {
@@ -59,13 +60,21 @@ const AuthModal: React.FC = () => {
         }
         setSubmitError(errorMessage);
       } else {
+        resetForm();
         setAuthModalOpen(false);
       }
     }
   };
 
   const resetForm = () => {
-    setEmail(''); setPhone(''); setPassword(''); setConfirmPassword(''); setDisplayName(''); setErrors({}); setSubmitError(null);
+    setEmail('');
+    setPhone('');
+    setPassword('');
+    setConfirmPassword('');
+    setDisplayName('');
+    setErrors({});
+    setSubmitError(null);
+    setShowPassword(false);
   };
 
   const switchTab = (tab: 'login' | 'register') => {

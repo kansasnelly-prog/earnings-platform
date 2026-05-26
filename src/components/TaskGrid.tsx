@@ -1414,21 +1414,10 @@ const allComplete = displayCompletedCount === totalTasks;
         </Dialog>
       )}
 
-      {/* Personal Day 2 Checkpoint Modal (task #21) - NON-DISMISSIBLE */}
+      {/* Personal Day 2 Checkpoint Modal (task #21) - Dismissible but server lock remains */}
       {showPersonalDay2CheckpointModal && user?.personal_day2_checkpoint?.status === 'pending_review' && (
-        <Dialog open={showPersonalDay2CheckpointModal} onOpenChange={(open) => {
-          // Prevent closing the modal - it's a hard lock
-          if (!open) {
-            toast({
-              title: 'Checkpoint Review Required',
-              description: 'You must contact Customer Service for admin approval before continuing.',
-              variant: 'destructive'
-            });
-            return;
-          }
-          setShowPersonalDay2CheckpointModal(open);
-        }}>
-          <DialogContent className="bg-[#1a1f2e] border-white/[0.06] text-white max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+        <Dialog open={showPersonalDay2CheckpointModal} onOpenChange={setShowPersonalDay2CheckpointModal}>
+          <DialogContent className="bg-[#1a1f2e] border-white/[0.06] text-white max-w-md">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-white">Day 2 Checkpoint</DialogTitle>
               <DialogDescription className="text-gray-400">
@@ -1468,6 +1457,13 @@ const allComplete = displayCompletedCount === totalTasks;
                 className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold"
               >
                 Contact Customer Service
+              </Button>
+              <Button
+                onClick={() => setShowPersonalDay2CheckpointModal(false)}
+                variant="outline"
+                className="w-full border-white/[0.06] text-white hover:bg-white/[0.05]"
+              >
+                Close
               </Button>
             </div>
           </DialogContent>

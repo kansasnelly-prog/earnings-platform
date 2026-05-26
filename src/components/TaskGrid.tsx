@@ -1360,8 +1360,11 @@ const allComplete = displayCompletedCount === totalTasks;
 
                 {/* Accountant Section Contact */}
                 <Button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('[TaskGrid] Contact Accountant button clicked, setting showCustomerService to true');
                     setShowCustomerService(true);
+                    console.log('[TaskGrid] showCustomerService state after set:', true);
                   }}
                   className="w-full bg-gradient-to-r from-pink-600 via-rose-500 to-pink-600 hover:from-pink-500 hover:via-rose-400 hover:to-pink-500 text-white font-semibold shadow-lg shadow-pink-500/30 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                 >

@@ -4,6 +4,8 @@ import { useCSNotification } from '@/contexts/CSNotificationContext';
 import { CheckCircle, Lock, Zap, Loader2, DollarSign, Award, Star, ShoppingBag, Send, Package, Headphones, AlertTriangle, MessageCircle, ArrowRight, Plus, Sparkles, Crown, GraduationCap, Trophy, Badge } from 'lucide-react';
 import DailyBonus from './DailyBonus';
 import Phase2Checkpoint from './Phase2Checkpoint';
+import ExpandableDropdown from './ExpandableDropdown';
+import CustomerService from './CustomerService';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -375,6 +377,10 @@ const TaskGrid: React.FC = () => {
   
   // Personal Day 2 checkpoint modal
   const [showPersonalDay2CheckpointModal, setShowPersonalDay2CheckpointModal] = useState(false);
+  const [showCustomerService, setShowCustomerService] = useState(false);
+  
+  // Day 2 checkpoint dropdown state
+  const [showCheckpointDropdown, setShowCheckpointDropdown] = useState(false);
   
   // Two-set structure loading state
   const [isTransitioningToSet2, setIsTransitioningToSet2] = useState(false);
@@ -1303,26 +1309,69 @@ const allComplete = displayCompletedCount === totalTasks;
 
       {/* Checkpoint Locked State Display */}
       {(day2CheckpointPending || phase2CheckpointPending) && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-              <Lock className="w-5 h-5 text-red-400" />
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+                <Lock className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <p className="text-white font-semibold">Account Locked</p>
+                <p className="text-sm text-red-400">
+                  {day2CheckpointPending ? 'Day 2 checkpoint pending admin approval' : 'Phase 2 checkpoint pending admin approval'}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-white font-semibold">Account Locked</p>
-              <p className="text-sm text-red-400">
-                {day2CheckpointPending ? 'Day 2 checkpoint pending admin approval' : 'Phase 2 checkpoint pending admin approval'}
-              </p>
-            </div>
+            <Button
+              onClick={() => setShowCheckpointDropdown(!showCheckpointDropdown)}
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold"
+            >
+              Contact CS
+            </Button>
           </div>
-          <Button
-            onClick={() => {
-              window.open('https://t.me/EARNINGSLLCONLINECS1', '_blank');
-            }}
-            className="bg-red-500 hover:bg-red-600 text-white font-semibold"
-          >
-            Contact CS
-          </Button>
+          
+          {/* Expandable Dropdown with Negative Balance Notice */}
+          {showCheckpointDropdown && (user?.balance < 0 || user?.pending_amount > 0) && (
+            <ExpandableDropdown
+              title=""
+              isOpen={showCheckpointDropdown}
+              onToggle={setShowCheckpointDropdown}
+              showCloseButton={true}
+            >
+              <div className="space-y-3 mt-3">
+                {/* Negative Balance Warning Card */}
+                <div className="bg-gradient-to-r from-red-500/20 via-red-600/15 to-pink-500/20 border border-red-500/40 rounded-xl p-4 animate-pulse-slow">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-red-300 uppercase tracking-wider">Negative Balance Warning</span>
+                    <AlertTriangle className="w-4 h-4 text-red-400" />
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="w-5 h-5 text-red-400" />
+                    <span className="text-2xl font-bold text-red-400">-${Math.abs(user?.pending_amount || 30).toFixed(2)}</span>
+                  </div>
+                  <p className="text-sm text-red-300/90 font-medium">Please contact Accountant Section</p>
+                </div>
+
+                {/* Optional Status Text */}
+                <div className="flex items-center gap-2 px-2">
+                  <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                  <span className="text-xs text-amber-300/80 font-medium">Pending financial verification</span>
+                </div>
+
+                {/* Accountant Section Contact */}
+                <Button
+                  onClick={() => {
+                    setShowCustomerService(true);
+                  }}
+                  className="w-full bg-gradient-to-r from-pink-600 via-rose-500 to-pink-600 hover:from-pink-500 hover:via-rose-400 hover:to-pink-500 text-white font-semibold shadow-lg shadow-pink-500/30 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Headphones className="w-4 h-4 mr-2" />
+                  Contact Accountant
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </ExpandableDropdown>
+          )}
         </div>
       )}
 
@@ -2102,6 +2151,12 @@ if (result.success) {
         <div className="flex items-center gap-1.5 md:gap-2"><div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-indigo-500 animate-pulse" /><span className="text-xs text-gray-400">Current</span></div>
         <div className="flex items-center gap-1.5 md:gap-2"><div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-gray-700" /><span className="text-xs text-gray-400">Locked</span></div>
       </div>
+
+      {/* Customer Service Modal */}
+      <CustomerService
+        isOpen={showCustomerService}
+        onClose={() => setShowCustomerService(false)}
+      />
     </div>
   );
 };

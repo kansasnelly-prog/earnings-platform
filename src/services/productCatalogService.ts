@@ -575,6 +575,13 @@ export const ProductCatalogService = {
 
   // Subscribe to training products changes
   subscribeToTrainingProducts(callback: (products: Product[]) => void): void {
+    // Prevent duplicate subscriptions
+    if (trainingChannel) {
+      console.log('[ProductCatalog] Training products subscription already exists, skipping');
+      trainingProductsUpdateCallback = callback;
+      return;
+    }
+
     console.log('[ProductCatalog] Subscribing to training products changes...');
     trainingProductsUpdateCallback = callback;
 
@@ -592,12 +599,21 @@ export const ProductCatalogService = {
         }
       )
       .subscribe((status) => {
-        // Subscription status logged only on error
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.error('[ProductCatalog] Training products subscription error:', status);
+        }
       });
   },
 
   // Subscribe to personal products changes
   subscribeToPersonalProducts(callback: (products: Product[]) => void): void {
+    // Prevent duplicate subscriptions
+    if (personalChannel) {
+      console.log('[ProductCatalog] Personal products subscription already exists, skipping');
+      personalProductsUpdateCallback = callback;
+      return;
+    }
+
     console.log('[ProductCatalog] Subscribing to personal products changes...');
     personalProductsUpdateCallback = callback;
 
@@ -615,7 +631,9 @@ export const ProductCatalogService = {
         }
       )
       .subscribe((status) => {
-        // Subscription status logged only on error
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.error('[ProductCatalog] Personal products subscription error:', status);
+        }
       });
   },
 

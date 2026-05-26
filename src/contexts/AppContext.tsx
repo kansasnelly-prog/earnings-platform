@@ -1956,8 +1956,8 @@ else if (
   // ===========================================
   // USER FUNCTIONS
   // ===========================================
-  
-  const refreshUser = async (): Promise<void> => {
+
+  const refreshUser = useCallback(async (): Promise<void> => {
     if (!user) return;
 
     // For training accounts, fetch from training_accounts table (Supabase is source of truth)
@@ -2068,7 +2068,7 @@ else if (
       setUser(mappedUser);
       setCachedUser(mappedUser); // Update cache on success
     }
-  };
+  }, [user]);
 
   const refreshApp = async (): Promise<void> => {
     // Prevent concurrent refresh calls (could cause lock contention)

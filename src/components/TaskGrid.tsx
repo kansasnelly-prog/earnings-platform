@@ -501,42 +501,48 @@ const TaskGrid: React.FC = () => {
   // ONLY in Phase 2 - Phase 1 has no checkpoints
   useEffect(() => {
     if (!user?.id) return;
-    
+
     // Only subscribe to checkpoint changes in Phase 2
     const isPhase2 = Number(user?.training_phase) === 2;
+    if (!isPhase2) return;
+
     const userId = user.id; // Capture user.id in local variable to avoid scope issues
+    const channelName = `checkpoint_changes_${userId}`; // Unique channel name per user
     const channel = supabase
-      .channel('checkpoint_changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
+        {
+          event: '*',
+          schema: 'public',
           table: 'phase2_checkpoints',
           filter: `auth_user_id=eq.${userId}`
         },
         async (payload) => {
           console.log('[Checkpoint User] Checkpoint change detected:', payload.eventType, payload.new);
-          
+
           // Refresh user data to get updated checkpoint state
           const updatedCheckpoint = payload.new as any;
           if (updatedCheckpoint?.status === 'approved') {
             console.log('[Checkpoint User] approved checkpoint detected via realtime');
           }
-          
+
           // Trigger a user refresh to get latest checkpoint data
           // This will update the UI to show/hide checkpoint modal or submit button
-          window.dispatchEvent(new CustomEvent('refresh_user_checkpoint', { 
+          window.dispatchEvent(new CustomEvent('refresh_user_checkpoint', {
             detail: { checkpointId: updatedCheckpoint?.id, status: updatedCheckpoint?.status }
           }));
         }
       )
       .subscribe((status) => {
-        // Subscription status logged only on error
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.error('[Checkpoint User] Subscription error:', status);
+        }
       });
-    
+
     return () => {
-      channel.unsubscribe();
+      console.log('[Checkpoint User] Cleaning up subscription');
+      supabase.removeChannel(channel);
     };
   }, [user?.id, user?.training_phase]);
 
@@ -579,7 +585,7 @@ const TaskGrid: React.FC = () => {
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             console.log('[PersonalDay2Checkpoint User] Realtime subscription established');
-          } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             console.error('[PersonalDay2Checkpoint User] Realtime subscription error:', status);
           }
         });
@@ -1254,7 +1260,8 @@ const allComplete = displayCompletedCount === totalTasks;
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <>
+      <div className="space-y-4 md:space-y-6">
       {/* Set Transition Loading State */}
       {isTransitioningToSet2 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
@@ -2159,13 +2166,14 @@ if (result.success) {
         <div className="flex items-center gap-1.5 md:gap-2"><div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-indigo-500 animate-pulse" /><span className="text-xs text-gray-400">Current</span></div>
         <div className="flex items-center gap-1.5 md:gap-2"><div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-gray-700" /><span className="text-xs text-gray-400">Locked</span></div>
       </div>
+      </div>
 
-      {/* Customer Service Modal */}
+      {/* Customer Service Modal - Rendered at end to stay within Router context */}
       <CustomerService
         isOpen={showCustomerService}
         onClose={() => setShowCustomerService(false)}
       />
-    </div>
+    </>
   );
 };
 

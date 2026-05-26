@@ -348,7 +348,9 @@ const CustomerService: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
         }
       )
       .subscribe((status) => {
-        console.log('[CustomerService] Messages subscription status:', status);
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.error('[CustomerService] Messages subscription error:', status);
+        }
       });
 
     // Subscribe to conversation status changes
@@ -386,7 +388,9 @@ const CustomerService: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
         }
       )
       .subscribe((status) => {
-        console.log('[CustomerService] Conversation subscription status:', status);
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.error('[CustomerService] Conversation subscription error:', status);
+        }
       });
 
     subscriptionsRef.current = [messagesChannel, conversationChannel];
@@ -877,7 +881,7 @@ Reply via Telegram to respond to customer.`;
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
       <div className="w-full max-w-md h-[90vh] sm:h-auto sm:max-h-[90vh] bg-gradient-to-br from-purple-600 via-pink-600 to-purple-700 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-white/10 backdrop-blur-md p-6 border-b border-white/[0.1]">

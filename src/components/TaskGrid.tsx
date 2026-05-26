@@ -1323,7 +1323,12 @@ const allComplete = displayCompletedCount === totalTasks;
               </div>
             </div>
             <Button
-              onClick={() => setShowCheckpointDropdown(!showCheckpointDropdown)}
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('[TaskGrid] Top Contact CS button clicked, toggling showCheckpointDropdown');
+                setShowCheckpointDropdown(!showCheckpointDropdown);
+                console.log('[TaskGrid] showCheckpointDropdown state after toggle:', !showCheckpointDropdown);
+              }}
               className="bg-red-500 hover:bg-red-600 text-white font-semibold"
             >
               Contact CS

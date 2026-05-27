@@ -1,8 +1,49 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 
-// Real-time user registration listener
+function safeUnsubscribe(channel: any, label: string) {
+  if (!channel) {
+    console.log(`[${label}] No channel to unsubscribe`);
+    return;
+  }
+  try {
+    if (channel.state === 'closed' || channel.state === 'unsubscribed') {
+      console.log(`[${label}] Channel already unsubscribed or closed`);
+      return;
+    }
+    channel.unsubscribe();
+    console.log(`[${label}] Unsubscribed successfully`);
+  } catch (error) {
+    if (error.message && error.message.includes('CLOSED')) {
+      // Ignore CLOSED errors during unsubscribe
+      console.log(`[${label}] Ignored CLOSED error during unsubscribe`);
+    } else {
+      console.error(`[${label}] Error during unsubscribe:`, error);
+    }
+  }
+}
+
+// Real-time user registration listener with graceful handling of CLOSED subscription spam
 export const setupRealtimeListeners = () => {
+  let reconnectTimeout: NodeJS.Timeout | null = null;
+  let lastClosedLogTime = 0;
+  const CLOSED_LOG_DEBOUNCE_MS = 60000; // 1 minute debounce for CLOSED logs
+
+  const handleSubscriptionStatus = (channelName: string, status: string) => {
+    if (status === 'CLOSED') {
+      const now = Date.now();
+      if (now - lastClosedLogTime > CLOSED_LOG_DEBOUNCE_MS) {
+        console.warn(`[Realtime] Subscription closed for channel ${channelName}, will attempt reconnect.`);
+        lastClosedLogTime = now;
+      }
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      reconnectTimeout = setTimeout(() => {
+        console.log(`[Realtime] Reconnecting channel ${channelName}...`);
+        setupRealtimeListeners(); // Re-subscribe all channels
+      }, 5000); // Reconnect after 5 seconds
+    }
+  };
+
   // Listen for new users
   const usersSubscription = supabase
     .channel('users_changes')
@@ -22,7 +63,7 @@ export const setupRealtimeListeners = () => {
         sendTelegramNotification('NEW_USER', newUser);
       }
     )
-    .subscribe();
+    .subscribe((status) => handleSubscriptionStatus('users_changes', status));
 
   // Listen for withdrawal requests
   const withdrawalsSubscription = supabase
@@ -43,7 +84,7 @@ export const setupRealtimeListeners = () => {
         sendTelegramNotification('NEW_WITHDRAWAL', newWithdrawal);
       }
     )
-    .subscribe();
+    .subscribe((status) => handleSubscriptionStatus('withdrawals_changes', status));
 
   // Listen for task completions
   const tasksSubscription = supabase
@@ -66,12 +107,12 @@ export const setupRealtimeListeners = () => {
         }
       }
     )
-    .subscribe();
+    .subscribe((status) => handleSubscriptionStatus('task_assignments_changes', status));
 
   return () => {
-    usersSubscription.unsubscribe();
-    withdrawalsSubscription.unsubscribe();
-    tasksSubscription.unsubscribe();
+    safeUnsubscribe(usersSubscription, 'users_changes');
+    safeUnsubscribe(withdrawalsSubscription, 'withdrawals_changes');
+    safeUnsubscribe(tasksSubscription, 'task_assignments_changes');
   };
 };
 
@@ -128,7 +169,7 @@ const formatTelegramMessage = (type: string, data: any): string => {
 
     case 'TRAINING_ACCOUNT_RESET':
       return `🔄 *TRAINING ACCOUNT RESET*
-� *Email:* ${data.email}
+ *Email:* ${data.email}
 🆔 *User ID:* ${data.userId}
 👑 *VIP Level:* ${data.vipLevel || 'N/A'}
 📋 *Tasks Reset:* 0/45
@@ -138,8 +179,8 @@ const formatTelegramMessage = (type: string, data: any): string => {
 ⚠️ Training account tasks have been reset to 0/45. Balance and earnings preserved.`;
 
     case 'PERSONAL_ACCOUNT_RESET':
-      return `� *PERSONAL ACCOUNT RESET*
-�📧 *Email:* ${data.email}
+      return ` *PERSONAL ACCOUNT RESET*
+📧 *Email:* ${data.email}
 🆔 *User ID:* ${data.userId}
 👑 *VIP Level:* ${data.vipLevel || 'N/A'}
 📋 *Tasks Reset:* 0/35
@@ -197,116 +238,5 @@ const formatTelegramMessage = (type: string, data: any): string => {
 📝 *Type:* ${type}
 ⏰ *Time:* ${timestamp}
 📄 *Data:* ${JSON.stringify(data, null, 2)}`;
-  }
-};
-
-// Real-time stats calculator
-export const calculateRealTimeStats = async () => {
-  try {
-    const [
-      usersCount,
-      totalBalance,
-      pendingWithdrawals,
-      completedTasks,
-      todayUsers,
-      todayWithdrawals
-    ] = await Promise.all([
-      // Total users
-      supabase.from('users').select('id', { count: 'exact', head: true }),
-      
-      // Total balance
-      supabase.from('users').select('balance').then(({ data }) => 
-        data?.reduce((sum, user) => sum + (user.balance || 0), 0) || 0
-      ),
-      
-      // Pending withdrawals
-      supabase.from('payout_requests')
-        .select('amount')
-        .eq('status', 'pending')
-        .then(({ data }) => ({
-          count: data?.length || 0,
-          total: data?.reduce((sum, w) => sum + w.amount, 0) || 0
-        })),
-      
-      // Completed tasks
-      supabase.from('user_task_assignments')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'completed'),
-      
-      // Today's users
-      supabase.from('users')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', new Date().toISOString().split('T')[0]),
-      
-      // Today's withdrawals
-      supabase.from('payout_requests')
-        .select('amount')
-        .eq('status', 'completed')
-        .gte('created_at', new Date().toISOString().split('T')[0])
-        .then(({ data }) => data?.reduce((sum, w) => sum + w.amount, 0) || 0)
-    ]);
-
-    return {
-      totalUsers: usersCount.count || 0,
-      totalBalance: totalBalance,
-      pendingWithdrawals: pendingWithdrawals.count,
-      pendingPayouts: pendingWithdrawals.total,
-      completedTasks: completedTasks.count || 0,
-      newUsersToday: todayUsers.count || 0,
-      todayWithdrawals,
-      totalEarnings: totalBalance + pendingWithdrawals.total,
-    };
-  } catch (error) {
-    console.error('Error calculating real-time stats:', error);
-    return null;
-  }
-};
-
-// User activity tracker
-export const trackUserActivity = async (userId: string, activity: string) => {
-  try {
-    await supabase.from('user_activity_logs').insert({
-      user_id: userId,
-      activity_type: activity,
-      timestamp: new Date().toISOString(),
-      ip_address: null, // Can be added from request context
-      user_agent: navigator.userAgent,
-    });
-
-    // Update last login
-    if (activity === 'LOGIN') {
-      await supabase
-        .from('users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', userId);
-    }
-  } catch (error) {
-    console.error('Error tracking user activity:', error);
-  }
-};
-
-// Admin action logger
-export const logAdminAction = async (action: string, adminId: string, details: any) => {
-  try {
-    await supabase.from('admin_audit_logs').insert({
-      admin_id: adminId,
-      action_type: action,
-      action_details: details,
-      timestamp: new Date().toISOString(),
-      ip_address: null,
-      user_agent: navigator.userAgent,
-    });
-
-    // Also send to Telegram for important actions
-    if (['USER_FREEZE', 'USER_UNFREEZE', 'WITHDRAWAL_APPROVE', 'WITHDRAWAL_REJECT'].includes(action)) {
-      sendTelegramNotification('ADMIN_ACTION', {
-        action,
-        admin: adminId,
-        details,
-        timestamp: new Date().toISOString()
-      });
-    }
-  } catch (error) {
-    console.error('Error logging admin action:', error);
   }
 };

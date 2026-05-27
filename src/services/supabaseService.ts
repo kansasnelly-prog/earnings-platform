@@ -1330,7 +1330,7 @@ export class SupabaseService {
         const personalCycleCompleted = user.personal_cycle_completed || false;
         
         // Cap earnings at $71.63 for VIP1 personal accounts
-        let newBalance = user.balance + reward;
+        const newBalance = user.balance + reward;
         let newTotalEarned = user.total_earned + reward;
         if (isVIP1Personal && newTotalEarned > 71.63) {
           newTotalEarned = 71.63;
@@ -4723,7 +4723,7 @@ export class SupabaseService {
 
       // Process each completed training account
       let totalTransferred = 0;
-      let personalAccountActivated = false;
+      const personalAccountActivated = false;
       
       for (const trainingAccount of trainingAccounts) {
         const result = await this.processSingleTrainingTransfer(user, trainingAccount);

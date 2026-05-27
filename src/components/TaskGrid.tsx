@@ -277,7 +277,7 @@ const CombinationProductCard: React.FC<{
         </div>
 
         {/* Contact Support Button */}
-        <button 
+        <button
           onClick={onContactSupport}
           className="w-full py-4 font-bold rounded-2xl transition-all duration-200 shadow-lg shadow-purple-500/30 flex items-center justify-center gap-3 text-lg bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:from-purple-500 hover:via-indigo-500 hover:to-purple-500 text-white transform hover:scale-[1.02] active:scale-[0.98]"
         >
@@ -1314,81 +1314,77 @@ const allComplete = displayCompletedCount === totalTasks;
         </div>
       )}
 
-      {/* Checkpoint Locked State Display */}
-      {(day2CheckpointPending || phase2CheckpointPending) && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                <Lock className="w-5 h-5 text-red-400" />
-              </div>
-              <div>
-                <p className="text-white font-semibold">Account Locked</p>
-                <p className="text-sm text-red-400">
-                  {day2CheckpointPending ? 'Day 2 checkpoint pending admin approval' : 'Phase 2 checkpoint pending admin approval'}
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log('[TaskGrid] Top Contact CS button clicked, toggling showCheckpointDropdown');
-                setShowCheckpointDropdown(!showCheckpointDropdown);
-                console.log('[TaskGrid] showCheckpointDropdown state after toggle:', !showCheckpointDropdown);
-              }}
-              className="bg-red-500 hover:bg-red-600 text-white font-semibold"
-            >
-              Contact CS
-            </Button>
-          </div>
-          
-          {/* Expandable Dropdown with Negative Balance Notice */}
-          {showCheckpointDropdown && (user?.balance < 0 || user?.pending_amount > 0) && (
-            <ExpandableDropdown
-              title=""
-              isOpen={showCheckpointDropdown}
-              onToggle={setShowCheckpointDropdown}
-              showCloseButton={true}
-            >
-              <div className="space-y-3 mt-3">
-                {/* Negative Balance Warning Card */}
-                <div className="bg-gradient-to-r from-red-500/20 via-red-600/15 to-pink-500/20 border border-red-500/40 rounded-xl p-4 animate-pulse-slow">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-red-300 uppercase tracking-wider">Negative Balance Warning</span>
-                    <AlertTriangle className="w-4 h-4 text-red-400" />
-                  </div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="w-5 h-5 text-red-400" />
-                    <span className="text-2xl font-bold text-red-400">-${Math.abs(user?.pending_amount || 30).toFixed(2)}</span>
-                  </div>
-                  <p className="text-sm text-red-300/90 font-medium">Please contact Accountant Section</p>
-                </div>
 
-                {/* Optional Status Text */}
-                <div className="flex items-center gap-2 px-2">
-                  <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-                  <span className="text-xs text-amber-300/80 font-medium">Pending financial verification</span>
+          {/* Checkpoint Locked State Display - BRANCH A */}
+          {(day2CheckpointPending || phase2CheckpointPending) && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-red-400" />
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold">Account Locked</p>
+                    <p className="text-sm text-red-400">
+                      {day2CheckpointPending ? 'Day 2 checkpoint pending admin approval' : 'Phase 2 checkpoint pending admin approval'}
+                    </p>
+                  </div>
                 </div>
-
-                {/* Accountant Section Contact */}
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
-                    console.log('[TaskGrid] Contact Accountant button clicked, setting showCustomerService to true');
-                    setShowCustomerService(true);
-                    console.log('[TaskGrid] showCustomerService state after set:', true);
+                    setShowCheckpointDropdown(!showCheckpointDropdown);
                   }}
-                  className="w-full bg-gradient-to-r from-pink-600 via-rose-500 to-pink-600 hover:from-pink-500 hover:via-rose-400 hover:to-pink-500 text-white font-semibold shadow-lg shadow-pink-500/30 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                  className="bg-red-500 hover:bg-red-600 text-white font-semibold"
                 >
-                  <Headphones className="w-4 h-4 mr-2" />
-                  Contact Accountant
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  Contact CS
                 </Button>
               </div>
-            </ExpandableDropdown>
+
+              {showCheckpointDropdown && (
+                <ExpandableDropdown
+                  title=""
+                  isOpen={showCheckpointDropdown}
+                  onToggle={setShowCheckpointDropdown}
+                  showCloseButton={true}
+                >
+                  <div className="space-y-3 mt-3">
+                    {/* Negative Balance Warning Card */}
+                    <div className="bg-gradient-to-r from-red-500/20 via-red-600/15 to-pink-500/20 border border-red-500/40 rounded-xl p-4 animate-pulse-slow">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-red-300 uppercase tracking-wider">Negative Balance Warning</span>
+                        <AlertTriangle className="w-4 h-4 text-red-400" />
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <DollarSign className="w-5 h-5 text-red-400" />
+                        <span className="text-2xl font-bold text-red-400">-${Math.abs(user?.pending_amount || 30).toFixed(2)}</span>
+                      </div>
+                      <p className="text-sm text-red-300/90 font-medium">Please contact Accountant Section</p>
+                    </div>
+
+                    {/* Optional Status Text */}
+                    <div className="flex items-center gap-2 px-2">
+                      <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                      <span className="text-xs text-amber-300/80 font-medium">Pending financial verification</span>
+                    </div>
+
+                    {/* Accountant Section Contact */}
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowCustomerService(true);
+                      }}
+                      className="w-full bg-gradient-to-r from-pink-600 via-rose-500 to-pink-600 hover:from-pink-500 hover:via-rose-400 hover:to-pink-500 text-white font-semibold shadow-lg shadow-pink-500/30 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      <Headphones className="w-4 h-4 mr-2" />
+                      Contact Accountant
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </ExpandableDropdown>
+              )}
+            </div>
           )}
-        </div>
-      )}
 
       {/* Phase 1 Lock Modal for VIP2 (45/45 completed) */}
       {showPhase1LockModal && (
@@ -1410,6 +1406,9 @@ const allComplete = displayCompletedCount === totalTasks;
                   <h3 className="text-amber-400 font-bold">Account Locked</h3>
                   <p className="text-amber-300/60 text-sm">Contact Customer Service to unlock Phase 2</p>
                 </div>
+              </div>
+              <div style={{background:'yellow',color:'black',padding:'10px',marginTop:'10px',fontSize:'12px'}}>
+                BRANCH B: Phase 1 Lock Modal
               </div>
             </div>
             
@@ -1511,6 +1510,8 @@ const allComplete = displayCompletedCount === totalTasks;
                   <p className="text-red-300/60 text-sm">Task progression is blocked until admin approval</p>
                 </div>
               </div>
+              {/* Removed "BRANCH C" label for cleaner UI */}
+              <></>
             </div>
             
             <div className="space-y-4">

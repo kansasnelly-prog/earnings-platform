@@ -526,63 +526,68 @@ const CustomerService: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
     try {
       // Race between submission and timeout
       const submissionPromise = (async () => {
-        // Create conversation in Supabase
-        const { data: convData, error: convError } = await supabase
-          .from('conversations')
-          .insert({
-            user_id: user.id,
-            user_email: user.email,
-            status: 'open'
-          })
-          .select()
-          .single();
+        try {
+          // Create conversation in Supabase
+          const { data: convData, error: convError } = await supabase
+            .from('conversations')
+            .insert({
+              user_id: user.id,
+              user_email: user.email,
+              status: 'open'
+            })
+            .select()
+            .single();
 
-        if (convError || !convData) {
-          console.error('[CustomerService] Error creating conversation:', convError);
-          throw new Error(convError?.message || 'Failed to create conversation');
+          if (convError || !convData) {
+            console.error('[CustomerService] Error creating conversation:', convError);
+            throw new Error(convError?.message || 'Failed to create conversation');
+          }
+
+          console.log('[CustomerService] Conversation created:', convData.id);
+          newConversation = convData;
+
+          // Save message to Supabase
+          const { data: msgData, error: msgError } = await supabase
+            .from('messages')
+            .insert({
+              conversation_id: newConversation.id,
+              sender: 'user',
+              message: messageText
+            })
+            .select()
+            .single();
+
+          if (msgError) {
+            console.error('[CustomerService] Error saving message:', msgError);
+            throw new Error(msgError?.message || 'Failed to save message');
+          }
+
+          console.log('[CustomerService] Message saved:', msgData?.id);
+          savedMessage = msgData;
+          dbSaveSuccess = true;
+
+          // Track message ID to prevent duplicate
+          if (savedMessage?.id) {
+            processedMessageIds.current.add(savedMessage.id);
+          }
+
+          // Set conversation and message in state
+          setConversation(newConversation);
+          setMessages([{
+            id: savedMessage?.id || crypto.randomUUID(),
+            content: messageText,
+            is_admin: false,
+            created_at: savedMessage?.created_at || new Date().toISOString()
+          }]);
+          setStep('conversation');
+          setFormData({ full_name: '', phone_number: '', message: '' });
+
+          console.log('[CustomerService] DB save completed successfully');
+          return { newConversation, savedMessage };
+        } catch (error) {
+          console.error('[CustomerService] Submission error inside promise:', error);
+          throw error;
         }
-
-        console.log('[CustomerService] Conversation created:', convData.id);
-        newConversation = convData;
-
-        // Save message to Supabase
-        const { data: msgData, error: msgError } = await supabase
-          .from('messages')
-          .insert({
-            conversation_id: newConversation.id,
-            sender: 'user',
-            message: messageText
-          })
-          .select()
-          .single();
-
-        if (msgError) {
-          console.error('[CustomerService] Error saving message:', msgError);
-          throw new Error(msgError?.message || 'Failed to save message');
-        }
-
-        console.log('[CustomerService] Message saved:', msgData?.id);
-        savedMessage = msgData;
-        dbSaveSuccess = true;
-
-        // Track message ID to prevent duplicate
-        if (savedMessage?.id) {
-          processedMessageIds.current.add(savedMessage.id);
-        }
-
-        // Set conversation and message in state
-        setConversation(newConversation);
-        setMessages([{
-          id: savedMessage?.id || crypto.randomUUID(),
-          content: messageText,
-          is_admin: false,
-          created_at: savedMessage?.created_at || new Date().toISOString()
-        }]);
-        setStep('conversation');
-        setFormData({ full_name: '', phone_number: '', message: '' });
-
-        console.log('[CustomerService] DB save completed successfully');
-        return { newConversation, savedMessage };
       })();
 
       await Promise.race([submissionPromise, timeoutPromise]);

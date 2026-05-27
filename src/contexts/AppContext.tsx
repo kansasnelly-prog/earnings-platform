@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+
+const hasInitializedRef = React.useRef(false);
+const hasRedirectedRef = React.useRef(false);
+const isRefreshingRef = React.useRef(false);
+
 import SupabaseService, { DatabaseUser, DatabaseTask, DatabaseTransaction, Phase2Checkpoint } from '@/services/supabaseService';
 import ProductCatalogService from '@/services/productCatalogService';
 import { toast } from '@/components/ui/use-toast';
@@ -11,60 +16,60 @@ import { TelegramService } from '@/services/telegramService';
 // TYPES
 // ===========================================
 
-export interface User {
-  id: string;
-  email: string;
-  phone: string | null;
-  display_name: string;
-  vip_level: 1 | 2 | 3;
-  balance: number;
-  total_earned: number;
-  referral_code: string;
-  created_at: string;
-  account_type: 'training' | 'personal' | 'admin';
-  training_completed: boolean;
-  training_progress: number;
-  user_status: 'registered' | 'waiting_for_training' | 'training_assigned' | 'training_credentials_sent' | 'training_completed' | 'active';
-  training_account_email?: string;
-  personal_account_id?: string;
-  training_phase: 1 | 2;
-  tasks_completed: number;
-  total_tasks: number;
-  task_number?: number;
-  current_task_set?: number;
-  set_1_completed_at?: string | null;
-  set_2_completed_at?: string | null;
-  trigger_task_number: 19 | 24 | 31 | 32 | null;
-  has_pending_order: boolean;
-  pending_amount: number;
-  is_negative_balance: boolean;
-  profit_added: boolean;
-  pending_product?: {
-    name: string;
-    brand: string;
-    price: number;
-    category: string;
-    image: string;
-  };
-  phase2_checkpoint?: Phase2Checkpoint | null;
-  has_pending_checkpoint?: boolean;
-  is_training_account: boolean;
-  // VIP1 lock mechanism fields
-  tasks_locked: boolean;
-  linked_training_account_id: string | null;
-  // Phase 2 tracking fields
-  training_phase_2_checkpoint: any;
-  training_completed_v2: boolean;
-  commission_transferred: boolean;
-  commission_transfer_amount: number;
-  commission_transferred_at: string | null;
-  training_phase_1_locked: boolean;
-  training_phase_1_locked_at: string | null;
-  // Personal Day 2 checkpoint fields
-  personal_day2_checkpoint?: any;
-  personal_cycle?: number;
-  personal_cycle_completed?: boolean;
-}
+  export interface User {
+    id: string;
+    email: string;
+    phone: string | null;
+    display_name: string;
+    vip_level: 1 | 2 | 3;
+    balance: number;
+    total_earned: number;
+    referral_code: string;
+    created_at: string;
+    account_type: 'training' | 'personal' | 'admin'; // Restored 'admin' to fix type error
+    training_completed: boolean;
+    training_progress: number;
+    user_status: 'registered' | 'waiting_for_training' | 'training_assigned' | 'training_credentials_sent' | 'training_completed' | 'active';
+    training_account_email?: string;
+    personal_account_id?: string;
+    training_phase: 1 | 2;
+    tasks_completed: number;
+    total_tasks: number;
+    task_number?: number;
+    current_task_set?: number;
+    set_1_completed_at?: string | null;
+    set_2_completed_at?: string | null;
+    trigger_task_number: 19 | 24 | 31 | 32 | null;
+    has_pending_order: boolean;
+    pending_amount: number;
+    is_negative_balance: boolean;
+    profit_added: boolean;
+    pending_product?: {
+      name: string;
+      brand: string;
+      price: number;
+      category: string;
+      image: string;
+    };
+    phase2_checkpoint?: Phase2Checkpoint | null;
+    has_pending_checkpoint?: boolean;
+    is_training_account: boolean;
+    // VIP1 lock mechanism fields
+    tasks_locked: boolean;
+    linked_training_account_id: string | null;
+    // Phase 2 tracking fields
+    training_phase_2_checkpoint: any;
+    training_completed_v2: boolean;
+    commission_transferred: boolean;
+    commission_transfer_amount: number;
+    commission_transferred_at: string | null;
+    training_phase_1_locked: boolean;
+    training_phase_1_locked_at: string | null;
+    // Personal Day 2 checkpoint fields
+    personal_day2_checkpoint?: any;
+    personal_cycle?: number;
+    personal_cycle_completed?: boolean;
+  }
 
 export interface Product {
   id: string;
@@ -625,13 +630,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Refresh tasks when user changes to ensure tasks are loaded for new accounts
-  useEffect(() => {
-    if (user && isAuthenticated) {
-      console.log('[AppContext] User changed, refreshing tasks for:', user.id, 'account_type:', user.account_type);
-      refreshTasks().catch(err => console.error('[AppContext] refreshTasks failed:', err));
-    }
-  }, [user?.id, user?.account_type, isAuthenticated]);
+      // Refresh tasks when user changes to ensure tasks are loaded for new accounts
+      useEffect(() => {
+        const refreshTasksOnceRef = React.useRef(false);
+        if (user && isAuthenticated && !refreshTasksOnceRef.current) {
+          refreshTasksOnceRef.current = true;
+          console.log('[AppContext] User changed, refreshing tasks for:', user.id, 'account_type:', user.account_type);
+          refreshTasks().catch(err => console.error('[AppContext] refreshTasks failed:', err));
+        }
+      }, [user?.id, user?.account_type, isAuthenticated]);
+
+      // Close auth modal and redirect after successful signup
+      useEffect(() => {
+        const redirectHandledRef = React.useRef(false);
+        if (user && isAuthenticated && !redirectHandledRef.current) {
+          redirectHandledRef.current = true;
+          console.log('[AppContext] User authenticated, closing auth modal and redirecting');
+          // Close auth modal
+          setAuthModalOpen(false);
+          // Redirect to dashboard or reload data
+          // Use refreshUser and refreshTasks as dashboard reload
+          refreshUser().then(() => {
+            refreshTasks();
+          }).catch(err => {
+            console.error('[AppContext] Error refreshing user/tasks after login:', err);
+          });
+        }
+      }, [user, isAuthenticated]);
 
   const loadUserData = async (userId: string, email?: string) => {
     console.log('[loadUserData] Starting loadUserData - userId:', userId);

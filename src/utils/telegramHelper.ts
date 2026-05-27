@@ -4,7 +4,7 @@
 interface TelegramNotificationOptions {
   type: 'admin_reset_personal' | 'admin_reset_training' | 'user_login' | 'wallet_bind' | 'wallet_unbind';
   email?: string;
-  accountType?: 'personal' | 'training';
+  accountType?: string; // Changed to string to support 'admin' and other types
   deviceName?: string;
   browser?: string;
   os?: string;

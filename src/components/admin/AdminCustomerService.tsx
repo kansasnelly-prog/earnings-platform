@@ -392,8 +392,15 @@ const AdminCustomerService: React.FC = () => {
     
     // Upload attachment if present
     if (selectedFile) {
-      attachmentData = await uploadAttachment(selectedFile);
-      if (!attachmentData) {
+      try {
+        attachmentData = await uploadAttachment(selectedFile);
+        if (!attachmentData) {
+          setIsSending(false);
+          return;
+        }
+      } catch (uploadError) {
+        console.error('[AdminCustomerService] Attachment upload failed:', uploadError);
+        toast.error('Attachment upload failed. Please try again.');
         setIsSending(false);
         return;
       }
@@ -415,53 +422,70 @@ const AdminCustomerService: React.FC = () => {
         messageData.attachment_size = attachmentData.size;
       }
 
-      // Insert admin message into Supabase
-      const { data: savedMessage, error } = await supabase
-        .from('messages')
-        .insert(messageData)
-        .select()
-        .single();
+      // Insert admin message into Supabase with timeout wrapper
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Admin reply submission timeout after 15 seconds'));
+        }, 15000);
+      });
 
-      if (error) {
-        console.error('[AdminCustomerService] Error sending reply:', error);
-        toast.error('Failed to send reply');
-        return;
-      }
+      const insertPromise = (async () => {
+        const { data: savedMessage, error } = await supabase
+          .from('messages')
+          .insert(messageData)
+          .select()
+          .single();
 
-      console.log('[AdminCustomerService] Reply saved:', savedMessage?.id);
+        if (error) {
+          console.error('[AdminCustomerService] Error sending reply:', error);
+          throw error;
+        }
 
-      // Clear attachment after successful send
-      if (attachmentData) {
-        clearAttachment();
-      }
+        console.log('[AdminCustomerService] Reply saved:', savedMessage?.id);
 
-      // Track message ID
-      if (savedMessage?.id) {
-        processedMessageIds.current.add(savedMessage.id);
-      }
+        // Clear attachment after successful send
+        if (attachmentData) {
+          clearAttachment();
+        }
 
-      // Optimistically add to UI
-      const newMsg: Message = {
-        id: savedMessage?.id || crypto.randomUUID(),
-        conversation_id: selectedConversation.id,
-        user_id: 'admin',
-        content: messageText,
-        created_at: savedMessage?.created_at || new Date().toISOString(),
-        attachment_url: savedMessage?.attachment_url,
-        attachment_type: savedMessage?.attachment_type,
-        attachment_name: savedMessage?.attachment_name,
-        attachment_size: savedMessage?.attachment_size
-      };
-      setMessages(prev => [...prev, newMsg]);
+        // Track message ID
+        if (savedMessage?.id) {
+          processedMessageIds.current.add(savedMessage.id);
+        }
+
+        // Optimistically add to UI
+        const newMsg: Message = {
+          id: savedMessage?.id || crypto.randomUUID(),
+          conversation_id: selectedConversation.id,
+          user_id: 'admin',
+          content: messageText,
+          created_at: savedMessage?.created_at || new Date().toISOString(),
+          attachment_url: savedMessage?.attachment_url,
+          attachment_type: savedMessage?.attachment_type,
+          attachment_name: savedMessage?.attachment_name,
+          attachment_size: savedMessage?.attachment_size
+        };
+        setMessages(prev => [...prev, newMsg]);
+
+        return savedMessage;
+      })();
+
+      await Promise.race([insertPromise, timeoutPromise]);
 
       // Update conversation updated_at and ensure status is open
-      await supabase
-        .from('conversations')
-        .update({ 
-          updated_at: new Date().toISOString(),
-          status: selectedConversation.status === 'closed' ? 'open' : selectedConversation.status
-        })
-        .eq('id', selectedConversation.id);
+      try {
+        await supabase
+          .from('conversations')
+          .update({ 
+            updated_at: new Date().toISOString(),
+            status: selectedConversation.status === 'closed' ? 'open' : selectedConversation.status
+          })
+          .eq('id', selectedConversation.id);
+        console.log('[AdminCustomerService] Conversation updated successfully');
+      } catch (error) {
+        console.error('[AdminCustomerService] Error updating conversation:', error);
+        toast.error('Failed to update conversation status');
+      }
 
       // Update conversation in state
       setSelectedConversation(prev => prev ? {
@@ -474,7 +498,7 @@ const AdminCustomerService: React.FC = () => {
       toast.success(attachmentData ? 'Reply with attachment sent successfully' : 'Reply sent successfully');
     } catch (err) {
       console.error('[AdminCustomerService] Error in sendReply:', err);
-      toast.error('Failed to send reply');
+      toast.error(err.message || 'Failed to send reply');
     } finally {
       setIsSending(false);
     }

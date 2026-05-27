@@ -535,7 +535,7 @@ const EnhancedAdminDashboard: React.FC = () => {
       const personalCycle = userData.personal_cycle || 1;
       const personalCycleCompleted = userData.personal_cycle_completed || false;
 
-      let updateData: any = {
+      const updateData: any = {
         tasks_completed: 0,
         updated_at: new Date().toISOString()
       };

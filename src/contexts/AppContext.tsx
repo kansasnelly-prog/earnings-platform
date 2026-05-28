@@ -1,10 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 
-const hasInitializedRef = React.useRef(false);
-const hasRedirectedRef = React.useRef(false);
-const isRefreshingRef = React.useRef(false);
-
+let hasInitializedRef = { current: false };
+let hasRedirectedRef = { current: false };
+let isRefreshingRef = { current: false };
 import SupabaseService, { DatabaseUser, DatabaseTask, DatabaseTransaction, Phase2Checkpoint } from '@/services/supabaseService';
 import ProductCatalogService from '@/services/productCatalogService';
 import { toast } from '@/components/ui/use-toast';
@@ -630,33 +629,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-      // Refresh tasks when user changes to ensure tasks are loaded for new accounts
-      useEffect(() => {
-        const refreshTasksOnceRef = React.useRef(false);
-        if (user && isAuthenticated && !refreshTasksOnceRef.current) {
-          refreshTasksOnceRef.current = true;
-          console.log('[AppContext] User changed, refreshing tasks for:', user.id, 'account_type:', user.account_type);
-          refreshTasks().catch(err => console.error('[AppContext] refreshTasks failed:', err));
-        }
-      }, [user?.id, user?.account_type, isAuthenticated]);
+  // Refresh tasks when user changes to ensure tasks are loaded for new accounts
+  const refreshTasksOnceRef = React.useRef(false);
+  const redirectHandledRef = React.useRef(false);
 
-      // Close auth modal and redirect after successful signup
-      useEffect(() => {
-        const redirectHandledRef = React.useRef(false);
-        if (user && isAuthenticated && !redirectHandledRef.current) {
-          redirectHandledRef.current = true;
-          console.log('[AppContext] User authenticated, closing auth modal and redirecting');
-          // Close auth modal
-          setAuthModalOpen(false);
-          // Redirect to dashboard or reload data
-          // Use refreshUser and refreshTasks as dashboard reload
-          refreshUser().then(() => {
-            refreshTasks();
-          }).catch(err => {
-            console.error('[AppContext] Error refreshing user/tasks after login:', err);
-          });
-        }
-      }, [user, isAuthenticated]);
+  useEffect(() => {
+    if (user && isAuthenticated && !refreshTasksOnceRef.current) {
+      refreshTasksOnceRef.current = true;
+      console.log('[AppContext] User changed, refreshing tasks for:', user.id, 'account_type:', user.account_type);
+      refreshTasks().catch(err => console.error('[AppContext] refreshTasks failed:', err));
+    }
+  }, [user?.id, user?.account_type, isAuthenticated]);
+
+  // Close auth modal and redirect after successful signup
+  useEffect(() => {
+    if (user && isAuthenticated && !redirectHandledRef.current) {
+      redirectHandledRef.current = true;
+      console.log('[AppContext] User authenticated, closing auth modal and redirecting');
+      // Close auth modal
+      setAuthModalOpen(false);
+      // Redirect to dashboard or reload data
+      // Use refreshUser and refreshTasks as dashboard reload
+      refreshUser().then(() => {
+        refreshTasks();
+      }).catch(err => {
+        console.error('[AppContext] Error refreshing user/tasks after login:', err);
+      });
+    }
+  }, [user, isAuthenticated]);
 
   const loadUserData = async (userId: string, email?: string) => {
     console.log('[loadUserData] Starting loadUserData - userId:', userId);
@@ -2594,10 +2594,17 @@ else if (
   );
 }
 
+
+
 export function useApp() {
   const context = useContext(AppContext);
   if (context === undefined) {
     throw new Error('useApp must be used within an AppProvider');
+  }
+  // Null check guard for user to prevent crash
+  if (context.user === null) {
+    // Instead of throwing error, return context with user undefined to allow graceful handling
+    return { ...context, user: undefined };
   }
   return context;
 }

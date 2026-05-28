@@ -35,6 +35,19 @@ const ProductCatalogManager: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'training' | 'personal'>('training');
   const [trainingProducts, setTrainingProducts] = useState<Product[]>([]);
   const [personalProducts, setPersonalProducts] = useState<Product[]>([]);
+
+  // Fix: Add type field to products on load to enable correct filtering/counting
+  useEffect(() => {
+    setTrainingProducts((products) =>
+      products.map((p) => ({ ...p, type: 'training' }))
+    );
+  }, []);
+
+  useEffect(() => {
+    setPersonalProducts((products) =>
+      products.map((p) => ({ ...p, type: 'personal' }))
+    );
+  }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);

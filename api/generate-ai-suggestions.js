@@ -39,24 +39,17 @@ module.exports = async function handler(req, res) {
 
     // Import and initialize Gemini client inside handler to catch startup errors
     console.log('[AI Suggestions] Loading Gemini SDK...');
-    const { GoogleGenerativeAI } = require("@google/generative-ai");
-    console.log('[AI Suggestions] Gemini SDK loaded successfully');
-    
-    const geminiApiKey = process.env.GEMINI_API_KEY;
-    console.log('[AI Suggestions] env key exists:', !!geminiApiKey);
-    console.log('[AI Suggestions] env key length:', geminiApiKey?.length || 0);
-    
-    if (!geminiApiKey) {
-      console.error('[AI Suggestions] CRITICAL: GEMINI_API_KEY missing');
+    const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+    const openRouterModel = 'google/gemini-pro'; // Using gemini-pro as per task
+
+    if (!openRouterApiKey) {
+      console.error('[AI Suggestions] CRITICAL: OPENROUTER_API_KEY missing');
       return res.status(500).json({
         success: false,
-        error: 'Missing GEMINI_API_KEY environment variable'
+        error: 'Missing OPENROUTER_API_KEY environment variable'
       });
     }
-    
-    console.log('[AI Suggestions] Initializing Gemini client...');
-    const genAI = new GoogleGenerativeAI(geminiApiKey);
-    console.log('[AI Suggestions] Gemini client initialized successfully');
+    console.log('[AI Suggestions] OpenRouter API key exists.');
 
     // Build conversation context
     let context = '';
@@ -112,52 +105,70 @@ Generate 5 distinct response variations (PROFESSIONAL, EMPATHETIC, SHORT, DETAIL
   ]
 }`;
 
-   console.log('[AI Suggestions] Calling Gemini API with SDK...');
+    console.log('[AI Suggestions] Calling OpenRouter API...');
     console.log('[AI Suggestions] Request details:');
-    console.log('[AI Suggestions] - Model: gemini-1.5-flash');
+    console.log('[AI Suggestions] - Model:', openRouterModel);
     console.log('[AI Suggestions] - Temperature: 0.6');
     console.log('[AI Suggestions] - Max tokens: 1500');
     console.log('[AI Suggestions] - System prompt length:', systemPrompt.length);
     console.log('[AI Suggestions] - User prompt length:', userPrompt.length);
 
-    // Get the model and configure generation
-    const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
-  generationConfig: {
-    temperature: 0.6,
-    maxOutputTokens: 1500
-  }
-});
-
     const startTime = Date.now();
     let aiResponse;
     try {
-      console.log('[AI Suggestions] Sending request to Gemini API...');
-      const result = await model.generateContent(`${systemPrompt}\n\n${userPrompt}`);
-      const responseTime = Date.now() - startTime;
-      console.log('[AI Suggestions] Gemini API response received in', responseTime, 'ms');
+      console.log('[AI Suggestions] Sending request to OpenRouter API...');
+      const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openRouterApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: openRouterModel,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.6,
+          max_tokens: 1500,
+        }),
+      });
 
-      // Use optional chaining to safely access response
-      aiResponse = result?.response?.text();
+      const responseTime = Date.now() - startTime;
+      console.log('[AI Suggestions] OpenRouter API response received in', responseTime, 'ms');
+
+      if (!openRouterResponse.ok) {
+        const errorData = await openRouterResponse.json();
+        console.error('[AI Suggestions] OpenRouter API error:', openRouterResponse.status, errorData);
+        return res.status(openRouterResponse.status).json({
+          success: false,
+          error: 'OpenRouter API error',
+          details: errorData?.message || 'Unknown OpenRouter API error'
+        });
+      }
+
+      const data = await openRouterResponse.json();
+      aiResponse = data?.choices?.[0]?.message?.content;
+
       if (!aiResponse) {
-        console.error('[AI Suggestions] Gemini response is empty or invalid');
+        console.error('[AI Suggestions] OpenRouter response is empty or invalid');
         return res.status(500).json({
           success: false,
           error: 'AI returned empty response'
         });
       }
       console.log('[AI Suggestions] AI response received, length:', aiResponse.length);
-    } catch (geminiError) {
+    } catch (openRouterError) {
       const responseTime = Date.now() - startTime;
-      console.error('[AI Suggestions] Gemini API error after', responseTime, 'ms:', geminiError);
-      console.error('[AI Suggestions] Error name:', geminiError?.name);
-      console.error('[AI Suggestions] Error message:', geminiError?.message);
-      console.error('[AI Suggestions] Error stack:', geminiError?.stack);
+      console.error('[AI Suggestions] OpenRouter API error after', responseTime, 'ms:', openRouterError);
+      console.error('[AI Suggestions] Error name:', openRouterError?.name);
+      console.error('[AI Suggestions] Error message:', openRouterError?.message);
+      console.error('[AI Suggestions] Error stack:', openRouterError?.stack);
 
       return res.status(503).json({
         success: false,
         error: 'AI service error',
-        details: geminiError?.message || 'Unknown Gemini API error'
+        details: openRouterError?.message || 'Unknown OpenRouter API error'
       });
     }
 

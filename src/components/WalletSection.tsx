@@ -133,41 +133,41 @@ const WalletSection: React.FC = () => {
             <DollarSign className="w-4 h-4 text-emerald-400" />
             <span className="text-xs text-gray-400 font-medium">Available Balance</span>
           </div>
-          <p className="text-2xl font-bold text-emerald-400">${walletState.available_balance.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-emerald-400">${(walletState?.available_balance ?? 0).toFixed(2)}</p>
         </div>
         <div className="p-5 bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-2xl">
           <div className="flex items-center gap-2 mb-2">
             <Loader2 className="w-4 h-4 text-amber-400" />
             <span className="text-xs text-gray-400 font-medium">Pending Balance</span>
           </div>
-          <p className="text-2xl font-bold text-amber-400">${walletState.pending_balance.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-amber-400">${(walletState?.pending_balance ?? 0).toFixed(2)}</p>
         </div>
         <div className="p-5 bg-gradient-to-br from-indigo-500/10 to-indigo-500/5 border border-indigo-500/20 rounded-2xl">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-indigo-400" />
             <span className="text-xs text-gray-400 font-medium">Total Earned</span>
           </div>
-          <p className="text-2xl font-bold text-indigo-400">${walletState.total_earned.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-indigo-400">${(walletState?.total_earned ?? 0).toFixed(2)}</p>
         </div>
         <div className="p-5 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-2xl">
           <div className="flex items-center gap-2 mb-2">
             <ArrowDown className="w-4 h-4 text-purple-400" />
             <span className="text-xs text-gray-400 font-medium">Total Withdrawn</span>
           </div>
-          <p className="text-2xl font-bold text-purple-400">${walletState.total_withdrawn.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-purple-400">${(walletState?.total_withdrawn ?? 0).toFixed(2)}</p>
         </div>
       </div>
 
       {/* Withdraw Button */}
-      <button
-        onClick={() => setShowWithdrawForm(!showWithdrawForm)}
-        disabled={walletState.available_balance < 10}
-        className="w-full p-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold rounded-2xl transition-all shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <ArrowUpRight size={20} />
-        Request Withdrawal
-        <span className="text-sm opacity-80">(${walletState.available_balance.toFixed(2)} available)</span>
-      </button>
+        <button
+          onClick={() => setShowWithdrawForm(!showWithdrawForm)}
+          disabled={(walletState?.available_balance ?? 0) < 10}
+          className="w-full p-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold rounded-2xl transition-all shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <ArrowUpRight size={20} />
+          Request Withdrawal
+          <span className="text-sm opacity-80">(${(walletState?.available_balance ?? 0).toFixed(2)} available)</span>
+        </button>
 
       {/* Withdrawal Form */}
       {showWithdrawForm && (
@@ -183,24 +183,24 @@ const WalletSection: React.FC = () => {
               setErrors({ amount: 'Minimum withdrawal is $10' });
               return;
             }
-            if (amount > walletState.available_balance) {
-              setErrors({ amount: 'Insufficient available balance' });
-              return;
-            }
-            if (!accountDetails.trim()) {
-              setErrors({ accountDetails: 'Account details are required' });
-              return;
-            }
-            // For now, just show a toast (backend integration later)
-            toast({
-              title: 'Withdrawal Request Submitted',
-              description: `Withdrawal of $${amount.toFixed(2)} via ${withdrawMethod} submitted for processing.`
-            });
-            setShowWithdrawForm(false);
-            setWithdrawAmount('');
-            setAccountDetails('');
-            setErrors({});
-          }} className="space-y-4">
+              if (amount > (walletState?.available_balance ?? 0)) {
+                setErrors({ amount: 'Insufficient available balance' });
+                return;
+              }
+              if (!accountDetails.trim()) {
+                setErrors({ accountDetails: 'Account details are required' });
+                return;
+              }
+              // For now, just show a toast (backend integration later)
+              toast({
+                title: 'Withdrawal Request Submitted',
+                description: `Withdrawal of $${amount.toFixed(2)} via ${withdrawMethod} submitted for processing.`
+              });
+              setShowWithdrawForm(false);
+              setWithdrawAmount('');
+              setAccountDetails('');
+              setErrors({});
+            }} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">Amount (USD)</label>
               <input
@@ -209,7 +209,7 @@ const WalletSection: React.FC = () => {
                 onChange={e => { setWithdrawAmount(e.target.value); setErrors({}); }}
                 placeholder="10.00"
                 min="10"
-                max={walletState.available_balance}
+                max={walletState?.available_balance ?? 0}
                 step="0.01"
                 className="w-full px-4 py-3 bg-[#1a2038] border border-emerald-500/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-sm"
               />
@@ -218,7 +218,7 @@ const WalletSection: React.FC = () => {
                   <AlertCircle size={12} /> {errors.amount}
                 </p>
               )}
-              <p className="text-xs text-gray-500 mt-1">Available: ${walletState.available_balance.toFixed(2)} | Minimum: $10.00</p>
+              <p className="text-xs text-gray-500 mt-1">Available: ${(walletState?.available_balance ?? 0).toFixed(2)} | Minimum: $10.00</p>
             </div>
 
             <div>
@@ -497,7 +497,7 @@ const WalletSection: React.FC = () => {
                 <div className={`text-sm font-bold ${
                   tx.amount > 0 ? 'text-emerald-400' : 'text-red-400'
                 }`}>
-                  {tx.amount > 0 ? '+' : ''}${tx.amount.toFixed(2)}
+                  {tx.amount > 0 ? '+' : ''}${(tx.amount ?? 0).toFixed(2)}
                 </div>
               </div>
             ))}

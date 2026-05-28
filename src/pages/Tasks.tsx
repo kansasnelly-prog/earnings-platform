@@ -334,11 +334,11 @@ const Tasks: React.FC = () => {
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2 text-emerald-400">
                 <DollarSign size={14} />
-                <span className="font-semibold">Balance: ${walletState.available_balance.toFixed(2)}</span>
+                <span className="font-semibold">Balance: ${(walletState?.available_balance ?? 0).toFixed(2)}</span>
               </div>
               <div className="flex items-center gap-2 text-purple-400">
                 <TrendingUp size={14} />
-                <span className="font-semibold">Total Earned: ${totalReward.toFixed(2)}</span>
+                <span className="font-semibold">Total Earned: ${(totalReward ?? 0).toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -420,10 +420,10 @@ const Tasks: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5 text-red-400" />
               </div>
-              <div className="flex-1">
-                <p className="text-red-400 font-semibold">Combination Product Detected!</p>
-                <p className="text-red-300/70 text-sm">Tasks are locked. Balance: ${user?.balance?.toFixed(2)}. Contact customer service to clear pending order.</p>
-              </div>
+            <div className="flex-1">
+              <p className="text-red-400 font-semibold">Combination Product Detected!</p>
+              <p className="text-red-300/70 text-sm">Tasks are locked. Balance: ${(user?.balance ?? 0).toFixed(2)}. Contact customer service to clear pending order.</p>
+            </div>
             </div>
           </div>
         )}
@@ -487,21 +487,21 @@ const Tasks: React.FC = () => {
                     {getTaskIcon(task.status)}
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold text-white">{task.title || `Task ${task.task_number}`}</h3>
-                      {task.status === 'pending' && (
-                        <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 text-xs font-bold rounded-full">2X REWARD</span>
-                      )}
-                    </div>
-                    <p className="text-sm text-slate-400">Complete to earn rewards</p>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-white">{task.title || `Task ${task.task_number}`}</h3>
+                  {task.status === 'pending' && (
+                    <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 text-xs font-bold rounded-full">2X REWARD</span>
+                  )}
                 </div>
-                {task.status === 'completed' && (
-                  <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-sm font-bold rounded-full">
-                    +${calculateTaskReward(task).toFixed(2)}
-                  </span>
-                )}
+                <p className="text-sm text-slate-400">Complete to earn rewards</p>
               </div>
+            </div>
+            {task.status === 'completed' && (
+              <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-sm font-bold rounded-full">
+                +${calculateTaskReward(task).toFixed(2)}
+              </span>
+            )}
+          </div>
 
               {/* Product showcase - 2 column layout */}
               <div className="grid md:grid-cols-2 gap-0">

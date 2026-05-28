@@ -321,17 +321,17 @@ const Dashboard: React.FC = () => {
             )}
           </div>
           <div className="space-y-2">
-            <p className={`text-3xl font-bold ${
-              user?.is_negative_balance ? 'text-red-400' : 'text-white'
-            }`}>
-              ${walletState.available_balance.toFixed(2)}
-            </p>
-            {user?.has_pending_order && (
-              <div className="flex items-center gap-2 text-xs text-red-400">
-                <AlertTriangle size={12} />
-                <span>Pending: ${user?.pending_amount?.toFixed(2) || '0.00'}</span>
-              </div>
-            )}
+              <p className={`text-3xl font-bold ${
+                user?.is_negative_balance ? 'text-red-400' : 'text-white'
+              }`}>
+                ${(walletState?.available_balance ?? 0).toFixed(2)}
+              </p>
+              {user?.has_pending_order && (
+                <div className="flex items-center gap-2 text-xs text-red-400">
+                  <AlertTriangle size={12} />
+                  <span>Pending: ${(user?.pending_amount ?? 0).toFixed(2)}</span>
+                </div>
+              )}
           </div>
         </div>
 
@@ -354,7 +354,7 @@ const Dashboard: React.FC = () => {
             <TrendingUp size={14} className="text-purple-400" />
           </div>
           <p className="text-xs text-gray-500 font-medium">Total Earned</p>
-          <p className="text-2xl font-bold text-white">${totalReward.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-white">${(totalReward ?? 0).toFixed(2)}</p>
         </div>
 
         <div className="p-5 bg-white/[0.03] border border-white/[0.06] rounded-2xl hover:border-indigo-500/20 transition-all group">
@@ -410,7 +410,7 @@ const Dashboard: React.FC = () => {
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-400">{displayCompletedCount} of {isTraining ? trainingTotalTasks : displayTotalTasks} tasks completed</span>
-            <span className="text-sm font-bold text-indigo-400">{progress.toFixed(0)}%</span>
+            <span className="text-sm font-bold text-indigo-400">{(progress ?? 0).toFixed(0)}%</span>
           </div>
           <div className="h-3 bg-white/5 rounded-full overflow-hidden">
             <div
@@ -589,7 +589,7 @@ const Dashboard: React.FC = () => {
                     <ArrowDownToLine size={14} className="text-indigo-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-white">${w.amount.toFixed(2)}</p>
+                    <p className="text-sm font-semibold text-white">${(w.amount ?? 0).toFixed(2)}</p>
                     <p className="text-xs text-gray-500">{new Date(w.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>

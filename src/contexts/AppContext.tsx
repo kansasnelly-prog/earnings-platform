@@ -643,18 +643,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Close auth modal and redirect after successful signup
   useEffect(() => {
-    if (user && isAuthenticated && !redirectHandledRef.current) {
-      redirectHandledRef.current = true;
-      console.log('[AppContext] User authenticated, closing auth modal and redirecting');
-      // Close auth modal
-      setAuthModalOpen(false);
-      // Redirect to dashboard or reload data
-      // Use refreshUser and refreshTasks as dashboard reload
-      refreshUser().then(() => {
-        refreshTasks();
-      }).catch(err => {
-        console.error('[AppContext] Error refreshing user/tasks after login:', err);
-      });
+    if (user && isAuthenticated) {
+      if (!redirectHandledRef.current) {
+        redirectHandledRef.current = true;
+        console.log('[AppContext] User authenticated, closing auth modal and redirecting');
+        // Close auth modal
+        setAuthModalOpen(false);
+        // Redirect to dashboard or reload data
+        // Use refreshUser and refreshTasks as dashboard reload
+        refreshUser().then(() => {
+          refreshTasks();
+        }).catch(err => {
+          console.error('[AppContext] Error refreshing user/tasks after login:', err);
+        });
+      }
+    } else {
+      // Reset redirect flag if user logs out or is not authenticated
+      redirectHandledRef.current = false;
     }
   }, [user, isAuthenticated]);
 

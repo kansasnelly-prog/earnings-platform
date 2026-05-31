@@ -121,7 +121,7 @@ const Home: React.FC = () => {
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-gray-800/50 rounded-xl p-4">
             <p className="text-gray-400 text-sm mb-1">Total Balance</p>
-            <p className="text-green-400 text-xl font-bold">${(user?.balance || 0).toFixed(2)}</p>
+            <p className="text-green-400 text-xl font-bold">${(user?.balance ?? 0).toFixed(2)}</p>
           </div>
           <div className="bg-gray-800/50 rounded-xl p-4">
             <p className="text-gray-400 text-sm mb-1">Tasks Done</p>

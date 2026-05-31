@@ -126,7 +126,7 @@ const openLogin = () => {
                 <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
                   <span className="text-emerald-400 text-xs font-medium">Balance:</span>
                   <span className="text-emerald-300 text-sm font-bold">
-                    ${walletState.available_balance.toFixed(2)}
+                    ${(walletState?.available_balance ?? 0).toFixed(2)}
                   </span>
                 </div>
 
@@ -220,7 +220,7 @@ const openLogin = () => {
         {isAuthenticated && mobileMenuOpen && <div className="md:hidden border-t border-indigo-500/10 py-2 pb-4">
             <div className="flex items-center gap-1.5 px-2 py-2 mb-2">
               <span className="text-emerald-400 text-xs font-medium">Balance:</span>
-              <span className="text-emerald-300 text-sm font-bold" data-mixed-content="true">${walletState.available_balance.toFixed(2)}</span>
+              <span className="text-emerald-300 text-sm font-bold" data-mixed-content="true">${(walletState?.available_balance ?? 0).toFixed(2)}</span>
             </div>
             {allNavItems.map(item => <button key={item.id} onClick={() => {
           safeSetActiveTab(item.id);

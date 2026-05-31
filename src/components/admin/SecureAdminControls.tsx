@@ -21,7 +21,8 @@ import {
   Target,
   Clock,
   Award,
-  X
+  X,
+  Package
 } from 'lucide-react';
 import { Phase2Checkpoint, PersonalDay2Checkpoint, fixTestAccountBonus, SupabaseService } from '@/services/supabaseService';
 
@@ -290,6 +291,17 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
             } catch (e) {
               // Skip invalid JSON
             }
+          }
+        }
+      }
+      
+      toast.success(`Migrated ${migratedCount} training accounts`);
+      onRefresh();
+    } catch (error) {
+      toast.error('Failed to migrate training accounts');
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   const migrateExistingTasks = (email: string, oldTasks: any[]) => {
@@ -467,10 +479,10 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
           `📋 <b>Checkpoint Details:</b>\n` +
           `🎯 Type: ${checkpointType}\n` +
           `🔢 Task Number: ${finalCheckpoint.task_number}\n` +
-          `📦 Product 1: ${finalCheckpoint.product1_name} ($${finalCheckpoint.product1_price.toFixed(2)})\n` +
-          `📦 Product 2: ${finalCheckpoint.product2_name} ($${finalCheckpoint.product2_price.toFixed(2)})\n` +
-          `💰 Combination Value: $${combinationValue.toFixed(2)}\n` +
-          `💵 Pending Bonus: $${finalCheckpoint.bonus_amount.toFixed(2)}\n` +
+          `📦 Product 1: ${finalCheckpoint.product1_name} ($${(finalCheckpoint.product1_price ?? 0).toFixed(2)})\n` +
+          `📦 Product 2: ${finalCheckpoint.product2_name} ($${(finalCheckpoint.product2_price ?? 0).toFixed(2)})\n` +
+          `💰 Combination Value: $${(combinationValue ?? 0).toFixed(2)}\n` +
+          `💵 Pending Bonus: $${(finalCheckpoint.bonus_amount ?? 0).toFixed(2)}\n` +
           `✅ Status: APPROVED\n\n` +
           `⚙️ <b>Admin Action:</b>\n` +
           `🕐 Time: ${new Date().toLocaleString()}\n` +
@@ -1067,9 +1079,9 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
                     if (!confirm('Execute emergency commission transfer? This will update both account balances.')) return;
                     const result = await SupabaseService.executeEmergencyTransfer();
                     if (result.success) {
-                      toast({ title: 'Success', description: 'Commission transfer executed successfully' });
+                      toast.success('Commission transfer executed successfully');
                     } else {
-                      toast({ title: 'Error', description: result.error || 'Transfer failed', variant: 'destructive' });
+                      toast.error(result.error || 'Transfer failed');
                     }
                   }}
                   className="mt-2 w-full bg-red-600 hover:bg-red-700 text-white"

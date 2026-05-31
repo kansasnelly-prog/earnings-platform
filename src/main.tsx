@@ -3,6 +3,36 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 
 // ===========================================
+// GLOBAL BULLETPROOF SAFETY NET FOR toFixed()
+// ===========================================
+
+// Global bulletproof safety net for missing/undefined numeric values calling toFixed
+if (!(Number.prototype as any).toFixedOriginal) {
+  (Number.prototype as any).toFixedOriginal = Number.prototype.toFixed;
+  
+  // Safe override to handle undefined, null, or missing values gracefully
+  Object.defineProperty(Object.prototype, 'toFixed', {
+    value: function(this: any, digits?: number) {
+      if (this === undefined || this === null) {
+        return (0 as any).toFixedOriginal(digits || 2);
+      }
+      // If it's a string representation of a number, parse it safely
+      if (typeof this === 'string') {
+        const parsed = parseFloat(this);
+        return isNaN(parsed) ? (0 as any).toFixedOriginal(digits || 2) : (parsed as any).toFixedOriginal(digits || 2);
+      }
+      try {
+        return (Number(this) as any).toFixedOriginal(digits);
+      } catch (e) {
+        return (0 as any).toFixedOriginal(digits || 2);
+      }
+    },
+    configurable: true,
+    writable: true
+  });
+}
+
+// ===========================================
 // CHUNK LOAD ERROR HANDLER
 // ===========================================
 

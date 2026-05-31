@@ -150,14 +150,14 @@ const ProfileSection: React.FC = () => {
             <DollarSign size={18} className="text-emerald-400" />
           </div>
           <p className="text-xs text-gray-500 font-medium">Total Balance</p>
-          <p className="text-xl font-bold text-emerald-400">${(walletState?.available_balance || 0).toFixed(2)}</p>
+          <p className="text-xl font-bold text-emerald-400">${(walletState?.available_balance ?? 0).toFixed(2)}</p>
         </div>
         <div className="p-5 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
           <div className="w-10 h-10 rounded-xl bg-indigo-500/15 flex items-center justify-center mb-3">
             <TrendingUp size={18} className="text-indigo-400" />
           </div>
           <p className="text-xs text-gray-500 font-medium">Total Earned</p>
-          <p className="text-xl font-bold text-indigo-400">${(walletState?.total_earned || 0).toFixed(2)}</p>
+          <p className="text-xl font-bold text-indigo-400">${(walletState?.total_earned ?? 0).toFixed(2)}</p>
         </div>
         <div className="p-5 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
           <div className="w-10 h-10 rounded-xl bg-purple-500/15 flex items-center justify-center mb-3">
@@ -191,7 +191,7 @@ const ProfileSection: React.FC = () => {
         <div className="mb-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-400">VIP{user?.vip_level || 1} Completion</span>
-            <span className="text-sm font-bold text-indigo-400">{progress.toFixed(0)}%</span>
+            <span className="text-sm font-bold text-indigo-400">{(progress ?? 0).toFixed(0)}%</span>
           </div>
           <div className="h-3 bg-white/5 rounded-full overflow-hidden">
             <div

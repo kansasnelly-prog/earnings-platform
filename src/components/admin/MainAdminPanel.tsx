@@ -21,6 +21,7 @@ import ProductCatalogManager from './ProductCatalogManager';
 import AdminUsers from './AdminUsers';
 import AdminPasswordReset from './AdminPasswordReset';
 import { sendTelegramNotification } from '@/lib/realtime';
+import AdBanner from '../AdBanner';
 
 interface RealUser {
   id: string;
@@ -873,11 +874,13 @@ const MainAdminPanel: React.FC = () => {
     return null;
   }
 
-  return (
+   return (
     <div className="min-h-screen bg-[#060a14] text-white">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#0a0e1a]/95 backdrop-blur-xl border-b border-indigo-500/10">
+      <AdBanner />
+      <header className="sticky top-0 z-50 bg-[#0a0e1a]/95 backdrop-blur-xl border-b border-slate-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <button

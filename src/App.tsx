@@ -21,10 +21,12 @@ const App = () => (
       <AppProvider>
         <Routes>
           <Route path="/" element={<Index />} />
+          {/* Admin routes */}
           <Route path="/admin/*" element={<AdminLayout />}> {/* Admin layout wrapper */}
             <Route index element={<Admin />} />
-            <Route path="ai-assistant" element={<AIAssistantWorkspace />} />
           </Route>
+          {/* Public AI Assistant route */}
+          <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AppProvider>

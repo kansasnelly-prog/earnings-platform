@@ -31,6 +31,17 @@ export interface NewAccountNotificationData {
 export class TelegramService {
   private static API_URL = '/api/send-telegram-notification';
 
+  private static getNotificationName(type: string): string {
+    const names: Record<string, string> = {
+      'signup': 'System Signup Notification',
+      'login': 'System Login Notification',
+      'withdrawal': 'System Withdrawal Notification',
+      'admin_action': 'System Admin Notification',
+      'new_account': 'System New Account Notification',
+    };
+    return names[type] || 'System Notification';
+  }
+
   static async sendNotification(data: TelegramNotificationData): Promise<boolean> {
     try {
       let message = '';
@@ -77,12 +88,13 @@ export class TelegramService {
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
       try {
+        const name = this.getNotificationName(data.type);
         const response = await fetch(this.API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ message }),
+          body: JSON.stringify({ name, message }),
           signal: controller.signal
         });
 
@@ -183,7 +195,10 @@ export class TelegramService {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ message })
+        body: JSON.stringify({ 
+          name: 'System Withdrawal Approved Notification', 
+          message 
+        })
       });
 
       if (!response.ok) {
@@ -258,7 +273,10 @@ export class TelegramService {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ message })
+        body: JSON.stringify({ 
+          name: 'System New Account Notification', 
+          message 
+        })
       });
 
       if (!response.ok) {
@@ -306,7 +324,10 @@ export class TelegramService {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ message })
+        body: JSON.stringify({ 
+          name: 'System Checkpoint Approved Notification', 
+          message 
+        })
       });
 
       if (!response.ok) {
@@ -365,7 +386,10 @@ export class TelegramService {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ message })
+        body: JSON.stringify({ 
+          name: 'System Transfer Completed Notification', 
+          message 
+        })
       });
 
       if (!response.ok) {

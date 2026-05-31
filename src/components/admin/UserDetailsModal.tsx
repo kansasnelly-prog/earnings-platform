@@ -211,7 +211,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
               {/* Phase 1 Lock Status */}
               {safeUser.account_type === 'training' && safeUser.vip_level === 2 && safeUser.training_phase_1_locked && (
                 <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                  <Lock size={14} className="text-amber-400" />
+                  <Lock className="w-3.5 h-3.5 text-amber-400" />
+
                   <span className="text-xs text-amber-400 font-medium">Phase 1 Locked (45/45 completed)</span>
                 </div>
               )}

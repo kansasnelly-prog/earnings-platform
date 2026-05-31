@@ -413,7 +413,7 @@ const MainAdminPanel: React.FC = () => {
     setProcessingIds(prev => new Set(prev).add(withdrawalId));
     try {
       // Use SupabaseService to approve withdrawal (includes balance update and transaction creation)
-      const result = await SupabaseService.approveWithdrawal(withdrawalId, user?.id);
+      const result = await SupabaseService.approveWithdrawal(withdrawalId,selectedUser?.id );
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to approve withdrawal');
@@ -421,7 +421,7 @@ const MainAdminPanel: React.FC = () => {
 
       // Update local state
       setWithdrawals(prev => prev.map(w => 
-        w.id === withdrawalId ? { ...w, status: 'approved' as const, processed_at: new Date().toISOString() } : w
+        w.id === withdrawalId ? { ...w, status: 'completed' as const, processed_at: new Date().toISOString() } : w
       ));
 
       toast({
@@ -450,7 +450,7 @@ const MainAdminPanel: React.FC = () => {
     setProcessingIds(prev => new Set(prev).add(withdrawalId));
     try {
       // Use SupabaseService to reject withdrawal (includes transaction creation)
-      const result = await SupabaseService.rejectWithdrawal(withdrawalId, user?.id, 'Rejected by admin');
+      const result = await SupabaseService.rejectWithdrawal(withdrawalId, selectedUser?.id, 'Rejected by admin');
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to reject withdrawal');

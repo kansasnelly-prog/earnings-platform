@@ -885,7 +885,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (!dbTasks || dbTasks.length === 0) {
           // Only create fresh tasks if user hasn't completed any tasks yet
           if (tasksCompleted === 0) {
-            const tasksCreated = await SupabaseService.createTrainingTasks(userId, 35);
+            // Training accounts should start with 45 tasks per phase.
+            // Previously this was hardcoded to 35, causing the UI to display
+            // only 35 tasks for new training accounts.  This mismatch was
+            // the root cause of the defect described in the task.
+            const tasksCreated = await SupabaseService.createTrainingTasks(userId, 45);
             
             if (tasksCreated) {
               const newTasks = await SupabaseService.getUserTasks(userId);

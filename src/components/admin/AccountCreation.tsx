@@ -135,8 +135,8 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
       // Create user in Supabase Auth first with email confirmation disabled
       console.log('[AccountCreation] Creating user in Supabase Auth');
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: trainingEmail.toLowerCase(),
-        password: trainingPassword,
+        email: trainingEmail.toLowerCase().trim(),
+        password: trainingPassword.trim(),
         options: {
           emailRedirectTo: undefined,
           data: {

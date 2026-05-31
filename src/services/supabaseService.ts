@@ -748,11 +748,12 @@ export class SupabaseService {
   
   static async signIn(email: string, password: string): Promise<{ user: DatabaseUser | null; error: string | null }> {
     const emailLower = email.trim().toLowerCase();
+    const passwordTrimmed = password.trim();
     
     try {
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: emailLower,
-        password,
+        password: passwordTrimmed,
       });
 
       if (authError) {

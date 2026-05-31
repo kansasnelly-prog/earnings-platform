@@ -116,61 +116,49 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
         return;
       }
 
-      // Call server-side API to create training account
-      console.log('[AccountCreation] Calling API to create training account');
-      const response = await fetch('/api/create-training-account', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: trainingEmail,
-          password: trainingPassword,
-          name: trainingName,
-          referralCode: normalizedTrainingReferral
+      // Generate a unique tracking referral code for the training account
+      const trackingReferralCode = `TRN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+      // Find the user associated with the provided referral code to link the account
+      const { data: linkedUser, error: linkError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('referral_code', normalizedTrainingReferral)
+        .maybeSingle();
+
+      if (linkError) {
+        throw new Error(`Error linking account: ${linkError.message}`);
+      }
+
+      const linkedToUserId = linkedUser?.id || 'Not Found';
+
+      // Insert training account directly into the database
+      console.log('[AccountCreation] Inserting training account into database');
+      const { data: insertedUser, error: insertError } = await supabase
+        .from('users')
+        .insert({
+          email: trainingEmail.toLowerCase(),
+          display_name: trainingName,
+          account_type: 'training',
+          vip_level: 2,
+          tasks_completed: 0,
+          balance: 1100,
+          total_earned: 0,
+          referral_code: trackingReferralCode,
+          training_completed: false,
+          training_phase: 1,
+          user_status: 'active',
+          created_at: new Date().toISOString(),
         })
-      });
+        .select()
+        .single();
 
-      if (!response.ok) {
-        const text = await response.text();
-        console.error('[AccountCreation] API error:', text);
-        toast({
-          title: 'Error',
-          description: text || 'Failed to create training account',
-          variant: 'destructive'
-        });
-        setIsCreating(false);
-        return;
+      if (insertError) {
+        console.error('[AccountCreation] Database insert error:', insertError);
+        throw new Error(insertError.message || 'Failed to insert training account into database');
       }
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType?.includes('application/json')) {
-        const text = await response.text();
-        console.error('[AccountCreation] Non-JSON response:', text);
-        toast({
-          title: 'Error',
-          description: 'Server returned invalid response format',
-          variant: 'destructive'
-        });
-        setIsCreating(false);
-        return;
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error('[AccountCreation] API error:', data);
-        toast({
-          title: 'Error',
-          description: data.error || 'Failed to create training account',
-          variant: 'destructive'
-        });
-        setIsCreating(false);
-        return;
-      }
-
-      console.log('[AccountCreation] API success:', data);
-      const { trackingReferralCode, linkedToUserId } = data.data;
+      console.log('[AccountCreation] Database insert success:', insertedUser);
 
       // Send Telegram notification for training account creation (non-blocking)
       const telegramMessage = `
@@ -200,8 +188,8 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
 • Progress tracked via referral code: ${trackingReferralCode}
 • Admin can monitor completion status
 
-🔗 <b>Contact User Support:</b> https://t.me/EARNINGSLLCONLINECS1
-      `.trim();
+🔗 <b>Contact User Support:</b> https://t.me/EARNINGSLLCONLINECS1`
+      
 
       console.log('[AccountCreation] Sending Telegram notification');
       try {
@@ -225,8 +213,8 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
 💾 <b>System:</b> Clean tracking activated
 🔍 <b>Monitoring:</b> Progress will be tracked
 
-🔗 <b>Contact User Support:</b> https://t.me/EARNINGSLLCONLINECS1
-      `.trim();
+🔗 <b>Contact User Support:</b> https://t.me/EARNINGSLLCONLINECS1`
+      
 
       console.log('[AccountCreation] Before second Telegram notification');
       try {

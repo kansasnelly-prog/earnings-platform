@@ -132,11 +132,29 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
 
       const linkedToUserId = linkedUser?.id || 'Not Found';
 
-      // Insert training account directly into the database
-      console.log('[AccountCreation] Inserting training account into database');
+      // Create user in Supabase Auth first
+      console.log('[AccountCreation] Creating user in Supabase Auth');
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: trainingEmail.toLowerCase(),
+        password: trainingPassword,
+      });
+
+      if (authError) {
+        console.error('[AccountCreation] Supabase Auth error:', authError);
+        throw new Error(authError.message || 'Failed to create auth account');
+      }
+
+      const userId = authData.user?.id;
+      if (!userId) {
+        throw new Error('User ID not returned from Supabase Auth');
+      }
+
+      // Insert training account metadata into the database
+      console.log('[AccountCreation] Inserting training account metadata into database');
       const { data: insertedUser, error: insertError } = await supabase
         .from('users')
         .insert({
+          id: userId,
           email: trainingEmail.toLowerCase(),
           display_name: trainingName,
           account_type: 'training',

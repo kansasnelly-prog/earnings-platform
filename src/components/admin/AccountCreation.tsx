@@ -166,6 +166,7 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
           account_type: 'training',
           vip_level: 2,
           tasks_completed: 0,
+          total_tasks: 45,
           balance: 1100,
           total_earned: 0,
           referral_code: trackingReferralCode,

@@ -192,11 +192,12 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
       
 
       console.log('[AccountCreation] Sending Telegram notification');
-      try {
-        await sendTelegramNotification(telegramMessage, 10000);
-      } catch (telegramError) {
-        console.error('[AccountCreation] First Telegram notification failed:', telegramError);
-      }
+     try {
+      sendTelegramNotification(telegramMessage, 10000);
+    } catch (telegramError) {
+      console.error('[AccountCreation] First Telegram notification failed:', telegramError);
+    }
+
       console.log('[AccountCreation] After first Telegram notification');
 
       // Send tracking notification for referral code usage (non-blocking)
@@ -218,7 +219,7 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
 
       console.log('[AccountCreation] Before second Telegram notification');
       try {
-        await sendTelegramNotification(trackingMessage, 10000);
+        sendTelegramNotification(trackingMessage, 10000);
       } catch (telegramError) {
         console.error('[AccountCreation] Second Telegram notification failed:', telegramError);
       }

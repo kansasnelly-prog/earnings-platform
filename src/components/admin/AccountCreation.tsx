@@ -132,11 +132,17 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
 
       const linkedToUserId = linkedUser?.id || 'Not Found';
 
-      // Create user in Supabase Auth first
+      // Create user in Supabase Auth first with email confirmation disabled
       console.log('[AccountCreation] Creating user in Supabase Auth');
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: trainingEmail.toLowerCase(),
         password: trainingPassword,
+        options: {
+          emailRedirectTo: undefined,
+          data: {
+            display_name: trainingName,
+          }
+        }
       });
 
       if (authError) {

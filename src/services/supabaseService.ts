@@ -756,6 +756,7 @@ export class SupabaseService {
       });
 
       if (authError) {
+        console.error("Supabase Login Error Details:", authError.message || authError);
         return { user: null, error: authError.message };
       }
 
@@ -784,6 +785,7 @@ export class SupabaseService {
       
       return { user: userData as DatabaseUser, error: null };
     } catch (error: unknown) {
+      console.error("Supabase Login Error Details:", error instanceof Error ? error.message : error);
       const message = error instanceof Error ? error.message : 'Sign in failed';
       return { user: null, error: message };
     }

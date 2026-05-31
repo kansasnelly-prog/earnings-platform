@@ -641,7 +641,7 @@ export const ProductCatalogService = {
   unsubscribeFromTrainingProducts(): void {
     console.log('[ProductCatalog] Unsubscribing from training products changes...');
     if (trainingChannel) {
-      trainingChannel.unsubscribe();
+      supabase.removeChannel(trainingChannel);
       trainingChannel = null;
     }
     trainingProductsUpdateCallback = null;
@@ -650,7 +650,7 @@ export const ProductCatalogService = {
   unsubscribeFromPersonalProducts(): void {
     console.log('[ProductCatalog] Unsubscribing from personal products changes...');
     if (personalChannel) {
-      personalChannel.unsubscribe();
+      supabase.removeChannel(personalChannel);
       personalChannel = null;
     }
     personalProductsUpdateCallback = null;

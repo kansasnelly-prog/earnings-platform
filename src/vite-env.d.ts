@@ -9,3 +9,15 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+// Global type extensions for toFixed() safety net
+declare global {
+  interface Number {
+    toFixedOriginal(digits?: number): string;
+  }
+  interface Object {
+    toFixed?(this: any, digits?: number): string;
+  }
+}
+
+export {};

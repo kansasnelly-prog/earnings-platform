@@ -20,7 +20,7 @@ export default function AdBanner() {
 
       const loadScript = document.createElement('script');
       loadScript.type = 'text/javascript';
-      loadScript.src = '//://highperformanceformat.com';
+      loadScript.src = '//www.highperformanceformat.com/5b6088cc5e954c3cf7b7f168f04ed4bf/invoke.js';
       adRef.current.appendChild(loadScript);
     }
   }, []);

@@ -111,7 +111,7 @@ export default async function handler(req, res) {
         const { error: userInsertError } = await supabase
           .from('users')
           .upsert({
-            id: authUserId,
+            id: newAuthUserId,
             email: email.toLowerCase(),
             display_name: name,
             phone: null,

@@ -28,7 +28,8 @@ export default async function handler(req, res) {
 
     case 'adminUpdateBalance':
       // Admin authentication (simplified for consolidation, use proper auth in production)
-      if (adminPassword !== process.env.ADMIN_PASSWORD) {
+      const adminPasswordEnv = process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD_SECRET;
+      if (adminPassword !== adminPasswordEnv) {
         return res.status(403).json({ error: 'Invalid admin password' });
       }
 
@@ -42,9 +43,10 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Amount must be a positive number' });
       }
 
-      const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // Resolve Supabase URLs and keys with fallbacks for server‑side usage
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE;
+  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
       if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
         console.error("CRITICAL: Supabase environment variables are missing in monetization.");

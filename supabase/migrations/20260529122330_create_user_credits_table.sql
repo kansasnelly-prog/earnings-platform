@@ -1,5 +1,5 @@
 
-CREATE TABLE user_credits (
+CREATE TABLE IF NOT EXISTS user_credits (
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     credit_balance INTEGER NOT NULL DEFAULT 0,
     daily_allotment_reset TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),

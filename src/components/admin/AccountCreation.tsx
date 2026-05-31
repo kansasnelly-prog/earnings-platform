@@ -271,6 +271,7 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
     } catch (error: any) {
       console.log('[AccountCreation] STOP - Caught error in try-catch');
       console.error('Error creating training account:', error);
+      console.error("Account Creation Failed Root Error:", error);
       let errorMessage = 'Unknown error';
       if (error?.message) {
         errorMessage = error.message;
@@ -404,6 +405,7 @@ ${userReferral ? `• Referred by: ${userReferral}` : ''}
       
     } catch (error: any) {
       console.error('Error creating user account:', error);
+      console.error("Account Creation Failed Root Error:", error);
       const errorMessage = error?.message || error?.error?.message || 'Unknown error';
       toast({
         title: 'Error',

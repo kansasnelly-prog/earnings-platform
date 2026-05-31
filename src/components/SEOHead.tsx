@@ -115,7 +115,7 @@ const SEOHead: React.FC<SEOHeadProps> = ({
       <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       
       {/* Security Headers */}
-      <meta httpEquiv="Content-Security-Policy" content={`default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.supabase.co ${import.meta.env.VITE_SUPABASE_URL};`} />
+      <meta httpEquiv="Content-Security-Policy" content={`default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.supabase.co ${import.meta.env.VITE_SUPABASE_URL}; frame-src 'self' https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/`} />
       <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
       <meta httpEquiv="X-Frame-Options" content="DENY" />
       <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />

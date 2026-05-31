@@ -343,7 +343,7 @@ const WithdrawalSection: React.FC = () => {
                     <ArrowDownToLine size={18} className="text-indigo-400" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-white">${w.amount.toFixed(2)}</p>
+                    <p className="text-sm font-semibold text-white">${(w.amount || 0).toFixed(2)}</p>
                     <p className="text-xs text-gray-500 font-mono truncate">{w.wallet_address}</p>
                     <p className="text-xs text-gray-500">
                       Requested: {new Date(w.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}

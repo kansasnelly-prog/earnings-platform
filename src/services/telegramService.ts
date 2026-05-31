@@ -89,8 +89,12 @@ export class TelegramService {
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          const text = await response.text();
-          console.error('[TelegramService] Failed to send notification:', text);
+          if (response.status === 404) {
+            console.warn('[TelegramService] API endpoint not found (404). Please check the API route.');
+          } else {
+            const text = await response.text();
+            console.error('[TelegramService] Failed to send notification:', text);
+          }
           return false;
         }
 

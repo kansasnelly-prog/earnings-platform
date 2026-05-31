@@ -83,11 +83,21 @@ const registerServiceWorker = () => {
 // SAFE INITIALIZATION WITH ERROR HANDLING
 // ===========================================
 
+import { supabaseError } from './lib/supabase';
+import SupabaseError from './components/SupabaseError';
+
 const initializeApp = async () => {
   const rootElement = document.getElementById("root");
 
   if (!rootElement) {
     console.error('Root element not found');
+    return;
+  }
+
+  const root = createRoot(rootElement);
+
+  if (supabaseError) {
+    root.render(<SupabaseError error={supabaseError} />);
     return;
   }
 
@@ -102,7 +112,6 @@ const initializeApp = async () => {
     rootElement.innerHTML = '';
 
     // Create and render app
-    const root = createRoot(rootElement);
     root.render(<App />);
 
     // Signal to cache buster that app mounted successfully

@@ -1,10 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { ArrowLeft, Sparkles, Copy, CheckCircle2, Info } from 'lucide-react';
+import { useCreditBalance } from '../hooks/useCreditBalance';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { useAuth } from '../contexts/SafeAuthProvider'; // Import useAuth
+import MonetizationBanner from '../components/MonetizationBanner';
 
 interface AISuggestion {
   type: string;
@@ -17,10 +28,93 @@ const AIAssistantWorkspace = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [showCreditModal, setShowCreditModal] = useState(false);
+
+  const { user } = useAuth(); // Get the current user from AuthContext
+  const { creditBalance, isLoading: isLoadingCredits, spendCredits, refreshCreditBalance } = useCreditBalance();
+
+  // Heartbeat logic for active attention tracking
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    const sendHeartbeat = async () => {
+      if (user?.id && document.visibilityState === 'visible') {
+        try {
+          // Assuming a new API route for heartbeat or using an existing one
+          // For now, let's assume a simple endpoint that triggers credit calculation
+          const response = await fetch('/api/monetization', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ action: 'trackActivity', userId: user.id, activityDuration: 1 }), // 1 minute of activity
+          });
+
+          if (response.ok) {
+            console.log('Heartbeat sent successfully.');
+            // Refresh credit balance immediately after a successful heartbeat
+            await refreshCreditBalance();
+          } else {
+            console.error('Failed to send heartbeat:', response.statusText);
+          }
+        } catch (error) {
+          console.error('Error sending heartbeat:', error);
+        }
+      }
+    };
+
+    intervalId = setInterval(sendHeartbeat, 60000); // Every 60 seconds
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [user, refreshCreditBalance]);
+
+  const handleUpgradeToPro = async () => {
+    if (!user?.id) {
+      toast.error('User not logged in.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/create-stripe-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          priceId: 'price_12345', // Replace with your actual Stripe Price ID for $1.50 or $2.00 / month
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error('Failed to create Stripe checkout session.');
+      }
+    } catch (error) {
+      console.error('Error creating Stripe checkout session:', error);
+      toast.error('Error creating Stripe checkout session.');
+    }
+  };
 
   const handleGenerateSuggestions = async () => {
     if (!customerMessage.trim()) {
       toast.error('Please paste a customer message first');
+      return;
+    }
+
+    if (creditBalance === null || creditBalance <= 0) {
+      setShowCreditModal(true);
+      return;
+    }
+
+    const spent = await spendCredits(1); // Deduct 1 credit for using the AI tool
+    if (!spent) {
+      toast.error('Failed to deduct credits. Please try again.');
       return;
     }
 
@@ -178,6 +272,7 @@ const AIAssistantWorkspace = () => {
 
           {/* Right Column: Paste & Reply Tool */}
           <div className="lg:col-span-2 space-y-6">
+            <MonetizationBanner />
             {/* Input Section */}
             <Card>
               <CardHeader>
@@ -185,8 +280,13 @@ const AIAssistantWorkspace = () => {
                   <Sparkles className="h-5 w-5 text-purple-600" />
                   Paste & Reply Tool
                 </CardTitle>
-                <CardDescription>
-                  Paste a difficult customer message below to generate professional response options
+                <CardDescription className="flex items-center justify-between">
+                  <span>Paste a difficult customer message below to generate professional response options</span>
+                  {isLoadingCredits ? (
+                    <span className="text-sm text-slate-500 dark:text-slate-400">Loading credits...</span>
+                  ) : (
+                    <span className="text-sm text-slate-500 dark:text-slate-400">Credits remaining: {creditBalance}</span>
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -222,6 +322,26 @@ const AIAssistantWorkspace = () => {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Credit Modal */}
+            <Dialog open={showCreditModal} onOpenChange={setShowCreditModal}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Upgrade to Pro Tier</DialogTitle>
+                  <DialogDescription>
+                    You have run out of credits. Subscribe to our Pro Tier to continue using AI chat features and premium optimization tools.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowCreditModal(false)}>
+                    Maybe Later
+                  </Button>
+                  <Button onClick={handleUpgradeToPro} className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white">
+                    Upgrade to Pro Tier
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {/* Results Section */}
             {suggestions.length > 0 && (

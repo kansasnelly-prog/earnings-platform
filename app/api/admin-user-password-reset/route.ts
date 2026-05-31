@@ -22,10 +22,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseServiceKey) {
+    if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
+      console.error("CRITICAL: Supabase environment variables are missing in admin-user-password-reset.");
       return NextResponse.json(
         { error: 'Supabase configuration missing' },
         { status: 500 }
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
     // Get logged-in user from token
     const userClient = createClient(
       supabaseUrl,
-      process.env.VITE_SUPABASE_ANON_KEY!,
+      supabaseAnonKey!,
       {
         global: {
           headers: {

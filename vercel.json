@@ -1,16 +1,24 @@
 {
   "rewrites": [
     {
-      "source": "/api/send-message",
-      "destination": "/api/send-message.js"
-    },
-    {
-      "source": "/api/telegram-webhook",
-      "destination": "/api/telegram-webhook.js"
-    },
-    {
       "source": "/api/send-telegram-notification",
       "destination": "/api/send-telegram-notification.js"
+    },
+    {
+      "source": "/api/telegram-router",
+      "destination": "/api/telegram-router.js"
+    },
+    {
+      "source": "/api/admin-customer-service",
+      "destination": "/api/admin-customer-service.js"
+    },
+    {
+      "source": "/api/admin-users",
+      "destination": "/api/admin-users.js"
+    },
+    {
+      "source": "/api/training-management",
+      "destination": "/api/training-management.js"
     },
     {
       "source": "/((?!api|assets|.*\\.js|.*\\.css|.*\\.woff|.*\\.woff2|.*\\.ttf|.*\\.otf|.*\\.eot|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.svg|.*\\.ico).*)",

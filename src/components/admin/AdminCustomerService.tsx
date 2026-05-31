@@ -932,18 +932,6 @@ const AdminCustomerService: React.FC = () => {
 
   const deleteConversation = async (convId: string) => {
     try {
-      // Delete messages first (cascade will handle this, but being explicit)
-      await supabase
-        .from('messages')
-        .delete()
-        .eq('conversation_id', convId);
-
-      // Delete conversation
-      const { error } = await supabase
-        .from('conversations')
-        .delete()
-        .eq('id', convId);
-
       if (error) {
         console.error('Error deleting conversation:', error);
         toast.error('Failed to delete conversation');

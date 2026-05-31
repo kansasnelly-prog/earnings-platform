@@ -1,50 +1,58 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string;
 
-console.log("=== SUPABASE CONFIGURATION ===")
-console.log("SUPABASE URL:", supabaseUrl)
-console.log("Expected Production URL: https://ybxshqzwirqfybdeukvq.supabase.co")
-console.log("URL Match:", supabaseUrl === "https://ybxshqzwirqfybdeukvq.supabase.co" ? "✓ CORRECT" : "✗ INCORRECT")
-console.log("================================")
+let supabase: SupabaseClient | null = null;
+let supabaseError: { message: string; details: string } | null = null;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
+  console.error("CRITICAL: Supabase environment variables are missing.");
+  supabaseError = {
+    message: "Configuration Missing",
+    details: "Please configure your Supabase Environment Variables in your hosting dashboard.",
+  };
+} else {
+  console.log("=== SUPABASE CONFIGURATION ===");
+  console.log("SUPABASE URL:", supabaseUrl);
+  console.log("Expected Production URL: https://ybxshqzwirqfybdeukvq.supabase.co");
+  console.log("URL Match:", supabaseUrl === "https://ybxshqzwirqfybdeukvq.supabase.co" ? "✓ CORRECT" : "✗ INCORRECT");
+  console.log("================================");
+
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: 'supabase.auth.token',
+      storage: window.localStorage,
+      flowType: 'pkce',
+      debug: false,
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'earnings-platform'
+      },
+      fetch: (url, options = {}) => {
+        const fetchOptions = {
+          ...options,
+          credentials: 'omit' as RequestCredentials
+        };
+        return fetch(url, fetchOptions);
+      }
+    },
+    db: {
+      schema: 'public'
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10
+      }
+    }
+  });
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storageKey: 'supabase.auth.token',
-    storage: window.localStorage,
-    flowType: 'pkce',
-    debug: false,
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'earnings-platform'
-    },
-    fetch: (url, options = {}) => {
-      // Avoid sending credentials for non-auth requests to prevent Cloudflare cookie issues
-      const fetchOptions = {
-        ...options,
-        credentials: 'omit' as RequestCredentials
-      };
-      return fetch(url, fetchOptions);
-    }
-  },
-  db: {
-    schema: 'public'
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10
-    }
-  }
-})
+export { supabase, supabaseError };
 export default supabase;
 
 // ================= DATABASE TYPES =================

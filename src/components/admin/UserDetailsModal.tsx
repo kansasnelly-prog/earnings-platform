@@ -164,14 +164,14 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                   <Wallet size={14} className="text-emerald-400" />
                   <span className="text-xs text-gray-500">Balance</span>
                 </div>
-                <p className="text-xl font-bold text-emerald-400">${(safeUser.balance || 0).toFixed(2)}</p>
+                <p className="text-xl font-bold text-emerald-400">${(safeUser.balance ?? 0).toFixed(2)}</p>
               </div>
               <div className="p-4 bg-[#0f1419] rounded-lg">
                 <div className="flex items-center gap-2 mb-1">
                   <TrendingUp size={14} className="text-purple-400" />
                   <span className="text-xs text-gray-500">Total Earned</span>
                 </div>
-                <p className="text-xl font-bold text-purple-400">${(safeUser.total_earned || 0).toFixed(2)}</p>
+                <p className="text-xl font-bold text-purple-400">${(safeUser.total_earned ?? 0).toFixed(2)}</p>
               </div>
             </div>
           </div>

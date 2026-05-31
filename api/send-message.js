@@ -12,10 +12,10 @@ export default async function handler(req, res) {
   // Get environment variables from request.env (for Vite plugin) or process.env (for Vercel)
   const env = req?.env || process.env;
   
-  const supabaseUrl = env.VITE_SUPABASE_URL;
+  const supabaseUrl = env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = env.SUPABASE_SERVICE_ROLE_KEY;
-  const TELEGRAM_BOT_TOKEN = env.TELEGRAM_BOT_TOKEN;
-  const TELEGRAM_CHAT_ID = env.TELEGRAM_CHAT_ID;
+  const TELEGRAM_BOT_TOKEN = env.TELEGRAM_BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
+  const TELEGRAM_CHAT_ID = env.TELEGRAM_CHAT_ID || 'YOUR_TELEGRAM_CHAT_ID';
   
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -140,6 +140,10 @@ export default async function handler(req, res) {
 
               if (error) {
                 console.error('❌ API: Telegram notification via Edge Function failed:', error);
+                // Add a specific check for 404 Not Found
+                if (error.message.includes('404')) {
+                  console.warn('❌ API: Telegram Edge Function not found. Please ensure the function is deployed and the name is correct.');
+                }
               } else {
                 console.log('✅ API: Telegram notification sent successfully via Edge Function');
               }

@@ -786,7 +786,7 @@ const MainAdminPanel: React.FC = () => {
       if (result.success) {
         toast({
           title: 'Success!',
-          description: `Cleared pending order and added $${result.profit?.toFixed(2)} (6× profit)`,
+          description: `Cleared pending order and added $${(result.profit ?? 0).toFixed(2)} (6× profit)`,
         });
         
         // Get user details for Telegram notification
@@ -798,9 +798,9 @@ const MainAdminPanel: React.FC = () => {
         await sendTelegramNotification('PENDING_ORDER_CLEARED', {
           userEmail: user?.email || 'Unknown',
           userId: userId,
-          pendingAmount: pendingAmount.toFixed(2),
-          profit: profit.toFixed(2),
-          totalCredit: (pendingAmount + profit).toFixed(2),
+          pendingAmount: (pendingAmount ?? 0).toFixed(2),
+          profit: (profit ?? 0).toFixed(2),
+          totalCredit: ((pendingAmount ?? 0) + (profit ?? 0)).toFixed(2),
           adminEmail: adminUser.email || 'Admin'
         });
         
@@ -1010,7 +1010,7 @@ const MainAdminPanel: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-slate-400">Total Balance</p>
-                          <p className="text-2xl font-bold text-white">${stats.totalBalance.toFixed(2)}</p>
+                          <p className="text-2xl font-bold text-white">${(stats.totalBalance ?? 0).toFixed(2)}</p>
                           <p className="text-xs text-slate-400">Across all users</p>
                         </div>
                         <BarChart3 className="h-8 w-8 text-green-500" />
@@ -1023,7 +1023,7 @@ const MainAdminPanel: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-slate-400">Pending Withdrawals</p>
-                          <p className="text-2xl font-bold text-white">${stats.pendingPayouts.toFixed(2)}</p>
+                          <p className="text-2xl font-bold text-white">${(stats.pendingPayouts ?? 0).toFixed(2)}</p>
                           <p className="text-xs text-slate-400">{stats.pendingWithdrawals} requests</p>
                         </div>
                         <Activity className="h-8 w-8 text-orange-500" />
@@ -1038,7 +1038,7 @@ const MainAdminPanel: React.FC = () => {
                           <p className="text-sm font-medium text-slate-400">Completed Tasks</p>
                           <p className="text-2xl font-bold text-white">{stats.completedTasks}</p>
                           <p className="text-xs text-slate-400">
-                            {stats.averageTasksPerUser.toFixed(1)} avg per user
+                            {(stats.averageTasksPerUser ?? 0).toFixed(1)} avg per user
                           </p>
                         </div>
                         <RefreshCw className="h-8 w-8 text-purple-500" />
@@ -1096,7 +1096,7 @@ const MainAdminPanel: React.FC = () => {
                               <p className="text-xs text-slate-400 font-mono truncate max-w-[160px]">{w.wallet_address}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-bold text-amber-400">${w.amount.toFixed(2)}</p>
+                              <p className="text-sm font-bold text-amber-400">${(w.amount ?? 0).toFixed(2)}</p>
                               <p className="text-xs text-slate-500">{new Date(w.created_at).toLocaleDateString()}</p>
                             </div>
                           </div>
@@ -1167,7 +1167,7 @@ const MainAdminPanel: React.FC = () => {
                               <span className="text-sm text-white">VIP{user.vip_level}</span>
                             </td>
                             <td className="px-4 py-3">
-                              <p className="text-sm font-medium text-emerald-400">${user.balance?.toFixed(2) || '0.00'}</p>
+                              <p className="text-sm font-medium text-emerald-400">${(user.balance ?? 0).toFixed(2) || '0.00'}</p>
                             </td>
                             <td className="px-4 py-3">
                               <p className="text-sm text-white">{user.tasks_completed || 0}</p>
@@ -1273,7 +1273,7 @@ const MainAdminPanel: React.FC = () => {
                     User: {selectedUser.display_name || selectedUser.email}
                   </p>
                   <p className="text-sm text-slate-400 mb-4">
-                    Current Balance: ${selectedUser.balance?.toFixed(2) || '0.00'}
+                    Current Balance: ${(selectedUser.balance ?? 0).toFixed(2) || '0.00'}
                   </p>
                   <div className="space-y-4">
                     <div>
@@ -1379,17 +1379,17 @@ const MainAdminPanel: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-slate-400 mb-1">Name</label>
-                        <p className="text-sm text-white">{selectedUser.display_name || 'N/A'}</p>
-                      </div>
-                      <div>
+                                <p className="text-sm text-white">{selectedUser.display_name || 'N/A'}</p>
+                              </div>
+                              <div>
                         <label className="block text-xs font-medium text-slate-400 mb-1">Email</label>
                         <p className="text-sm text-white">{selectedUser.email}</p>
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-400 mb-1">Balance</label>
-                        <p className="text-sm text-emerald-400">${selectedUser.balance?.toFixed(2) || '0.00'}</p>
-                      </div>
-                      <div>
+                                <p className="text-sm text-emerald-400">${selectedUser.balance?.toFixed(2) || '0.00'}</p>
+                              </div>
+                              <div>
                         <label className="block text-xs font-medium text-slate-400 mb-1">VIP Level</label>
                         <p className="text-sm text-white">VIP{selectedUser.vip_level}</p>
                       </div>
@@ -1405,13 +1405,13 @@ const MainAdminPanel: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-400 mb-1">Tasks Completed</label>
-                        <p className="text-sm text-white">{selectedUser.tasks_completed || 0}</p>
-                      </div>
-                      <div>
+                                <p className="text-sm text-white">{selectedUser.tasks_completed || 0}</p>
+                              </div>
+                              <div>
                         <label className="block text-xs font-medium text-slate-400 mb-1">Total Earned</label>
-                        <p className="text-sm text-white">${selectedUser.total_earned?.toFixed(2) || '0.00'}</p>
-                      </div>
-                    </div>
+                                <p className="text-sm text-white">${selectedUser.total_earned?.toFixed(2) || '0.00'}</p>
+                              </div>
+                            </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-400 mb-1">Created Date</label>
                       <p className="text-sm text-white">{new Date(selectedUser.created_at).toLocaleDateString()}</p>
@@ -1505,7 +1505,7 @@ const MainAdminPanel: React.FC = () => {
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              <p className="text-sm font-bold text-white">${w.amount.toFixed(2)}</p>
+                                <p className="text-sm font-bold text-white">${(w.amount ?? 0).toFixed(2)}</p>
                             </td>
                             <td className="px-4 py-3">
                               <p className="text-xs text-slate-400 font-mono truncate max-w-[120px]">{w.wallet_address}</p>

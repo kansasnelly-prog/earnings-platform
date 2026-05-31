@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/SafeAuthProvider";
+import AdminLayout from "./components/admin/AdminLayout";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AppProvider } from "./contexts/AppContext";
@@ -14,16 +16,20 @@ const App = () => (
     <LanguageProvider>
       <CSNotificationProvider>
         <ErrorBoundary>
-          <BrowserRouter>
-            <AppProvider>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AppProvider>
-          </BrowserRouter>
+  <BrowserRouter>
+    <AuthProvider>
+      <AppProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/admin/*" element={<AdminLayout />}> {/* Admin layout wrapper */}
+            <Route index element={<Admin />} />
+            <Route path="ai-assistant" element={<AIAssistantWorkspace />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AppProvider>
+    </AuthProvider>
+  </BrowserRouter>
         </ErrorBoundary>
       </CSNotificationProvider>
     </LanguageProvider>

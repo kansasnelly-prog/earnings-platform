@@ -599,9 +599,10 @@ export const ProductCatalogService = {
         }
       )
       .subscribe((status) => {
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           console.error('[ProductCatalog] Training products subscription error:', status);
         }
+        // CLOSED is expected when unsubscribing, so we don't log it as an error
       });
   },
 

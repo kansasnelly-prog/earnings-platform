@@ -134,6 +134,12 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ onLogout }) => {
   }, []);
 
   const loadUsers = useCallback(async () => {
+    // Don't load users if not authenticated
+    if (!isAuthenticated) {
+      console.log('[AdminUsers] Skipping user load - not authenticated');
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Fetch users from Supabase
@@ -157,9 +163,10 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ onLogout }) => {
         return;
       }
 
-      // Map Supabase data to User interface
+      // Map Supabase data to User interface with safe fallbacks
       const mappedUsers: User[] = data.map((user: any) => ({
-        ...user,
+        id: user.id || '',
+        email: user.email || '',
         account_type: user.account_type || 'personal',
         vip_level: user.vip_level ?? 1,
         tasks_completed: user.tasks_completed ?? 0,
@@ -169,6 +176,8 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ onLogout }) => {
         total_earned: user.total_earned ?? 0,
         balance: user.balance ?? 0,
         referral_code: user.referral_code || '',
+        created_at: user.created_at || new Date().toISOString(),
+        last_login: user.last_login || null,
         status: user.user_status || user.status || 'active'
       }));
 
@@ -183,11 +192,11 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ onLogout }) => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     loadUsers();
-  }, [loadUsers]);
+  }, [loadUsers, isAuthenticated]);
 
   useEffect(() => {
     let filtered = users;

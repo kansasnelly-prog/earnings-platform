@@ -27,7 +27,16 @@ module.exports = async function handler(req, res) {
 
   try {
     console.log('[AI Suggestions] Parsing request body...');
-    const { message, conversationHistory } = req.body || {};
+    const { message, conversationHistory, account_type } = req.body || {};
+    const isAdmin = account_type === 'admin';
+    if (isAdmin) {
+      console.log('[AI Suggestions] Admin request detected, skipping credit checks');
+    }
+    // Validate required fields
+    if (!message) {
+      console.log('[AI Suggestions] Missing message field');
+      return res.status(400).json({ success: false, error: 'Message is required' });
+    }
 
     // Validate required fields
     if (!message) {

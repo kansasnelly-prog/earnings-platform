@@ -107,16 +107,25 @@ const AIAssistantWorkspace = () => {
       return;
     }
 
-    if (creditBalance === null || creditBalance <= 0) {
-      setShowCreditModal(true);
-      return;
+    // Admin bypass: if the logged in user is an admin, skip credit checks
+    const isAdmin = user?.account_type === 'admin';
+    if (isAdmin) {
+      // Pretend we have plenty of credits
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      spendCredits(0); // no actual deduction
+    } else {
+      if (creditBalance === null || creditBalance <= 0) {
+        setShowCreditModal(true);
+        return;
+      }
+      const spent = await spendCredits(1); // Deduct 1 credit for using the AI tool
+      if (!spent) {
+        toast.error('Failed to deduct credits. Please try again.');
+        return;
+      }
     }
 
-    const spent = await spendCredits(1); // Deduct 1 credit for using the AI tool
-    if (!spent) {
-      toast.error('Failed to deduct credits. Please try again.');
-      return;
-    }
+    // No additional credit deduction needed for admins
 
     setIsGenerating(true);
     setSuggestions([]);

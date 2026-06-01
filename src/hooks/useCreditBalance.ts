@@ -11,17 +11,22 @@ export function useCreditBalance() {
 
   useEffect(() => {
     async function fetchCreditBalance() {
-      if (user?.id) {
-        setIsLoading(true);
-        setError(null);
-        const { credit_balance, error: fetchError } = await getUserCredits(user.id);
-        if (fetchError) {
-          setError(fetchError);
-        } else {
-          setCreditBalance(credit_balance);
-        }
+      if (!user?.id) return;
+      // Admin bypass
+      if (user.account_type === 'admin') {
+        setCreditBalance(999);
         setIsLoading(false);
+        return;
       }
+      setIsLoading(true);
+      setError(null);
+      const { credit_balance, error: fetchError } = await getUserCredits(user.id);
+      if (fetchError) {
+        setError(fetchError);
+      } else {
+        setCreditBalance(credit_balance);
+      }
+      setIsLoading(false);
     }
     fetchCreditBalance();
   }, [user]);

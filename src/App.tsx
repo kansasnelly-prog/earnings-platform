@@ -9,6 +9,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import AIAssistantWorkspace from "./pages/AIAssistantWorkspace";
+import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
@@ -25,8 +26,10 @@ const App = () => (
           <Route path="/admin/*" element={<AdminLayout />}> {/* Admin layout wrapper */}
             <Route index element={<Admin />} />
           </Route>
-          {/* Public AI Assistant route */}
-          <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
+          {/* Protected AI Assistant route */}
+          <Route element={<ProtectedRoute />}> 
+            <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AppProvider>

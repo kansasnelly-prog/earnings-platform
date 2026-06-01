@@ -94,10 +94,15 @@ export function useUserActivity() {
     const initializeAuthTracking = async () => {
       // Get the current session
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        userIdRef.current = session.user.id;
-        setupInterval(session.user.id);
-      }
+       if (session?.user) {
+         const isAdmin = (session.user as any)?.account_type === 'admin';
+         if (isAdmin) {
+           console.log('[Heartbeat Engine] Admin user detected, skipping heartbeat setup');
+           return;
+         }
+         userIdRef.current = session.user.id;
+         setupInterval(session.user.id);
+       }
 
       // Subscribe to real-time auth changes (sign in, sign out, token refresh)
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {

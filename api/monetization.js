@@ -27,33 +27,34 @@ export default async function handler(req, res) {
       }
 
     case 'adminUpdateBalance':
-      // Admin authentication (simplified for consolidation, use proper auth in production)
-      const adminPasswordEnv = process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD_SECRET;
-      if (adminPassword !== adminPasswordEnv) {
-        return res.status(403).json({ error: 'Invalid admin password' });
-      }
+      try {
+        // Admin authentication (simplified for consolidation, use proper auth in production)
+        const adminPasswordEnv = process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD_SECRET;
+        if (adminPassword !== adminPasswordEnv) {
+          return res.status(403).json({ error: 'Invalid admin password' });
+        }
 
-      // Validate required fields
-      if (!userId || !amount) {
-        return res.status(400).json({ error: 'Missing required fields: userId, amount' });
-      }
+        // Validate required fields
+        if (!userId || !amount) {
+          return res.status(400).json({ error: 'Missing required fields: userId, amount' });
+        }
 
-      // Validate amount
-      if (typeof amount !== 'number' || amount <= 0) {
-        return res.status(400).json({ error: 'Amount must be a positive number' });
-      }
+        // Validate amount
+        if (typeof amount !== 'number' || amount <= 0) {
+          return res.status(400).json({ error: 'Amount must be a positive number' });
+        }
 
-  // Resolve Supabase URLs and keys with fallbacks for server‑side usage
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE;
-  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+        // Resolve Supabase URLs and keys with fallbacks for server‑side usage
+        const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE;
+        const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
-      if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
-        console.error("CRITICAL: Supabase environment variables are missing in monetization.");
-        return res.status(500).json({ error: 'Supabase configuration missing' });
-      }
+        if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
+          console.error("CRITICAL: Supabase environment variables are missing in monetization.");
+          return res.status(500).json({ error: 'Supabase configuration missing' });
+        }
 
-      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
       // 🔐 Verify admin using logged-in user (assuming authHeader is passed in req.headers)
       const authHeader = req.headers.authorization;
@@ -145,6 +146,10 @@ export default async function handler(req, res) {
         action: req.body.subAction,
         amount
       });
+    } catch (err) {
+      console.error('Error in adminUpdateBalance action:', err);
+      return res.status(500).json({ message: 'Internal Server Error' });
+    }
 
     default:
       return res.status(400).json({ message: 'Invalid action' });

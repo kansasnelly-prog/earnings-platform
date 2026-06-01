@@ -14,11 +14,17 @@ if (supabaseUrl && supabaseAnonKey) {
 }
 
 export async function calculateAndAwardCredits(userId: string): Promise<void> {
-  const { data: activityLogs, error: activityError } = await supabase
-    .from('user_activity_logs')
-    .select('activity_duration_minutes')
-    .eq('user_id', userId)
-    .gte('timestamp', new Date(new Date().setHours(0, 0, 0, 0)).toISOString()); // Get logs for today
+  // Guard against an uninitialized Supabase client
+  if (!supabase) {
+    console.error('Supabase client is not initialized in calculateAndAwardCredits');
+    return;
+  }
+  try {
+    const { data: activityLogs, error: activityError } = await supabase
+      .from('user_activity_logs')
+      .select('activity_duration_minutes')
+      .eq('user_id', userId)
+      .gte('timestamp', new Date(new Date().setHours(0, 0, 0, 0)).toISOString()); // Get logs for today
 
   if (activityError) {
     console.error('Error fetching activity logs:', activityError);
@@ -39,10 +45,10 @@ export async function calculateAndAwardCredits(userId: string): Promise<void> {
     .eq('user_id', userId)
     .single();
 
-  if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found
-    console.error('Error fetching existing credits:', fetchError);
-    return;
-  }
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found
+      console.error('Error fetching existing credits:', fetchError);
+      return;
+    }
 
   let newCreditBalance = creditsEarned;
   let dailyAllotmentReset = new Date();
@@ -68,53 +74,74 @@ export async function calculateAndAwardCredits(userId: string): Promise<void> {
       { onConflict: 'user_id' }
     );
 
-  if (updateError) {
-    console.error('Error updating user credits:', updateError);
+    if (updateError) {
+      console.error('Error updating user credits:', updateError);
+    }
+  } catch (err) {
+    console.error('Unhandled error in calculateAndAwardCredits:', err);
   }
 }
 
 export async function getUserCredits(userId: string): Promise<{ credit_balance: number | null, error: any }> {
-  const { data, error } = await supabase
-    .from('user_credits')
-    .select('credit_balance')
-    .eq('user_id', userId)
-    .single();
-
-  if (error && error.code !== 'PGRST116') {
-    console.error('Error fetching user credits:', error);
-    return { credit_balance: null, error };
+  if (!supabase) {
+    console.error('Supabase client is not initialized in getUserCredits');
+    return { credit_balance: null, error: new Error('Supabase not initialized') };
   }
+  try {
+    const { data, error } = await supabase
+      .from('user_credits')
+      .select('credit_balance')
+      .eq('user_id', userId)
+      .single();
 
-  return { credit_balance: data ? data.credit_balance : 0, error: null };
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching user credits:', error);
+      return { credit_balance: null, error };
+    }
+
+    return { credit_balance: data ? data.credit_balance : 0, error: null };
+  } catch (err) {
+    console.error('Unhandled error in getUserCredits:', err);
+    return { credit_balance: null, error: err };
+  }
 }
 
 export async function deductCredits(userId: string, amount: number): Promise<{ success: boolean, error: any }> {
-  const { data: existingCredits, error: fetchError } = await supabase
-    .from('user_credits')
-    .select('credit_balance')
-    .eq('user_id', userId)
-    .single();
-
-  if (fetchError) {
-    console.error('Error fetching existing credits for deduction:', fetchError);
-    return { success: false, error: fetchError };
+  if (!supabase) {
+    console.error('Supabase client is not initialized in deductCredits');
+    return { success: false, error: new Error('Supabase not initialized') };
   }
+  try {
+    const { data: existingCredits, error: fetchError } = await supabase
+      .from('user_credits')
+      .select('credit_balance')
+      .eq('user_id', userId)
+      .single();
 
-  if (!existingCredits || existingCredits.credit_balance < amount) {
-    return { success: false, error: new Error('Insufficient credits') };
+    if (fetchError) {
+      console.error('Error fetching existing credits for deduction:', fetchError);
+      return { success: false, error: fetchError };
+    }
+
+    if (!existingCredits || existingCredits.credit_balance < amount) {
+      return { success: false, error: new Error('Insufficient credits') };
+    }
+
+    const newBalance = existingCredits.credit_balance - amount;
+
+    const { error: updateError } = await supabase
+      .from('user_credits')
+      .update({ credit_balance: newBalance })
+      .eq('user_id', userId);
+
+    if (updateError) {
+      console.error('Error deducting credits:', updateError);
+      return { success: false, error: updateError };
+    }
+
+    return { success: true, error: null };
+  } catch (err) {
+    console.error('Unhandled error in deductCredits:', err);
+    return { success: false, error: err };
   }
-
-  const newBalance = existingCredits.credit_balance - amount;
-
-  const { error: updateError } = await supabase
-    .from('user_credits')
-    .update({ credit_balance: newBalance })
-    .eq('user_id', userId);
-
-  if (updateError) {
-    console.error('Error deducting credits:', updateError);
-    return { success: false, error: updateError };
-  }
-
-  return { success: true, error: null };
 }

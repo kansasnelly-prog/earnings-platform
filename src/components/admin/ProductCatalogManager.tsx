@@ -29,6 +29,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import ProductCatalogService, { Product } from '@/services/productCatalogService';
+import { supabase } from '@/lib/supabase';
 import ImageUpload from './ImageUpload';
 
 const ProductCatalogManager: React.FC = () => {
@@ -107,21 +108,40 @@ const ProductCatalogManager: React.FC = () => {
   useEffect(() => {
     loadProducts();
 
-    // Subscribe to realtime changes
-    ProductCatalogService.subscribeToTrainingProducts((products) => {
-      console.log('[ProductCatalogManager] Training products updated via realtime:', products.length);
-      setTrainingProducts(products);
-    });
+    // Create Supabase realtime channels for training and personal products
+    const trainingChannel = supabase
+      .channel('training-products-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'training_products',
+      }, (payload) => {
+        console.log('[ProductCatalogManager] Training products change detected:', payload.eventType);
+        // Fetch updated list and update state
+        ProductCatalogService.getTrainingProducts().then(setTrainingProducts);
+      })
+      .subscribe();
 
-    ProductCatalogService.subscribeToPersonalProducts((products) => {
-      console.log('[ProductCatalogManager] Personal products updated via realtime:', products.length);
-      setPersonalProducts(products);
-    });
+    const personalChannel = supabase
+      .channel('personal-products-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'personal_products',
+      }, (payload) => {
+        console.log('[ProductCatalogManager] Personal products change detected:', payload.eventType);
+        ProductCatalogService.getPersonalProducts().then(setPersonalProducts);
+      })
+      .subscribe();
 
-    // Cleanup subscriptions on unmount
+    // Cleanup: remove channels on unmount to prevent memory leaks
     return () => {
-      ProductCatalogService.unsubscribeFromTrainingProducts();
-      ProductCatalogService.unsubscribeFromPersonalProducts();
+      if (trainingChannel) {
+        supabase.removeChannel(trainingChannel);
+      }
+      if (personalChannel) {
+        supabase.removeChannel(personalChannel);
+      }
     };
   }, []);
 

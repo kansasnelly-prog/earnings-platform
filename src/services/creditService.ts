@@ -88,22 +88,40 @@ export async function getUserCredits(userId: string): Promise<{ credit_balance: 
     return { credit_balance: null, error: new Error('Supabase not initialized') };
   }
   try {
+    // Use .select without .single() to avoid PGRST116 when no row exists
+    // Fetch the user's credit balance. Use maybeSingle() to avoid PGRST116 when
+    // the user has no credit row yet. If no row is returned, we will insert a
+    // default row with 999 credits.
     const { data, error } = await supabase
       .from('user_credits')
-      .select('credit_balance')
+      .select('credit_balance, daily_allotment_reset')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
       console.error('Error fetching user credits:', error);
-      return { credit_balance: null, error };
     }
 
-    return { credit_balance: data ? data.credit_balance : 0, error: null };
-  } catch (err) {
-    console.error('Unhandled error in getUserCredits:', err);
-    return { credit_balance: null, error: err };
-  }
+    // If no data returned, insert a default row and return 999 credits
+    if (!data) {
+      const defaultCredits = 999;
+      const { error: insertErr } = await supabase
+        .from('user_credits')
+        .insert({
+          user_id: userId,
+          credit_balance: defaultCredits,
+          daily_allotment_reset: new Date().toISOString(),
+        })
+        .maybeSingle();
+      if (insertErr) {
+        console.error('Error inserting default credits:', insertErr);
+        return { credit_balance: null, error: insertErr };
+      }
+      return { credit_balance: defaultCredits, error: null };
+    }
+
+    // Existing record found
+    return { credit_balance: data.credit_balance, error: null };
 }
 
 export async function deductCredits(userId: string, amount: number): Promise<{ success: boolean, error: any }> {

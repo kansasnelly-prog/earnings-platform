@@ -543,9 +543,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     if (typeof window !== 'undefined') {
-      window.addEventListener('online', (e) => {
-        if (!e || !e.target) return;
-        handleOnline(e as any);
+      // Listen for online events without passing an event argument to handleOnline
+      window.addEventListener('online', () => {
+        handleOnline();
       });
     }
     
@@ -2598,6 +2598,11 @@ else if (
     getWithdrawalHistory,
     hasPendingWithdrawal
   };
+
+  // Pre‑flight guard: stall rendering until initial auth/loading resolves
+  if (isLoading) {
+    return <div className="loading-spinner">Loading application...</div>;
+  }
 
   return (
     <AppContext.Provider value={value}>

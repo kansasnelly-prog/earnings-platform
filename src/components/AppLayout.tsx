@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import Navbar from './Navbar';
+import LoadingSpinner from './ui/LoadingSpinner';
 import AuthModal from './AuthModal';
 import LandingHero from './LandingHero';
 import Home from './Home';
@@ -16,7 +17,12 @@ import TelegramWidget from './TelegramWidget';
 import Footer from './Footer';
 
 const AppLayout: React.FC = () => {
-  const { isAuthenticated, activeTab } = useAppContext();
+  const { isAuthenticated, activeTab, isLoading } = useAppContext();
+
+  // Show a global loading spinner while the app context is initializing
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
   
   const renderContent = () => {
     if (!isAuthenticated) {

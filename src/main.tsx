@@ -145,8 +145,13 @@ const initializeApp = async () => {
     // Clear the loading spinner
     rootElement.innerHTML = '';
 
-    // Create and render app
-    root.render(<App />);
+      // Create and render app wrapped with AuthProvider
+      import { AuthProvider } from './contexts/SafeAuthProvider';
+      root.render(
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      );
 
     // Signal to cache buster that app mounted successfully
     if (typeof window !== 'undefined' && (window as any).appMounted) {

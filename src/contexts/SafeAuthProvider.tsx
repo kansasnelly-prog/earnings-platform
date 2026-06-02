@@ -84,11 +84,25 @@ interface AuthContextType extends AuthState {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
+const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    // In rare cases (e.g., during SSR or if a component is rendered
+    // outside the provider tree) this can throw and crash the app.
+    // Instead of throwing, we return a safe default that mirrors the
+    // initial state. This allows the component to render a fallback
+    // UI and keeps the app running.
+    console.warn('useAuth called outside of AuthProvider. Returning default context.');
+    return {
+      user: null,
+      isAdmin: false,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+      login: async () => ({ success: false }),
+      logout: () => {},
+      clearError: () => {},
+    } as any;
   }
   return context;
 };

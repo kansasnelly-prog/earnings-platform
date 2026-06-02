@@ -543,7 +543,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     if (typeof window !== 'undefined') {
-      window.addEventListener('online', handleOnline);
+      window.addEventListener('online', (e) => {
+        if (!e || !e.target) return;
+        handleOnline(e as any);
+      });
     }
     
     // Listen for checkpoint refresh events from TaskGrid realtime subscription

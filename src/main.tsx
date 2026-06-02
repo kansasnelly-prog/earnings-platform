@@ -38,6 +38,10 @@ if (!(Number.prototype as any).toFixedOriginal) {
 
 // Handle webpack/vite chunk loading failures and module load errors
 window.addEventListener('error', (event) => {
+  // Guard against minified event objects that may lack expected
+  // properties. If the event or its target is missing, simply
+  // return to avoid a crash that propagates to the ErrorBoundary.
+  if (!event || !event.error) return;
   const error = event.error;
   const errorMessage = event.message || '';
   

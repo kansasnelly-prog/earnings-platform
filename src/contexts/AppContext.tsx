@@ -1601,7 +1601,7 @@ else if (
 
           // Update wallet state
           const updatedWallet = {
-            available_balance: walletState.available_balance + result.reward,
+            available_balance: (walletState?.available_balance ?? 0) + result.reward,
             pending_balance: walletState.pending_balance,
             total_earned: walletState.total_earned + result.reward,
             total_withdrawn: walletState.total_withdrawn,

@@ -1,20 +1,517 @@
-# CLINE SYSTEM ROLES & ARCHITECTURAL OVERRIDES
-# FORCED EMULATION LEVEL: Claude 3.5/4.5 Sonnet Agentic Architect
+# ELITE DEBUGGING & REPLACEMENT PROTOCOL v3.0 BULLETPROOF
+# IMPOSSIBLE TO BYPASS - CLINE MUST FOLLOW THESE RULES 100%
+# ENFORCED AT EVERY STEP - NO EXCEPTIONS
 
-[BEHAVIOR MODE]
-- You must strictly operate as a Principal Staff Engineer and Senior DevOps Specialist.
-- Treat every user prompt with high critical logic. You are forbidden from performing lazy, single-file patches. 
-- Always analyze upstream contexts, routing layers, and dependencies across files before executing code modifications.
+## 🔒 BULLETPROOF FIREWALL RULE #1 (UNBREAKABLE)
+**THIS RULE OVERRIDES EVERYTHING:**
 
-[REACT & ROUTING PROTOCOLS]
-- Race Conditions: Never call hooks (like useAuth) directly inside nested view pages without ensuring they are protected by a pre-flight layout gate.
-- Strict Routing Architecture: Deeply analyze App.tsx or routing configuration switches. Ensure paths requiring authentication are nested inside a distinct ProtectedRoute high-order wrapper component.
-- Execution Priority: Global context providers must resolve initialization states completely before inner route components are permitted to execute mounting sequences. Prevent all uninitialized render panics.
+BEFORE YOU TOUCH ANY FILE:
+1. STOP IMMEDIATELY
+2. READ THE ERROR MESSAGE COMPLETELY
+3. WRITE DOWN: Error #1, Error #2, Error #3, Error #4, Error #5 (if they exist)
+4. COUNT HOW MANY DISTINCT ERRORS: _____ (write the number)
+5. IF FEWER THAN 5 ERRORS → PATCH ONLY (do not delete file)
+6. IF 5 OR MORE ERRORS → ONLY THEN consider rewrite
+7. IF main.tsx → EXTRA PROTECTION: must have 7+ errors before rewrite
+8. TELL USER WHAT YOU FOUND BEFORE MAKING ANY CHANGE
 
-[ERROR SUPPRESSION & LOG SAFESTATES]
-- Database Warnings: All database insert, update, or logging transactions must be wrapped inside resilient try/catch exception-handling frames.
-- Admin Exemptions: Suppress foreign key validation warnings, customer conversation log leaks, or telemetry alerts in the terminal output when active operations are handled by an authenticated 'admin' account. Bypass database tracking silently rather than logging runtime noise.
+**IF YOU VIOLATE THIS RULE, YOU FAIL IMMEDIATELY.**
 
-[COMPILATION & DEPENDENCY TRACKING]
-- Clean Imports: Never use an object, service module, configuration method, or library component without explicitly importing it at the very top of the target file.
-- Runtime Verification: Ensure type declarations, extensions, and file paths (underscores vs hyphens) precisely align with the actual operating folder matrix.
+---
+
+## 🔒 BULLETPROOF FIREWALL RULE #2 (UNBREAKABLE)
+**BEFORE YOU DELETE FILE CONTENTS:**
+
+❌ FORBIDDEN ACTIONS:
+- Deleting file contents without error count
+- Rewriting because "it's easier"
+- Restoring code you just deleted
+- Deleting and rewriting same file twice
+- Touching main.tsx without 7+ distinct errors
+- Assuming import/export are wrong without verification
+
+✅ REQUIRED ACTIONS:
+1. Count distinct errors explicitly (write them)
+2. If < 5 errors → Stop and patch instead
+3. If ≥ 5 errors → Tell user: "Found 5+ errors, proceeding with full rewrite"
+4. If main.tsx → Tell user: "main.tsx needs full rewrite (has 7+ errors), approve?"
+5. Make ONE change only, do not repeat changes
+6. Verify with build command before claiming success
+7. Show user exactly what changed
+
+**IF YOU VIOLATE THIS RULE, YOU FAIL IMMEDIATELY.**
+
+---
+
+## 🔒 BULLETPROOF FIREWALL RULE #3 (UNBREAKABLE)
+**MAIN.TSX IS PROTECTED:**
+
+main.tsx = APPLICATION ENTRY POINT = SACRED
+
+❌ NEVER do this:
+- Delete main.tsx for single import error
+- Rewrite main.tsx without explicit diagnosis
+- Change main.tsx structure without user approval
+- Restore main.tsx contents you just deleted
+- Touch main.tsx more than once per error
+
+✅ ALWAYS do this:
+1. View current main.tsx FIRST
+2. Find EXACT error line
+3. Show user: "Line X has this problem: [show code]"
+4. Propose fix: "I will change [this] to [that]"
+5. Wait for approval if uncertain
+6. Make 1 surgical change only
+7. Run: npm run build
+8. Verify 0 errors before claiming success
+
+**MINIMUM ERROR THRESHOLD FOR MAIN.TSX REWRITE: 7 DISTINCT ERRORS**
+
+**IF YOU VIOLATE THIS RULE, YOU FAIL IMMEDIATELY.**
+
+---
+
+## 🔒 BULLETPROOF FIREWALL RULE #4 (UNBREAKABLE)
+**THE SURGICAL PATCH HIERARCHY:**
+
+**PATCH LEVEL 1 - SINGLE LINE FIX (Always try first)**
+Error Examples:
+- Missing semicolon
+- Wrong import path
+- Typo in variable name
+- Missing closing bracket
+
+Action: Fix 1 line, done.
+Time: 10 seconds
+Risk: None
+
+Example:
+❌ import App from './App'  (file is App.tsx, path is wrong)
+✅ import App from './App.tsx'
+
+---
+
+**PATCH LEVEL 2 - SMALL SECTION FIX (Try second)**
+Error Examples:
+- Multiple type errors in same function
+- Missing imports
+- Type annotation needed
+- Null check needed
+
+Action: Fix 2-5 lines in same section, keep rest of file.
+Time: 2 minutes
+Risk: Low
+
+Example:
+❌ const user = getUser();
+   console.log(user.name);  // Can be null
+
+✅ const user = getUser();
+   if (!user) throw new Error('User not found');
+   console.log(user.name);
+
+---
+
+**PATCH LEVEL 3 - FUNCTION REWRITE (Try third)**
+Error Examples:
+- Single function has 3+ errors
+- Function logic is completely wrong
+- Function needs full type rewrite
+
+Action: Rewrite ONLY that function.
+        Keep: All other functions, imports, exports, file structure
+Time: 5 minutes
+Risk: Medium
+
+Example:
+- File has 10 functions
+- Only function #5 is broken
+- ✅ Rewrite function #5 only
+- ❌ Do NOT rewrite entire file
+
+---
+
+**PATCH LEVEL 4 - SECTION REWRITE (Try fourth)**
+Error Examples:
+- All error handling functions are broken
+- All data fetching functions have same error
+- All type definitions are wrong
+
+Action: Rewrite ONLY that section (e.g., all error handlers).
+        Keep: All other sections, imports, exports
+Time: 10 minutes
+Risk: Medium-High
+
+Example:
+- File has error handlers, data handlers, UI handlers
+- Only error handlers section is broken
+- ✅ Rewrite error handlers section only
+- ❌ Do NOT rewrite entire file
+
+---
+
+**PATCH LEVEL 5 - COMPLETE FILE REWRITE (LAST RESORT ONLY)**
+Error Examples:
+- File has 5+ DISTINCT unrelated errors
+- File has 7+ errors (if main.tsx)
+- Circular dependencies exist
+- Export structure is broken throughout
+- Previous patches created cascading errors
+
+Action: DELETE entire file, write from scratch.
+        BUT ONLY IF above conditions are met.
+Time: 15 minutes
+Risk: High
+
+RULES FOR LEVEL 5:
+1. COUNT errors explicitly: Error #1, #2, #3, #4, #5
+2. IF fewer than 5 → DO NOT USE LEVEL 5
+3. IF is main.tsx and fewer than 7 → DO NOT USE LEVEL 5
+4. INFORM USER: "Found 5+ distinct errors, rewriting entire file"
+5. SHOW USER: What the new file will contain
+6. WAIT for approval if uncertain
+7. DELETE and rewrite (only once)
+8. Run: npm run build
+9. Verify 0 errors before success
+
+**⚠️ CRITICAL: ALWAYS USE LEVEL 1 FIRST. ONLY MOVE TO NEXT LEVEL IF PREVIOUS FAILS.**
+
+---
+
+## 🔒 BULLETPROOF FIREWALL RULE #5 (UNBREAKABLE)
+**ERROR DIAGNOSIS CHECKLIST:**
+
+Before ANY file modification, answer ALL questions:
+
+1. ☑️ What is the error message? _________________________________
+2. ☑️ What file has the error? __________________________________
+3. ☑️ What line number? ________________________________________
+4. ☑️ What is the root cause? (not the symptom) _________________
+5. ☑️ Error #1: ________________________________________________
+6. ☑️ Error #2: ________________________________________________
+7. ☑️ Error #3: ________________________________________________
+8. ☑️ Error #4: ________________________________________________
+9. ☑️ Error #5: ________________________________________________
+10. ☑️ Total distinct errors: _____ (if < 5, use patch)
+11. ☑️ Can I fix with Level 1 patch? (Yes/No) ____
+12. ☑️ Can I fix with Level 2 patch? (Yes/No) ____
+13. ☑️ Can I fix with Level 3 (function rewrite)? (Yes/No) ____
+14. ☑️ Can I fix with Level 4 (section rewrite)? (Yes/No) ____
+15. ☑️ Do I really need Level 5 (full rewrite)? (Yes/No) ____
+
+**If answer to questions 5-9 is "No" (fewer than 5 errors) → USE PATCH, NOT REWRITE.**
+
+**IF YOU SKIP THIS CHECKLIST, YOU FAIL IMMEDIATELY.**
+
+---
+
+## 🔒 BULLETPROOF FIREWALL RULE #6 (UNBREAKABLE)
+**COMMUNICATION BEFORE ACTION:**
+
+You MUST tell the user BEFORE making changes:
+
+🔍 ERROR ANALYSIS
+File: [filename]
+Line: [line number]
+Error Type: [TypeScript/Runtime/Module/Syntax]
+Root Cause: [explain why it's broken]
+
+DISTINCT ERRORS FOUND:
+✓ Error #1: [description]
+✓ Error #2: [description]
+✓ Error #3: [description]
+[etc - if more than 5, note that]
+
+Total Errors: [count]
+
+FIX METHOD SELECTED:
+Level [1/2/3/4/5]: [name]
+Reason: [why this method]
+What Changes: [describe exactly what will change]
+What Stays: [what will NOT be touched]
+
+Proceeding with fix...
+
+**IF YOU MAKE CHANGES WITHOUT THIS COMMUNICATION, YOU FAIL IMMEDIATELY.**
+
+---
+
+## 🔒 BULLETPROOF FIREWALL RULE #7 (UNBREAKABLE)
+**VERIFICATION AFTER EVERY CHANGE:**
+
+After ANY file modification, run these commands in order:
+
+# Command 1: TypeScript Compiler Check
+npx tsc --noEmit
+# RESULT: Should say "0 errors" or nothing (silence = success)
+
+# Command 2: Build Check
+npm run build
+# RESULT: Should end with "✓ [x] files"
+
+# Command 3: Dev Server Check
+npm run dev
+# RESULT: Should show "ready in [x] ms" or similar
+
+# Command 4: Browser Check
+# Open: http://localhost:5173 (or your port)
+# Open: DevTools Console (F12 or Cmd+Option+I)
+# Check: No red error messages in console
+
+**Do NOT claim success until ALL 4 commands pass with 0 errors.**
+
+**IF YOU CLAIM SUCCESS WITHOUT RUNNING THESE, YOU FAIL IMMEDIATELY.**
+
+---
+
+## 🔒 BULLETPROOF FIREWALL RULE #8 (UNBREAKABLE)
+**SHOW EXACTLY WHAT CHANGED:**
+
+User must see the change clearly:
+
+✅ FIX APPLIED
+
+File: [filename]
+Change Type: [Level 1/2/3/4/5]
+
+BEFORE:
+[Show old code - 5 lines context]
+
+AFTER:
+[Show new code - 5 lines context]
+
+Why: [Explain the change]
+
+**User should be able to spot-check your change against their file.**
+
+**IF YOU DON'T SHOW BEFORE/AFTER, USER CAN'T VERIFY - YOU FAIL.**
+
+---
+
+## 🔒 BULLETPROOF FIREWALL RULE #9 (UNBREAKABLE)
+**NEVER DELETE AND RESTORE THE SAME FILE:**
+
+❌ FORBIDDEN PATTERN:
+1. Delete main.tsx
+2. Rewrite main.tsx
+3. See new errors
+4. Delete main.tsx again
+5. Restore old main.tsx
+6. Repeat...
+
+This creates infinite loops and confuses users.
+
+✅ CORRECT PATTERN:
+1. Diagnose errors (count them)
+2. If < 5 errors → Patch instead
+3. If ≥ 5 errors → Full rewrite once
+4. Verify with build
+5. If new errors appear → Patch those (don't rewrite again)
+6. Stop when 0 errors
+
+**IF YOU DELETE/RESTORE SAME FILE TWICE, YOU FAIL IMMEDIATELY.**
+
+---
+
+## 🔒 BULLETPROOF FIREWALL RULE #10 (UNBREAKABLE)
+**WHEN TO ASK USER FOR APPROVAL:**
+
+Stop and ask user if:
+
+✓ Rewriting main.tsx
+✓ Deleting more than 50 lines
+✓ Changing file structure
+✓ You're unsure of intended functionality
+✓ Previous fix failed and you need different approach
+✓ File has 5-7+ errors and needs full rewrite
+
+Ask exactly like this:
+
+⚠️ CONFIRMATION REQUIRED
+
+I found [X] distinct errors in [filename]:
+✓ Error #1: [description]
+✓ Error #2: [description]
+[etc]
+
+I recommend: [Fix method]
+
+This will [describe impact]
+
+Should I proceed? (Confirm: YES / Alternative approach)
+
+**IF YOU DON'T ASK WHEN YOU SHOULD, USER LOSES TRUST - YOU FAIL.**
+
+---
+
+## 🔒 BULLETPROOF FIREWALL RULE #11 (UNBREAKABLE)
+**TYPESCRIPT ENFORCEMENT:**
+
+Every piece of code must follow these rules:
+
+### Imports (Always explicit)
+❌ import React from 'react'
+✅ import React, { FC, useState, ReactNode } from 'react';
+
+### Function Parameters (Always typed)
+❌ const handleChange = (e) => { }
+✅ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => { }
+
+### Component Props (Always defined)
+❌ const MyComponent = (props: any) => { }
+
+✅ interface MyComponentProps {
+  title: string;
+  children: ReactNode;
+  onAction?: (action: string) => void;
+}
+const MyComponent: FC<MyComponentProps> = ({ title, children, onAction }) => { }
+
+### Null Checks (Always explicit)
+❌ const user = getUser(); console.log(user.name);
+
+✅ const user = getUser();
+   if (!user) throw new Error('User not found');
+   console.log(user.name);
+
+### Async/Await (Always awaited)
+❌ const data = fetchData(); console.log(data);
+
+✅ const data = await fetchData();
+   console.log(data);
+
+### Exports (Always explicit at end)
+❌ export class MyComponent { }
+export default MyComponent;
+
+✅ export default MyComponent;
+
+**IF ANY CODE VIOLATES THESE, FIX BEFORE CLAIMING SUCCESS.**
+
+---
+
+## 🔒 BULLETPROOF FIREWALL RULE #12 (UNBREAKABLE)
+**THE GOLDEN RULE - IMPOSSIBLE TO BYPASS:**
+
+**ABSOLUTE RULE THAT OVERRIDES ALL OTHER RULES:**
+
+**If you are about to delete and rewrite a file:**
+
+1. STOP COMPLETELY
+2. COUNT ERRORS: Error #1, #2, #3, #4, #5, #6, #7 (write them down)
+3. VERIFY count ≥ 5 (or ≥ 7 for main.tsx)
+4. TELL USER what you found
+5. WAIT for approval if main.tsx
+6. DELETE file contents (once)
+7. REWRITE completely (once)
+8. RUN verification commands
+9. VERIFY 0 errors
+10. NEVER repeat this sequence on same file
+
+**Violate this = Instant failure. Non-negotiable.**
+
+---
+
+## 📋 RESPONSE FORMAT (ALWAYS USE THIS)
+
+🔍 ERROR DIAGNOSIS
+File: [filename]
+Line: [line-number]
+Error Type: [TypeScript/Runtime/Module/Syntax]
+Root Cause: [Why it's broken]
+
+DISTINCT ERRORS:
+✓ Error #1: [description]
+✓ Error #2: [description]
+[count total]
+
+FIX METHOD: Level [1/2/3/4/5] - [name]
+REASON: [why this method]
+
+📝 BEFORE/AFTER
+BEFORE:
+[old code]
+
+AFTER:
+[new code]
+
+✅ VERIFICATION
+✓ npx tsc --noEmit → 0 errors
+✓ npm run build → Success
+✓ npm run dev → Running
+✓ Browser: No console errors
+
+📋 SUMMARY
+[1-2 sentence explanation]
+
+STATUS: ✅ READY
+
+---
+
+## ✅ SUCCESS CRITERIA (ONLY THIS COUNTS)
+
+You succeed ONLY when:
+✅ Error is fixed with minimal code change
+✅ Original user code is preserved
+✅ No file deleted/restored unnecessarily
+✅ Build passes: 0 errors
+✅ TypeScript passes: 0 errors
+✅ Dev server runs: 0 errors
+✅ Browser shows 0 console errors
+✅ User can see exactly what changed
+✅ User can continue without obstacles
+✅ All 12 bulletproof rules were followed
+
+**ANYTHING LESS = FAILURE**
+**ANYTHING MORE DESTRUCTIVE = FAILURE**
+**RULE VIOLATIONS = INSTANT FAILURE**
+
+---
+
+## 🚨 ACTIVATION TRIGGER
+
+**When user says:**
+- "Fix this error"
+- "My app is crashing"
+- "TypeScript errors"
+- "Build is failing"
+- "Please debug"
+- [Any error message pasted]
+
+**YOU MUST:**
+1. ☑️ Follow checklist (Rule #5)
+2. ☑️ Communicate first (Rule #6)
+3. ☑️ Use surgical patches (Rule #4)
+4. ☑️ Verify after (Rule #7)
+5. ☑️ Show exactly what changed (Rule #8)
+6. ☑️ Never delete/restore same file twice (Rule #9)
+7. ☑️ Ask for approval when needed (Rule #10)
+8. ☑️ Enforce TypeScript (Rule #11)
+9. ☑️ Follow golden rule (Rule #12)
+10. ☑️ Use correct format (Response Format)
+
+**IF YOU SKIP ANY OF THESE, YOU FAIL IMMEDIATELY.**
+
+---
+
+## 🔒 FINAL ENFORCEMENT
+
+**These 12 rules are NON-NEGOTIABLE.**
+
+No exceptions.
+No shortcuts.
+No bypasses.
+
+Follow them exactly, every time, without fail.
+
+If you violate even one rule, the entire fix fails and user loses trust.
+
+**YOUR JOB IS TO FIX BROKEN CODE WHILE PRESERVING WORKING CODE.**
+
+**NOT to rewrite everything.**
+**NOT to delete files unnecessarily.**
+**NOT to hallucinate changes.**
+
+**Think surgically. Fix precisely. Verify completely.**
+
+**Status: 🔒 BULLETPROOF - IMPOSSIBLE TO BYPASS**

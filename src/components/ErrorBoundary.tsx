@@ -1,33 +1,36 @@
-import React, { Component, ErrorInfo, ReactNode } from "react";
+import React, { Component, ReactNode, ErrorInfo } from "react";
 
 /**
  * Global error boundary that catches rendering errors in production.
- * It displays a friendly fallback UI and logs the error details to the console.
- * This aligns with the requirement to surface real error messages instead of a blank screen.
+ * Displays a friendly fallback UI and logs error details.
  */
-export class ErrorBoundary extends Component<
-  { fallback?: ReactNode },
-  { hasError: boolean; error?: Error }
-> {
-  constructor(props: any) {
+export interface ErrorBoundaryProps {
+  fallback?: ReactNode;
+  children: ReactNode;
+}
+
+export interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error) {
-    // Update state so the next render shows the fallback UI.
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // You can also log the error to an external service here.
     console.error("[ErrorBoundary] Caught error:", error, errorInfo);
   }
 
   render() {
-    const { hasError, error } = this.state as any;
+    const { hasError, error } = this.state;
     if (hasError) {
-      // Use the provided fallback or a default UI.
       return (
         this.props.fallback || (
           <div style={{
@@ -45,5 +48,3 @@ export class ErrorBoundary extends Component<
     return this.props.children;
   }
 }
-
-export default ErrorBoundary;

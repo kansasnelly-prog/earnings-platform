@@ -34,7 +34,7 @@ const AppContent: React.FC = () => {
     return (
       <Routes>
         <Route path="/admin/*" element={<AdminLayout />}> 
-          <Route index element={<Admin />} />
+          <Route index element={<AIAssistantWorkspace />} />
         </Route>
       </Routes>
     );

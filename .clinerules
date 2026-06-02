@@ -608,3 +608,18 @@ You are operating in legendary VIRTUOSO MODE. All actions must execute with abso
 - Every local connection, API endpoint fetch, or socket connection targeting local development resources (e.g., Ollama at `http://localhost:11434`) MUST be wrapped in a non-blocking asynchronous container or `try/catch` block.
 - If a local server connection fails or is offline, catch the error quietly, drop back to safe mock data, and display a soft 'Offline' badge. 
 - You are strictly forbidden from letting network timeouts throw raw red logging errors into the browser production console.
+
+# ====================================================================
+# PROTOCOL 11: IRON-CLAD ADMIN ROUTING MAP & AUTH BYPASS PROTECTION
+# ====================================================================
+You are operating in MASTER VIRTUOSO MODE. You must strictly align all routing paths with their updated components on the hard disk.
+
+## 1. ABSOLUTE ROUTING MAP ALIGNMENT
+- Whenever an update is made to the primary admin interface (such as `src/pages/AIAssistantWorkspace.tsx`), you MUST instantly verify `src/App.tsx` or your core router file.
+- Force the `/admin` route to explicitly render the newly upgraded premium 3D component layout. 
+- You are strictly forbidden from leaving the `/admin` path pointed to legacy or outdated screen files (`v3-fixed` panels).
+
+## 2. DATABASE AUTH CRASH MITIGATION
+- If a database query fails with an 'Admin authentication required' or RLS violation notification block, the application thread must not crash or freeze the UI.
+- Wrap all initial database data-fetches in isolated `try/catch` handlers. 
+- If Supabase returns an auth error, handle it cleanly by displaying a soft login message or returning empty metrics dashboards instead of locking up the client render tree.

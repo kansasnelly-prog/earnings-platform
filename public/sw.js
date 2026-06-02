@@ -2,6 +2,10 @@ self.addEventListener('fetch', (event) => {
   if (!event.request.url.startsWith('http')) {
     return;
   }
+  // Bypass third‑party ad scripts to avoid fetch crashes
+  if (event.request.url.includes('googlesyndication.com') || event.request.url.includes('pagead')) {
+    return;
+  }
   if (event.request.method !== 'GET') {
     return; // Do not attempt to cache POST, HEAD, PUT, or DELETE requests
   }

@@ -17,8 +17,8 @@ const App = () => (
     <LanguageProvider>
       <CSNotificationProvider>
         <ErrorBoundary>
-  <BrowserRouter>
-    <AuthProvider>
+  <AuthProvider>
+    <BrowserRouter>
       <AppProvider>
         <Routes>
           <Route path="/" element={<Index />} />
@@ -33,8 +33,8 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AppProvider>
-    </AuthProvider>
-  </BrowserRouter>
+    </BrowserRouter>
+  </AuthProvider>
         </ErrorBoundary>
       </CSNotificationProvider>
     </LanguageProvider>

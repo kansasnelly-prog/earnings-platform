@@ -41,17 +41,13 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <AuthProvider>
-      <AppProvider>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route element={<ProtectedRoute />}> 
-            <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AppProvider>
-    </AuthProvider>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route element={<ProtectedRoute />}> 
+        <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
+      </Route>
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 
@@ -61,15 +57,18 @@ const App: React.FC = () => (
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
-            {/* AuthProvider now wraps the entire routing tree */}
+            {/* Single AuthProvider wrapping the whole app */}
             <AuthProvider>
-              <LanguageProvider>
-                <CSNotificationProvider>
-                  <Toaster />
-                  <Sonner />
-                  <AppContent />
-                </CSNotificationProvider>
-              </LanguageProvider>
+              {/* AppProvider now envelops the entire routing tree */}
+              <AppProvider>
+                <LanguageProvider>
+                  <CSNotificationProvider>
+                    <Toaster />
+                    <Sonner />
+                    <AppContent />
+                  </CSNotificationProvider>
+                </LanguageProvider>
+              </AppProvider>
             </AuthProvider>
           </TooltipProvider>
         </QueryClientProvider>

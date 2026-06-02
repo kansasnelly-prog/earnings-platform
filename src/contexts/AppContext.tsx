@@ -2599,11 +2599,8 @@ else if (
     hasPendingWithdrawal
   };
 
-  // Pre‑flight guard: stall rendering until initial auth/loading resolves
-  if (isLoading) {
-    return <div className="loading-spinner">Loading application...</div>;
-  }
-
+  // Render the provider regardless of loading state to avoid a permanent blank screen.
+  // The UI components themselves can handle loading states as needed.
   return (
     <AppContext.Provider value={value}>
       {children}

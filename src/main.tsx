@@ -119,6 +119,7 @@ const registerServiceWorker = () => {
 
 import { supabaseError } from './lib/supabase';
 import SupabaseError from './components/SupabaseError';
+import { AuthProvider } from './contexts/SafeAuthProvider';
 
 const initializeApp = async () => {
   const rootElement = document.getElementById("root");
@@ -146,12 +147,11 @@ const initializeApp = async () => {
     rootElement.innerHTML = '';
 
       // Create and render app wrapped with AuthProvider
-      import { AuthProvider } from './contexts/SafeAuthProvider';
-      root.render(
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      );
+        root.render(
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        );
 
     // Signal to cache buster that app mounted successfully
     if (typeof window !== 'undefined' && (window as any).appMounted) {

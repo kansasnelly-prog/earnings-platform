@@ -27,6 +27,7 @@ const AIAssistantWorkspace = () => {
   const [customerMessage, setCustomerMessage] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
+  const [aiStatus, setAiStatus] = useState<'online' | 'offline'>('offline');
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [showCreditModal, setShowCreditModal] = useState(false);
 
@@ -98,6 +99,19 @@ const AIAssistantWorkspace = () => {
     } catch (error) {
       console.error('Error creating Stripe checkout session:', error);
       toast.error('Error creating Stripe checkout session.');
+    }
+  };
+
+  const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 5000) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(id);
+      return response;
+    } catch (err) {
+      clearTimeout(id);
+      throw err;
     }
   };
 
@@ -190,7 +204,7 @@ const AIAssistantWorkspace = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 shadow-[0_20px_50px_rgba(0,0,0,0.3)] border-white/10 hover:scale-[1.01] transition-all">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

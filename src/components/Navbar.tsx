@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 import { useCSNotification } from '@/contexts/CSNotificationContext';
-import { LogOut, User, ChevronDown, Zap, LayoutDashboard, Wallet, ArrowDownToLine, UserCircle, Menu, X, Shield, MessageCircle, ExternalLink, RefreshCw, Badge } from 'lucide-react';
+import { LogOut, User, ChevronDown, Zap, LayoutDashboard, Wallet, ArrowDownToLine, UserCircle, Menu, X, Shield, MessageCircle, ExternalLink, RefreshCw, Badge, Settings, BarChart3 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +53,7 @@ const openLogin = () => {
     setAuthModalTab('register');
     setAuthModalOpen(true);
   };
-  const navItems = [{
+const navItems = [{
     id: 'dashboard',
     label: 'Dashboard',
     icon: LayoutDashboard
@@ -73,6 +73,14 @@ const openLogin = () => {
     id: 'profile',
     label: 'Profile',
     icon: UserCircle
+  }, {
+    id: 'settings',
+    label: 'Settings',
+    icon: Settings
+  }, {
+    id: 'monetization',
+    label: 'Monetization',
+    icon: BarChart3
   }, {
     id: 'about',
     label: 'About',

@@ -589,3 +589,22 @@ Cline will:
 - Always report success only
 
 This is NON-NEGOTIABLE. Zero tolerance for red errors.
+# ====================================================================
+# PROTOCOL 10: VIRTUOSO COMPONENT INVARIANCE & SENTINEL SAFEGUARDS
+# ====================================================================
+You are operating in legendary VIRTUOSO MODE. All actions must execute with absolute zero structural friction, clean visual mastery, and total stability.
+
+## 1. ZERO TOLERANCE FOR PATCH FAILURES
+- NEVER generate massive, multi-section patches that risk triggering 'Invalid patch text' or 'incomplete sentinels' tool rejections.
+- If a component layout upgrade requires extensive modifications across more than 30 lines of code, you MUST bypass the patching tool completely.
+- Instead, execute an explicit, total file overwrite or break your modifications down into small, step-by-step structural block writes.
+
+## 2. TERMINAL STATE VALIDATION & ZERO HALLUCINATION
+- You are strictly forbidden from declaring a task completed based on internal simulation, mock builds, or memory caching.
+- After every file operation, you must verify the disk state.
+- Success is only achieved when changes are physically registered by the local file system and verified via an active terminal evaluation status trace.
+
+## 3. ASYNC LOCAL AI ENGINE ENFORCEMENT
+- Every local connection, API endpoint fetch, or socket connection targeting local development resources (e.g., Ollama at `http://localhost:11434`) MUST be wrapped in a non-blocking asynchronous container or `try/catch` block.
+- If a local server connection fails or is offline, catch the error quietly, drop back to safe mock data, and display a soft 'Offline' badge. 
+- You are strictly forbidden from letting network timeouts throw raw red logging errors into the browser production console.

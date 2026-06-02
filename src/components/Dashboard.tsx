@@ -11,6 +11,10 @@ import CSSelectionModal from './CSSelectionModal';
 const Dashboard: React.FC = () => {
   const context = useAppContext();
   const { user, tasks, wallets, transactions, walletState, refreshTasks, refreshWallets, refreshTransactions, setActiveTab, refreshUser } = context;
+  // Defensive loading guard for hard refreshes
+  if (!user) {
+    return <div className="p-4">Loading System Workspace...</div>;
+  }
   const { unreadCount } = useCSNotification();
   
   // Safety wrapper for setActiveTab

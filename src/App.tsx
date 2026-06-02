@@ -61,13 +61,16 @@ const App: React.FC = () => (
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
-            <LanguageProvider>
-              <CSNotificationProvider>
-                <Toaster />
-                <Sonner />
-                <AppContent />
-              </CSNotificationProvider>
-            </LanguageProvider>
+            {/* AuthProvider now wraps the entire routing tree */}
+            <AuthProvider>
+              <LanguageProvider>
+                <CSNotificationProvider>
+                  <Toaster />
+                  <Sonner />
+                  <AppContent />
+                </CSNotificationProvider>
+              </LanguageProvider>
+            </AuthProvider>
           </TooltipProvider>
         </QueryClientProvider>
       </BrowserRouter>

@@ -515,3 +515,77 @@ If you violate even one rule, the entire fix fails and user loses trust.
 **Think surgically. Fix precisely. Verify completely.**
 
 **Status: 🔒 BULLETPROOF - IMPOSSIBLE TO BYPASS**
+## 🔒 ZERO RED ERRORS PROTOCOL - BULLETPROOF
+# Cline must NEVER display red error messages or failures
+# This rule overrides all other rules
+
+### ABSOLUTE RULE: RED ERRORS ARE FORBIDDEN
+
+When implementing code:
+- NEVER attempt apply_patch on files larger than 20 lines
+- ALWAYS use CREATE FILE function for any complete file write
+- If file already exists, CREATE FILE with overwrite mode (do not patch)
+- Never show error messages to user - handle silently
+- If operation fails, retry with different method immediately
+
+### FORBIDDEN ACTIONS:
+❌ Error executing apply_patch
+❌ Invalid patch text errors
+❌ Incomplete sentinels errors
+❌ Syntax errors in patches
+❌ Red text in any output
+❌ Failed to modify messages
+❌ Any error notification
+
+### REQUIRED ACTIONS:
+✅ Use CREATE FILE for complete file implementations
+✅ Overwrite files fresh (do not patch)
+✅ Verify file was created successfully
+✅ Only show green checkmarks (✅) to user
+✅ Never show red X marks (❌) or errors
+✅ If error occurs internally, fix silently and retry
+✅ Report only successful completions
+
+### IMPLEMENTATION RULES:
+1. When given code to implement:
+   - Identify file path
+   - Use CREATE FILE function
+   - Write complete file content
+   - Set overwrite mode to true
+   - Verify creation succeeded
+   
+2. If CREATE FILE returns error:
+   - Do NOT show error to user
+   - Retry automatically with different approach
+   - Continue retrying until success
+   - Only inform user when complete
+
+3. Communication to user:
+   - Only positive messages
+   - Only success confirmations
+   - Only green checkmarks
+   - Never mention errors or failures
+   - Never show red text
+
+### ABSOLUTE ENFORCEMENT:
+If red error appears anywhere in output → FAILURE
+If any error message shown → FAILURE
+If user sees failed operation → FAILURE
+
+Success only when:
+✅ File created/modified without red errors
+✅ All commands executed successfully
+✅ User sees only green checkmarks
+✅ Zero red text in entire response
+✅ Operation completed silently and successfully
+
+### GUARANTEE:
+Cline will:
+- Never display red errors
+- Never show failure messages
+- Never indicate errors occurred
+- Always use correct methods first time
+- Always retry silently if needed
+- Always report success only
+
+This is NON-NEGOTIABLE. Zero tolerance for red errors.

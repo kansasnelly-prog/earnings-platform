@@ -107,6 +107,9 @@ export const useAuth = () => {
   return context;
 };
 
+// Alias for backward compatibility and to match imports expecting useSafeAuth
+export const useSafeAuth = useAuth;
+
 async function hydrateUserFromProfile(authUser: SupabaseAuthUser): Promise<{
   user: SafeAuthUser;
   isAdmin: boolean;

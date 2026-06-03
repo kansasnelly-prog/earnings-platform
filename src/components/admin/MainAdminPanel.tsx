@@ -235,11 +235,19 @@ const MainAdminPanel: React.FC = () => {
       const { data: sessionData } = await supabase.auth.getSession();
       logSupabase('[MainAdmin] Current session', sessionData.session ? 'Authenticated' : 'Not authenticated');
       
-      // Test connection with cache-busting
-      const { error: connectionError } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .abortSignal(AbortSignal.timeout(5000));
+      // Test connection with cache-busting - wrapped in try/catch for timeout safety
+      let connectionError = null;
+      try {
+        const connectionTest = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true })
+          .abortSignal(AbortSignal.timeout(5000));
+        connectionError = connectionTest.error;
+      } catch (timeoutErr: any) {
+        // Handle timeout gracefully - log as warning, don't break lifecycle
+        logError('[MainAdmin] Connection test timed out (non-critical)', timeoutErr);
+        connectionError = timeoutErr;
+      }
         
       if (connectionError) {
         logError('[MainAdmin] Connection test failed', connectionError);
@@ -250,9 +258,9 @@ const MainAdminPanel: React.FC = () => {
         setIsRefreshing(false);
         logCore('[MainAdmin] Loading state reset due to connection error');
         toast({
-          title: 'Connection Error',
-          description: 'Cannot connect to database. Please check your internet connection.',
-          variant: 'destructive'
+          title: 'Connection Warning',
+          description: 'Database connection slow or unavailable. Interface loaded in degraded mode.',
+          variant: 'default'
         });
         return;
       }
@@ -847,7 +855,7 @@ const MainAdminPanel: React.FC = () => {
   // Block render until initialized
   if (!isInitialized) {
     return (
-      <div className="min-h-screen bg-[#060a14] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-slate-950 text-slate-100 backdrop-blur-xl flex items-center justify-center px-4">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-400">Loading...</p>
@@ -876,7 +884,7 @@ const MainAdminPanel: React.FC = () => {
   }
 
    return (
-    <div className="min-h-screen bg-[#060a14] text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 backdrop-blur-xl">
       {/* Header */}
       <AdBanner />
       <header className="sticky top-0 z-50 bg-[#0a0e1a]/95 backdrop-blur-xl border-b border-slate-800/50">

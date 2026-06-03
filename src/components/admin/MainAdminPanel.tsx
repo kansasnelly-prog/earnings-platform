@@ -74,6 +74,24 @@ interface RealStats {
   flaggedAccounts: number;
 }
 
+interface RevenueStats {
+  totalAppInstalls: number;
+  androidInstalls: number;
+  iosInstalls: number;
+  nellyCoinsFromInstalls: number;
+  adRevenueUSD: number;
+  adECPM: number;
+  activeVIPSubscriptions: number;
+  vipRevenueUSD: number;
+  withdrawalFeesUSD: number;
+  taskTaxUSD: number;
+  marketplaceRevenueUSD: number;
+  appStoreRevenueUSD: number;
+  referralRevenueUSD: number;
+  totalRevenueUSD: number;
+  totalNellyCoinsMinted: number;
+}
+
 const MainAdminPanel: React.FC = () => {
   logCore('MainAdminPanel COMPONENT RENDERED');
   const navigate = useNavigate();
@@ -90,6 +108,24 @@ const MainAdminPanel: React.FC = () => {
     totalUsers: 0, totalPayouts: 0, pendingPayouts: 0, totalBalance: 0,
     completedTasks: 0, totalTasks: 0, activeToday: 0, pendingWithdrawals: 0, newUsersToday: 0,
     totalEarnings: 0, averageTasksPerUser: 0, topPerformers: 0, flaggedAccounts: 0,
+  });
+
+  const [revenueStats, setRevenueStats] = useState<RevenueStats>({
+    totalAppInstalls: 0,
+    androidInstalls: 0,
+    iosInstalls: 0,
+    nellyCoinsFromInstalls: 0,
+    adRevenueUSD: 0,
+    adECPM: 0,
+    activeVIPSubscriptions: 0,
+    vipRevenueUSD: 0,
+    withdrawalFeesUSD: 0,
+    taskTaxUSD: 0,
+    marketplaceRevenueUSD: 0,
+    appStoreRevenueUSD: 0,
+    referralRevenueUSD: 0,
+    totalRevenueUSD: 0,
+    totalNellyCoinsMinted: 0,
   });
 
   const [users, setUsers] = useState<RealUser[]>([]);
@@ -1057,6 +1093,84 @@ const MainAdminPanel: React.FC = () => {
                       </div>
                     </CardContent>
                   </Card>
+                </div>
+
+                {/* Revenue Engine Dashboard */}
+                <div>
+                  <h3 className="text-xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-4">Seven-Engine Monetization Matrix</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Card 1: Network Traffic Desk */}
+                    <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <CardHeader>
+                        <CardTitle className="bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent flex items-center text-lg">
+                          <span className="text-2xl mr-2">📱</span>
+                          Network Traffic Desk
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-slate-400">Total App Installs</p>
+                            <p className="text-2xl font-bold text-white">{revenueStats.totalAppInstalls.toLocaleString()}</p>
+                            <p className="text-xs text-slate-500">Android: {revenueStats.androidInstalls} | iOS: {revenueStats.iosInstalls}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-400">NellyCoins Minted</p>
+                            <p className="text-2xl font-bold text-amber-400">+{revenueStats.nellyCoinsFromInstalls.toLocaleString()} 🪙</p>
+                            <p className="text-xs text-slate-500">+10 coins per install</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Card 2: Ads & Subscription Yield */}
+                    <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <CardHeader>
+                        <CardTitle className="bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent flex items-center text-lg">
+                          <span className="text-2xl mr-2">💰</span>
+                          Ads & Subscription Yield
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-slate-400">Ad Revenue (USD)</p>
+                            <p className="text-2xl font-bold text-green-400">${revenueStats.adRevenueUSD.toLocaleString()}</p>
+                            <p className="text-xs text-slate-500">eCPM: ${revenueStats.adECPM.toFixed(2)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-400">Active VIP Subscriptions</p>
+                            <p className="text-2xl font-bold text-purple-400">{revenueStats.activeVIPSubscriptions.toLocaleString()}</p>
+                            <p className="text-xs text-slate-500">${revenueStats.vipRevenueUSD.toLocaleString()} monthly</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Card 3: Platform Tax Engine */}
+                    <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <CardHeader>
+                        <CardTitle className="bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent flex items-center text-lg">
+                          <span className="text-2xl mr-2">⚡</span>
+                          Platform Tax Engine
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-slate-400">Withdrawal Fees</p>
+                            <p className="text-2xl font-bold text-orange-400">${revenueStats.withdrawalFeesUSD.toLocaleString()}</p>
+                            <p className="text-xs text-slate-500">Priority processing</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-400">Task Tax & B2B Commissions</p>
+                            <p className="text-2xl font-bold text-blue-400">${revenueStats.taskTaxUSD.toLocaleString()}</p>
+                            <p className="text-xs text-slate-500">Sponsored matching</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
 
                 {/* Quick Summary */}

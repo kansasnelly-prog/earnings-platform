@@ -109,39 +109,40 @@ const ProductCatalogManager: React.FC = () => {
     loadProducts();
 
     // Create Supabase realtime channels for training and personal products
-    const trainingChannel = supabase
-      .channel('training-products-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'training_products',
-      }, (payload) => {
-        console.log('[ProductCatalogManager] Training products change detected:', payload.eventType);
-        // Fetch updated list and update state
-        ProductCatalogService.getTrainingProducts().then(setTrainingProducts);
-      })
-      .subscribe();
+    // COMMENTED OUT: Duplicate realtime subscriptions causing database lock loop
+    // const trainingChannel = supabase
+    //   .channel('training-products-changes')
+    //   .on('postgres_changes', {
+    //     event: '*',
+    //     schema: 'public',
+    //     table: 'training_products',
+    //   }, (payload) => {
+    //     console.log('[ProductCatalogManager] Training products change detected:', payload.eventType);
+    //     // Fetch updated list and update state
+    //     ProductCatalogService.getTrainingProducts().then(setTrainingProducts);
+    //   })
+    //   .subscribe();
 
-    const personalChannel = supabase
-      .channel('personal-products-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'personal_products',
-      }, (payload) => {
-        console.log('[ProductCatalogManager] Personal products change detected:', payload.eventType);
-        ProductCatalogService.getPersonalProducts().then(setPersonalProducts);
-      })
-      .subscribe();
+    // const personalChannel = supabase
+    //   .channel('personal-products-changes')
+    //   .on('postgres_changes', {
+    //     event: '*',
+    //     schema: 'public',
+    //     table: 'personal_products',
+    //   }, (payload) => {
+    //     console.log('[ProductCatalogManager] Personal products change detected:', payload.eventType);
+    //     ProductCatalogService.getPersonalProducts().then(setPersonalProducts);
+    //   })
+    //   .subscribe();
 
     // Cleanup: remove channels on unmount to prevent memory leaks
     return () => {
-      if (trainingChannel) {
-        supabase.removeChannel(trainingChannel);
-      }
-      if (personalChannel) {
-        supabase.removeChannel(personalChannel);
-      }
+      // if (trainingChannel) {
+      //   supabase.removeChannel(trainingChannel);
+      // }
+      // if (personalChannel) {
+      //   supabase.removeChannel(personalChannel);
+      // }
     };
   }, []);
 

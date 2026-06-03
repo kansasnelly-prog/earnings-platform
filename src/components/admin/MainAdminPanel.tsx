@@ -947,12 +947,12 @@ const MainAdminPanel: React.FC = () => {
               { id: 'users', label: 'Users', icon: Users },
               { id: 'withdrawals', label: 'Withdrawals', icon: ArrowDownToLine },
               { id: 'pending-orders', label: 'Pending Orders', icon: AlertTriangle },
-              { id: 'customer-service', label: 'Customer Service', icon: Headphones },
-              { id: 'product-catalog', label: 'Product Catalog', icon: ShoppingBag },
+              // { id: 'customer-service', label: 'Customer Service', icon: Headphones },
+              // { id: 'product-catalog', label: 'Product Catalog', icon: ShoppingBag },
               { id: 'admin-controls', label: 'Admin Controls', icon: Settings },
               { id: 'create-account', label: 'Create Account', icon: UserPlus },
               { id: 'password-reset', label: 'Password Reset', icon: Key },
-              { id: 'ai-assistant', label: "KANSAS NELLY'S AI", icon: Sparkles, external: true },
+              // { id: 'ai-assistant', label: "KANSAS NELLY'S AI", icon: Sparkles, external: true },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -988,13 +988,13 @@ const MainAdminPanel: React.FC = () => {
             {activeTab === 'overview' && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Platform Overview</h2>
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent">Platform Overview</h2>
                   <p className="text-sm text-gray-500">Real-time statistics and platform health metrics</p>
                 </div>
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <Card className="bg-slate-800/50 border-slate-700">
+                  <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
@@ -1009,7 +1009,7 @@ const MainAdminPanel: React.FC = () => {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-slate-800/50 border-slate-700">
+                  <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
@@ -1022,7 +1022,7 @@ const MainAdminPanel: React.FC = () => {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-slate-800/50 border-slate-700">
+                  <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
@@ -1035,7 +1035,7 @@ const MainAdminPanel: React.FC = () => {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-slate-800/50 border-slate-700">
+                  <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
@@ -1054,9 +1054,9 @@ const MainAdminPanel: React.FC = () => {
                 {/* Quick Summary */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Recent Users */}
-                  <Card className="bg-slate-800/50 border-slate-700">
+                  <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                     <CardHeader>
-                      <CardTitle className="text-white flex items-center text-lg">
+                      <CardTitle className="bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent flex items-center text-lg">
                         <Users className="w-5 h-5 mr-2 text-blue-500" />
                         Recent Users
                       </CardTitle>
@@ -1084,9 +1084,9 @@ const MainAdminPanel: React.FC = () => {
                   </Card>
 
                   {/* Pending Withdrawals */}
-                  <Card className="bg-slate-800/50 border-slate-700">
+                  <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                     <CardHeader>
-                      <CardTitle className="text-white flex items-center text-lg">
+                      <CardTitle className="bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent flex items-center text-lg">
                         <ArrowDownToLine className="w-5 h-5 mr-2 text-green-500" />
                         Pending Withdrawals
                       </CardTitle>
@@ -1131,7 +1131,7 @@ const MainAdminPanel: React.FC = () => {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-2xl font-bold text-white">User Management</h2>
+                    <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent">User Management</h2>
                     <p className="text-sm text-gray-500">Manage user accounts and permissions</p>
                   </div>
                   <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
@@ -1139,7 +1139,7 @@ const MainAdminPanel: React.FC = () => {
                   </Badge>
                 </div>
 
-                <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+                <div className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead className="bg-slate-700/50">
@@ -1478,7 +1478,7 @@ const MainAdminPanel: React.FC = () => {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-2xl font-bold text-white">Withdrawal Management</h2>
+                    <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent">Withdrawal Management</h2>
                     <p className="text-sm text-gray-500">Process and manage withdrawal requests</p>
                   </div>
                   <Badge variant="secondary" className="bg-amber-500/20 text-amber-400">
@@ -1486,7 +1486,7 @@ const MainAdminPanel: React.FC = () => {
                   </Badge>
                 </div>
 
-                <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+                <div className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead className="bg-slate-700/50">

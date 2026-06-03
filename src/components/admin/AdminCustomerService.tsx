@@ -72,6 +72,8 @@ const AdminCustomerService: React.FC = () => {
   const [selectedUserData, setSelectedUserData] = useState<UserData | null>(null);
   const [aiSuggestions, setAiSuggestions] = useState<Array<{type: string, content: string}>>([]);
   const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
+  const [aiGeneratedReply, setAiGeneratedReply] = useState('');
+  const [isGeneratingReply, setIsGeneratingReply] = useState(false);
   
   // Attachment states
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -243,6 +245,77 @@ const AdminCustomerService: React.FC = () => {
     if (lowerMessage.includes('upgrade') || lowerMessage.includes('vip')) return 'Upgrade Inquiry';
     
     return 'General Inquiry';
+  };
+
+  // AI Reply Generator using Ollama
+  const generateAIReply = async () => {
+    if (!selectedConversation || messages.length === 0) {
+      toast.error('Please select a conversation first');
+      return;
+    }
+
+    setIsGeneratingReply(true);
+    setAiGeneratedReply('');
+
+    try {
+      // Build conversation context
+      const conversationContext = messages
+        .map(m => `${m.user_id === 'user' ? 'Customer' : 'Admin'}: ${m.content}`)
+        .join('\n');
+
+      const prompt = `You are a professional customer service representative for a task rewards platform. Generate a helpful, professional, and empathetic response to the customer's latest message.
+
+Conversation history:
+${conversationContext}
+
+Customer's latest message: ${messages[messages.length - 1]?.content || ''}
+
+Generate a response that:
+1. Acknowledges their concern
+2. Provides helpful information or next steps
+3. Maintains a professional and friendly tone
+4. Is concise but complete
+
+Response:`;
+
+      // Call Ollama API
+      const response = await fetch('http://localhost:11434/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama3',
+          prompt: prompt,
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to connect to AI service');
+      }
+
+      const data = await response.json();
+      setAiGeneratedReply(data.response || data.text || '');
+      toast.success('AI reply generated successfully');
+    } catch (error) {
+      console.error('[AdminCustomerService] Error generating AI reply:', error);
+      toast.error('Failed to generate AI reply. Make sure Ollama is running at localhost:11434');
+      setAiGeneratedReply('');
+    } finally {
+      setIsGeneratingReply(false);
+    }
+  };
+
+  const copyAIReply = () => {
+    navigator.clipboard.writeText(aiGeneratedReply);
+    toast.success('Reply copied to clipboard');
+  };
+
+  const useAIReply = () => {
+    setNewMessage(aiGeneratedReply);
+    setAiGeneratedReply('');
+    toast.success('Reply applied to message input');
   };
 
   // Fetch user data when conversation is selected
@@ -613,158 +686,161 @@ const AdminCustomerService: React.FC = () => {
   }, [selectedConversation?.id]);
 
   // Real-time subscription for new messages and conversation updates
+  // COMMENTED OUT: Duplicate realtime subscriptions causing database lock loop
   useEffect(() => {
     if (!selectedConversation?.id) return;
 
     console.log('[AdminCustomerService] Setting up realtime for conversation:', selectedConversation.id);
 
     // Subscribe to new messages
-    const messagesChannel = supabase
-      .channel(`admin-messages-${selectedConversation.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${selectedConversation.id}`,
-        },
-        (payload) => {
-          console.log('[AdminCustomerService] Realtime message received:', payload);
-          const newMessage = payload.new as any;
-          
-          // Prevent duplicates
-          if (processedMessageIds.current.has(newMessage.id)) {
-            console.log('[AdminCustomerService] Duplicate message ignored:', newMessage.id);
-            return;
-          }
-          processedMessageIds.current.add(newMessage.id);
-          
-          const transformedMsg = {
-            id: newMessage.id,
-            conversation_id: newMessage.conversation_id,
-            user_id: newMessage.sender === 'user' ? 'user' : 'admin',
-            content: newMessage.message,
-            created_at: newMessage.created_at,
-            attachment_url: newMessage.attachment_url,
-            attachment_type: newMessage.attachment_type,
-            attachment_name: newMessage.attachment_name,
-            attachment_size: newMessage.attachment_size,
-          };
-          
-          setMessages((prev) => {
-            const exists = prev.some(m => m.id === transformedMsg.id);
-            if (exists) return prev;
-            return [...prev, transformedMsg];
-          });
-          
-          // Show notification for user messages
-          if (newMessage.sender === 'user') {
-            toast.info('New message from customer');
-            fetchConversations();
-            // Auto-generate AI suggestion for new customer message
-            const suggestions = generateAISuggestions(newMessage.message || '');
-            setAiSuggestions(suggestions);
-            // Auto-detect and save issue label
-            const label = detectIssueLabel(newMessage.message || '');
-            if (label && label !== 'General Inquiry') {
-              supabase
-                .from('conversations')
-                .update({ issue_label: label })
-                .eq('id', selectedConversation.id)
-                .then(({ error }) => {
-                  if (error) console.error('[AdminCustomerService] Error updating issue label:', error);
-                });
-            }
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('[AdminCustomerService] Messages subscription status:', status);
-      });
+    // const messagesChannel = supabase
+    //   .channel(`admin-messages-${selectedConversation.id}`)
+    //   .on(
+    //     'postgres_changes',
+    //     {
+    //       event: 'INSERT',
+    //       schema: 'public',
+    //       table: 'messages',
+    //       filter: `conversation_id=eq.${selectedConversation.id}`,
+    //     },
+    //     (payload) => {
+    //       console.log('[AdminCustomerService] Realtime message received:', payload);
+    //       const newMessage = payload.new as any;
+    //       
+    //       // Prevent duplicates
+    //       if (processedMessageIds.current.has(newMessage.id)) {
+    //         console.log('[AdminCustomerService] Duplicate message ignored:', newMessage.id);
+    //         return;
+    //       }
+    //       processedMessageIds.current.add(newMessage.id);
+    //       
+    //       const transformedMsg = {
+    //         id: newMessage.id,
+    //         conversation_id: newMessage.conversation_id,
+    //         user_id: newMessage.sender === 'user' ? 'user' : 'admin',
+    //         content: newMessage.message,
+    //         created_at: newMessage.created_at,
+    //         attachment_url: newMessage.attachment_url,
+    //         attachment_type: newMessage.attachment_type,
+    //         attachment_name: newMessage.attachment_name,
+    //         attachment_size: newMessage.attachment_size,
+    //       };
+    //       
+    //       setMessages((prev) => {
+    //         const exists = prev.some(m => m.id === transformedMsg.id);
+    //         if (exists) return prev;
+    //         return [...prev, transformedMsg];
+    //       });
+    //       
+    //       // Show notification for user messages
+    //       if (newMessage.sender === 'user') {
+    //         toast.info('New message from customer');
+    //         fetchConversations();
+    //         // Auto-generate AI suggestion for new customer message
+    //         const suggestions = generateAISuggestions(newMessage.message || '');
+    //         setAiSuggestions(suggestions);
+    //         // Auto-detect and save issue label
+    //         const label = detectIssueLabel(newMessage.message || '');
+    //         if (label && label !== 'General Inquiry') {
+    //           supabase
+    //             .from('conversations')
+    //             .update({ issue_label: label })
+    //             .eq('id', selectedConversation.id)
+    //             .then(({ error }) => {
+    //               if (error) console.error('[AdminCustomerService] Error updating issue label:', error);
+    //             });
+    //         }
+    //       }
+    //     }
+    //   )
+    //   .subscribe((status) => {
+    //     console.log('[AdminCustomerService] Messages subscription status:', status);
+    //   });
 
     // Subscribe to conversation status changes
-    const conversationChannel = supabase
-      .channel(`admin-conversation-${selectedConversation.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'conversations',
-          filter: `id=eq.${selectedConversation.id}`,
-        },
-        (payload) => {
-          console.log('[AdminCustomerService] Conversation status update:', payload);
-          const updated = payload.new as any;
-          
-          setSelectedConversation(prev => prev ? { 
-            ...prev, 
-            status: updated.status,
-            updated_at: updated.updated_at 
-          } : null);
-          
-          fetchConversations();
-        }
-      )
-      .subscribe((status) => {
-        console.log('[AdminCustomerService] Conversation subscription status:', status);
-      });
+    // const conversationChannel = supabase
+    //   .channel(`admin-conversation-${selectedConversation.id}`)
+    //   .on(
+    //     'postgres_changes',
+    //     {
+    //       event: 'UPDATE',
+    //       schema: 'public',
+    //       table: 'conversations',
+    //       filter: `id=eq.${selectedConversation.id}`,
+    //     },
+    //     (payload) => {
+    //       console.log('[AdminCustomerService] Conversation status update:', payload);
+    //       const updated = payload.new as any;
+    //       
+    //       setSelectedConversation(prev => prev ? { 
+    //         ...prev, 
+    //         status: updated.status,
+    //         updated_at: updated.updated_at 
+    //       } : null);
+    //       
+    //       fetchConversations();
+    //     }
+    //   )
+    //   .subscribe((status) => {
+    //     console.log('[AdminCustomerService] Conversation subscription status:', status);
+    //   });
 
-    subscriptionsRef.current = [messagesChannel, conversationChannel];
+    // subscriptionsRef.current = [messagesChannel, conversationChannel];
 
     return () => {
       console.log('[AdminCustomerService] Removing realtime subscriptions');
-      supabase.removeChannel(messagesChannel);
-      supabase.removeChannel(conversationChannel);
+      // supabase.removeChannel(messagesChannel);
+      // supabase.removeChannel(conversationChannel);
       subscriptionsRef.current = [];
     };
   }, [selectedConversation?.id]);
 
   // Real-time subscription for ALL new messages (to update conversation list)
+  // COMMENTED OUT: Duplicate realtime subscriptions causing database lock loop
   useEffect(() => {
-    const messagesChannel = supabase
-      .channel('admin-all-messages')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-        },
-        (payload) => {
-          console.log('🔥 New message received (all):', payload);
-          // Refresh conversations to show updated last message
-          fetchConversations();
-        }
-      )
-      .subscribe();
+    // const messagesChannel = supabase
+    //   .channel('admin-all-messages')
+    //   .on(
+    //     'postgres_changes',
+    //     {
+    //       event: 'INSERT',
+    //       schema: 'public',
+    //       table: 'messages',
+    //     },
+    //     (payload) => {
+    //       console.log('🔥 New message received (all):', payload);
+    //       // Refresh conversations to show updated last message
+    //       fetchConversations();
+    //     }
+    //   )
+    //   .subscribe();
 
     return () => {
-      supabase.removeChannel(messagesChannel);
+      // supabase.removeChannel(messagesChannel);
     };
   }, []);
 
   // Real-time subscription for new conversations
+  // COMMENTED OUT: Duplicate realtime subscriptions causing database lock loop
   useEffect(() => {
-    const conversationsChannel = supabase
-      .channel('admin-conversations')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'conversations',
-        },
-        (payload) => {
-          console.log('🔥 New conversation received:', payload);
-          fetchConversations();
-        }
-      )
-      .subscribe();
+    // const conversationsChannel = supabase
+    //   .channel('admin-conversations')
+    //   .on(
+    //     'postgres_changes',
+    //     {
+    //       event: 'INSERT',
+    //       schema: 'public',
+    //       table: 'conversations',
+    //     },
+    //     (payload) => {
+    //       console.log('🔥 New conversation received:', payload);
+    //       fetchConversations();
+    //     }
+    //   )
+    //   .subscribe();
 
     return () => {
-      supabase.removeChannel(conversationsChannel);
+      // supabase.removeChannel(conversationsChannel);
     };
   }, []);
 
@@ -1446,6 +1522,23 @@ const AdminCustomerService: React.FC = () => {
                         className="flex-1 px-3 py-2 md:px-4 md:py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-pink-500 transition-all"
                       />
                       
+                      {/* AI Generate Button */}
+                      <button
+                        onClick={generateAIReply}
+                        disabled={isGeneratingReply || !selectedConversation || messages.length === 0}
+                        className="px-3 py-2 md:px-4 md:py-3 backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-xl text-white hover:bg-slate-800/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        title="Generate AI Answer"
+                      >
+                        {isGeneratingReply ? (
+                          <div className="w-4 h-4 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin" />
+                        ) : (
+                          <Sparkles className="w-4 h-4 text-violet-400" />
+                        )}
+                        <span className="hidden sm:inline text-sm bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent font-medium">
+                          Generate AI Answer
+                        </span>
+                      </button>
+                      
                       {/* Send Button */}
                       <button
                         onClick={sendReply}
@@ -1462,6 +1555,42 @@ const AdminCustomerService: React.FC = () => {
                         )}
                       </button>
                     </div>
+
+                    {/* AI Generated Reply Display */}
+                    {aiGeneratedReply && (
+                      <div className="mt-3 p-4 backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-xl">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent">
+                            ✨ AI Generated Reply
+                          </span>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={copyAIReply}
+                              className="px-3 py-1 text-xs bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 transition-all flex items-center gap-1"
+                            >
+                              <Copy className="w-3 h-3" />
+                              Copy
+                            </button>
+                            <button
+                              onClick={useAIReply}
+                              className="px-3 py-1 text-xs bg-gradient-to-r from-violet-500 to-purple-600 rounded-lg text-white hover:from-violet-600 hover:to-purple-700 transition-all flex items-center gap-1"
+                            >
+                              <CheckCircle className="w-3 h-3" />
+                              Use Reply
+                            </button>
+                            <button
+                              onClick={() => setAiGeneratedReply('')}
+                              className="px-3 py-1 text-xs bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 transition-all"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="bg-white/5 rounded-lg p-3 text-white/90 text-sm whitespace-pre-wrap max-h-40 overflow-y-auto">
+                          {aiGeneratedReply}
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>

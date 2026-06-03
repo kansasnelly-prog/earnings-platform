@@ -927,7 +927,7 @@ const MainAdminPanel: React.FC = () => {
                 size="sm"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                className="border-slate-600 text-slate-300 hover:bg-slate-800/50"
               >
                 <RefreshCw size={14} className={`mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
                 Refresh
@@ -1072,7 +1072,7 @@ const MainAdminPanel: React.FC = () => {
                     <CardContent>
                       <div className="space-y-3">
                         {users.slice(0, 5).map((user) => (
-                          <div key={user.id} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
+                          <div key={user.id} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                                 <span className="text-xs font-bold text-white">{(user.display_name || user.email || 'U').charAt(0).toUpperCase()}</span>
@@ -1102,7 +1102,7 @@ const MainAdminPanel: React.FC = () => {
                     <CardContent>
                       <div className="space-y-3">
                         {withdrawals.filter(w => w.status === 'pending').slice(0, 5).map(w => (
-                          <div key={w.id} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
+                          <div key={w.id} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
                             <div>
                               <p className="text-sm font-medium text-white">{w.user_name}</p>
                               <p className="text-xs text-slate-400 font-mono truncate max-w-[160px]">{w.wallet_address}</p>
@@ -1150,7 +1150,7 @@ const MainAdminPanel: React.FC = () => {
                 <div className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-slate-700/50">
+                      <thead className="bg-slate-800/50">
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">User</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Type</th>
@@ -1161,9 +1161,9 @@ const MainAdminPanel: React.FC = () => {
                           <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-700">
+                      <tbody className="divide-y divide-slate-800">
                         {users.map((user) => (
-                          <tr key={user.id} className="hover:bg-slate-700/30 transition-colors">
+                          <tr key={user.id} className="hover:bg-slate-800/30 transition-colors">
                             <td className="px-4 py-3">
                               <div>
                                 <p className="text-sm font-medium text-white">{user.display_name || user.email?.split('@')[0]}</p>
@@ -1294,7 +1294,7 @@ const MainAdminPanel: React.FC = () => {
                         type="number"
                         value={balanceAmount}
                         onChange={(e) => setBalanceAmount(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter amount"
                         min="0"
                         step="0.01"
@@ -1306,7 +1306,7 @@ const MainAdminPanel: React.FC = () => {
                         type="text"
                         value={balanceReason}
                         onChange={(e) => setBalanceReason(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter reason (optional)"
                       />
                     </div>
@@ -1324,7 +1324,7 @@ const MainAdminPanel: React.FC = () => {
                           setBalanceReason('');
                           setSelectedUser(null);
                         }}
-                        className="flex-1 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                        className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800/50 transition-colors"
                       >
                         Cancel
                       </button>
@@ -1351,7 +1351,7 @@ const MainAdminPanel: React.FC = () => {
                       <select
                         value={newVipLevel}
                         onChange={(e) => setNewVipLevel(parseInt(e.target.value))}
-                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value={1}>VIP1 Bronze</option>
                         <option value={2}>VIP2 Silver</option>
@@ -1372,7 +1372,7 @@ const MainAdminPanel: React.FC = () => {
                           setVipModalOpen(false);
                           setSelectedUser(null);
                         }}
-                        className="flex-1 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                        className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800/50 transition-colors"
                       >
                         Cancel
                       </button>
@@ -1434,7 +1434,7 @@ const MainAdminPanel: React.FC = () => {
                           setUserDetailsModalOpen(false);
                           setSelectedUser(null);
                         }}
-                        className="flex-1 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                        className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800/50 transition-colors"
                       >
                         Close
                       </button>
@@ -1452,7 +1452,7 @@ const MainAdminPanel: React.FC = () => {
                   <p className="text-sm text-slate-400 mb-4">
                     Are you sure you want to delete this user?
                   </p>
-                  <div className="bg-slate-700/50 rounded-lg p-3 mb-4">
+                  <div className="bg-slate-800/50 rounded-lg p-3 mb-4">
                     <p className="text-sm text-white">{selectedUser.display_name || selectedUser.email}</p>
                     <p className="text-xs text-slate-400">{selectedUser.email}</p>
                   </div>
@@ -1497,7 +1497,7 @@ const MainAdminPanel: React.FC = () => {
                 <div className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-slate-700/50">
+                      <thead className="bg-slate-800/50">
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">User</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Amount</th>
@@ -1507,9 +1507,9 @@ const MainAdminPanel: React.FC = () => {
                           <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-700">
+                      <tbody className="divide-y divide-slate-800">
                         {withdrawals.map((w) => (
-                          <tr key={w.id} className="hover:bg-slate-700/30 transition-colors">
+                          <tr key={w.id} className="hover:bg-slate-800/30 transition-colors">
                             <td className="px-4 py-3">
                               <div>
                                 <p className="text-sm font-medium text-white">{w.user_name}</p>

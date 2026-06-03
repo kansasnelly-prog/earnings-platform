@@ -196,11 +196,11 @@ const AIAssistantWorkspace: FC = () => {
   }, []);
 
   if (loading) {
-    return <div>Loading authentication…</div>;
+    return <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">Loading authentication…</div>;
   }
 
   if (!user) {
-    return <div>Access denied. Please log in.</div>;
+    return <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">Access denied. Please log in.</div>;
   }
 
   return (
@@ -209,33 +209,33 @@ const AIAssistantWorkspace: FC = () => {
       awardCoins: completeTaskAndAwardCoins,
       refreshNellyCoinState: async () => {}
     }}>
-      <div className="space-y-8 p-4">
-        <h1 className="text-2xl font-bold">Admin Workspace</h1>
-        <p className="text-sm text-gray-600">AI Service Status: {aiStatus}</p>
+      <div className="min-h-screen bg-slate-950 text-slate-100 backdrop-blur-xl space-y-8 p-4">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent">Admin Workspace</h1>
+        <p className="text-sm text-slate-400">AI Service Status: {aiStatus}</p>
         
         {/* NELLYCOIN ECONOMY MANAGER - Premium 3D Summary Card */}
         <section className="mt-8">
           <div 
-            className="bg-gradient-to-br from-amber-500/20 to-orange-600/20 backdrop-blur-xl rounded-2xl p-6 border border-amber-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
+            className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl p-6"
           >
-            <h2 className="text-2xl font-bold text-amber-400 mb-4 flex items-center gap-2">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-4 flex items-center gap-2">
               <span className="text-3xl">🪙</span>
               NELLYCOIN ECONOMY MANAGER
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-black/30 rounded-xl p-4 border border-amber-500/20">
-                <p className="text-sm text-amber-300/70 font-semibold mb-1">Total Net NellyCoins</p>
+              <div className="backdrop-blur-xl bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+                <p className="text-sm text-slate-300 font-semibold mb-1">Total Net NellyCoins</p>
                 <p className="text-3xl font-bold text-amber-400">
                   {nellyCoinState.totalCoins.toLocaleString()} 🪙
                 </p>
-                <p className="text-xs text-gray-400 mt-1">Across 118 active users</p>
+                <p className="text-xs text-slate-400 mt-1">Across 118 active users</p>
               </div>
-              <div className="bg-black/30 rounded-xl p-4 border border-amber-500/20">
-                <p className="text-sm text-amber-300/70 font-semibold mb-1">Pending Dollar Payouts</p>
+              <div className="backdrop-blur-xl bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+                <p className="text-sm text-slate-300 font-semibold mb-1">Pending Dollar Payouts</p>
                 <p className="text-3xl font-bold text-green-400">
                   ${nellyCoinState.pendingPayouts.toLocaleString()}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">Awaiting admin clearance</p>
+                <p className="text-xs text-slate-400 mt-1">Awaiting admin clearance</p>
               </div>
             </div>
           </div>
@@ -243,19 +243,19 @@ const AIAssistantWorkspace: FC = () => {
 
         {/* Render the premium admin panels */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">User Management</h2>
+          <h2 className="text-xl font-semibold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-2">User Management</h2>
             <AdminUsers onLogout={logout} />
         </section>
         <section>
-          <h2 className="text-xl font-semibold mb-2">Customer Service</h2>
+          <h2 className="text-xl font-semibold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-2">Customer Service</h2>
           <AdminCustomerService />
         </section>
         <section>
-          <h2 className="text-xl font-semibold mb-2">Product Catalog</h2>
+          <h2 className="text-xl font-semibold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-2">Product Catalog</h2>
           <ProductCatalogManager />
         </section>
         <section>
-          <h2 className="text-xl font-semibold mb-2">Core Network Controls</h2>
+          <h2 className="text-xl font-semibold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-2">Core Network Controls</h2>
           <MainAdminPanel />
         </section>
       </div>

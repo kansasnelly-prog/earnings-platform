@@ -977,6 +977,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       }
       
+      // Admin redirect: Redirect admin users to AIAssistantWorkspace
+      if (dbUser.account_type === 'admin') {
+        console.log('[AppContext.login] Admin user detected, redirecting to admin workspace');
+        window.location.href = '/admin';
+        return { success: true };
+      }
+      
       toast({
         title: 'Welcome back!',
         description: `Successfully logged in as ${dbUser.display_name}`

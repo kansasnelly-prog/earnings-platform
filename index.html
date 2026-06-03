@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Cache-Control" content="max-age=0, must-revalidate" />
     
-    <!-- Aggressive Cache Buster & Crash Handler -->
+    <!-- Cache Buster - Version-based cache management -->
     <script>
       (function() {
         // Remove _t parameter from URL to keep URLs clean
@@ -61,102 +61,6 @@
           }
           return;
         }
-        
-        // Track if React app has mounted successfully
-        let appMounted = false;
-        let mountTimeout;
-        
-        // Set a timeout to detect hung loading state (15 seconds)
-        mountTimeout = setTimeout(function() {
-          if (!appMounted) {
-            console.error('[Crash Handler] App failed to mount within 15 seconds, forcing reload...');
-            try {
-              localStorage.clear();
-              sessionStorage.clear();
-            } catch(e) {}
-            
-          }
-        }, 15000);
-        
-        // Signal that app mounted successfully (called from React app)
-        window.appMounted = function() {
-          appMounted = true;
-          clearTimeout(mountTimeout);
-          console.log('[Crash Handler] App mounted successfully');
-        };
-        
-        // Global error handler - enhanced to catch module loading failures
-        window.onerror = function(msg, url, line, col, error) {
-          console.error('[Crash Handler] Global error detected:', msg, error);
-          
-          const errorMessage = msg ? msg.toString() : '';
-          const errorName = error ? error.name : '';
-          
-          // Reload on critical errors including module loading failures
-          const criticalErrors = ['TypeError', 'ReferenceError', 'SyntaxError', 'ChunkLoadError', 'LoadError'];
-          const moduleLoadKeywords = ['Failed to load module', 'Loading chunk', 'Failed to fetch dynamically imported module'];
-          
-          if (
-            criticalErrors.some(name => errorName.includes(name)) ||
-            moduleLoadKeywords.some(keyword => errorMessage.includes(keyword))
-          ) {
-            console.error('[Crash Handler] Critical error/module load failure detected, clearing caches and reloading...');
-            try {
-              localStorage.clear();
-              sessionStorage.clear();
-              
-              // Clear service worker caches
-              if ('serviceWorker' in navigator && navigator.serviceWorker) {
-                navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                  registrations.forEach(function(registration) {
-                    registration.unregister();
-                  });
-                }).catch(function(e) {
-                  console.error('[Crash Handler] Failed to unregister service workers:', e);
-                });
-              }
-            } catch(e) {}
-            setTimeout(function() {
-              
-            }, 500);
-          }
-          
-          // Return false to prevent default error handling
-          return false;
-        };
-        
-        // Unhandled promise rejection handler - enhanced for module failures
-        window.addEventListener('unhandledrejection', function(event) {
-          console.error('[Crash Handler] Unhandled promise rejection:', event.reason);
-          
-          // Only reload on critical rejections
-          if (event.reason && typeof event.reason === 'object') {
-            const reasonStr = event.reason.toString().toLowerCase();
-            const criticalKeywords = ['chunk', 'load', 'network', 'fetch', 'timeout', 'module'];
-            
-            if (criticalKeywords.some(keyword => reasonStr.includes(keyword))) {
-              console.error('[Crash Handler] Critical promise rejection/module load failure, clearing caches and reloading...');
-              try {
-                localStorage.clear();
-                sessionStorage.clear();
-                
-                // Clear service worker caches
-                if ('serviceWorker' in navigator && navigator.serviceWorker) {
-                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    registrations.forEach(function(registration) {
-                      registration.unregister();
-                    });
-                  }).catch(function(e) {
-                    console.error('[Crash Handler] Failed to unregister service workers:', e);
-                  });
-                }
-              } catch(e) {}
-              setTimeout(function() {
-                
-              }, 500);
-            }
-          }
-        });
         
         console.log('[Cache Buster] Initialized with version:', CACHE_BUSTER_VERSION);
       })();

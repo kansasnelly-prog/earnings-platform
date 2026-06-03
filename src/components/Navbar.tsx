@@ -2,13 +2,21 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 import { useCSNotification } from '@/contexts/CSNotificationContext';
-import { LogOut, User, ChevronDown, Zap, LayoutDashboard, Wallet, ArrowDownToLine, UserCircle, Menu, X, Shield, MessageCircle, ExternalLink, RefreshCw, Badge, Settings, BarChart3 } from 'lucide-react';
+import { LogOut, User, ChevronDown, Zap, LayoutDashboard, Wallet, ArrowDownToLine, UserCircle, Menu, X, Shield, MessageCircle, ExternalLink, RefreshCw, Badge, Settings, BarChart3, LucideIcon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
+
+interface NavItem {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  hasBadge?: boolean;
+}
+
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const context = useAppContext();
@@ -53,7 +61,7 @@ const openLogin = () => {
     setAuthModalTab('register');
     setAuthModalOpen(true);
   };
-const navItems = [{
+const navItems: NavItem[] = [{
     id: 'dashboard',
     label: 'Dashboard',
     icon: LayoutDashboard
@@ -74,14 +82,6 @@ const navItems = [{
     label: 'Profile',
     icon: UserCircle
   }, {
-    id: 'settings',
-    label: 'Settings',
-    icon: Settings
-  }, {
-    id: 'monetization',
-    label: 'Monetization',
-    icon: BarChart3
-  }, {
     id: 'about',
     label: 'About',
     icon: Shield
@@ -92,13 +92,23 @@ const navItems = [{
     hasBadge: true
   }];
 
+  const adminNavItems: NavItem[] = [{
+    id: 'settings',
+    label: 'Settings',
+    icon: Settings
+  }, {
+    id: 'monetization',
+    label: 'Monetization',
+    icon: BarChart3
+  }, {
+    id: 'admin',
+    label: 'Admin',
+    icon: Shield
+  }];
+
   const allNavItems = user?.account_type === 'admin' ? [
     ...navItems,
-    {
-      id: 'admin',
-      label: 'Admin',
-      icon: Shield
-    }
+    ...adminNavItems
   ] : navItems;
   return (
     <>

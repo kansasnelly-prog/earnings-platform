@@ -133,21 +133,28 @@ export class TelegramService {
         if (fetchError instanceof Error) {
           if (fetchError.name === 'AbortError') {
             console.warn('[TelegramService] Notification request timed out (15s)');
-          } else if (fetchError.message.includes('SSL') || fetchError.message.includes('ERR_SSL')) {
-            console.warn('[TelegramService] SSL/TLS error - notification skipped:', fetchError.message);
-          } else {
-            console.warn('[TelegramService] Network error - notification skipped:', fetchError.message);
-          }
-        }
-        
-        // Gracefully return false without throwing - don't block app logic
-        return false;
+         } else if (fetchError.message.includes('SSL') || fetchError.message.includes('ERR_SSL')) {
+           // Suppress error output in local development
+           if (window.location.hostname !== 'localhost') {
+             console.warn('[TelegramService] SSL/TLS error - notification skipped:', fetchError.message);
+           }
+         } else {
+           if (window.location.hostname !== 'localhost') {
+             console.warn('[TelegramService] Network error - notification skipped:', fetchError.message);
+           }
+         }
+       }
+       
+       // Gracefully return false without throwing - don't block app logic
+       return false;
       }
 
     } catch (error) {
-      console.error('[TelegramService] Exception sending notification:', error);
-      // Gracefully return false without throwing - don't block app logic
-      return false;
+       if (window.location.hostname !== 'localhost') {
+         console.error('[TelegramService] Exception sending notification:', error);
+       }
+       // Gracefully return false without throwing - don't block app logic
+       return false;
     }
   }
 

@@ -770,13 +770,11 @@ const AdminCustomerService: React.FC = () => {
 
   const fetchConversations = useCallback(async () => {
     if (isFetchingRef.current) {
-      console.log('[AdminCustomerService] Skipping fetch - already in progress');
       return;
     }
 
     isFetchingRef.current = true;
     setIsLoading(true);
-    console.log('[AdminCustomerService] Fetching conversations...');
 
     try {
       const { data, error } = await supabase
@@ -813,7 +811,6 @@ const AdminCustomerService: React.FC = () => {
         })
       );
 
-      console.log('[AdminCustomerService] Fetched', conversationsWithLastMessage.length, 'conversations');
       setConversations(conversationsWithLastMessage);
       setError(null);
     } catch (err: any) {

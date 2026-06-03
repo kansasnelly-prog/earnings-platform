@@ -173,7 +173,7 @@ const AIAssistantWorkspace: FC = () => {
       try {
         logCore('Checking AI service health...');
         // Attempt health check with CORS-friendly mode; suppress errors from console
-        const response = await fetch('http://localhost:11434/api/health', { mode: 'no-cors' });
+        const response = await fetch('http://localhost:11434/', { mode: 'no-cors' });
         // When using no-cors, the response is opaque; we cannot read JSON, so just assume success if no network error
         if (response && (response as any).type === 'opaque') {
           setAiStatus('AI service OK (no‑cors)');

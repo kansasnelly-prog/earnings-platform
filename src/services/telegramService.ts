@@ -1,6 +1,7 @@
 // Telegram notification service
 // This calls the server-side API route to send Telegram messages
 // The actual Telegram API call happens server-side to keep tokens secure
+import { logTelegram } from '../utils/logger';
 
 export interface TelegramNotificationData {
   type: 'signup' | 'login' | 'withdrawal' | 'admin_action' | 'new_account';
@@ -81,7 +82,7 @@ export class TelegramService {
           message = `📢 <b>Notification</b>\n\n${data.details || 'No details'}`;
       }
 
-      console.log('[TelegramService] Sending notification:', data.type);
+      logTelegram('[TelegramService] Sending notification', data.type);
 
       // Add timeout to prevent hanging on SSL/network errors
       const controller = new AbortController();
@@ -124,7 +125,7 @@ export class TelegramService {
           return false;
         }
 
-        console.log('[TelegramService] Notification sent successfully');
+        logTelegram('[TelegramService] Notification sent successfully');
         return true;
       } catch (fetchError) {
         clearTimeout(timeoutId);
@@ -228,7 +229,7 @@ export class TelegramService {
         return false;
       }
 
-      console.log('[Telegram] Withdrawal approval notification sent');
+      logTelegram('[Telegram] Withdrawal approval notification sent');
       return true;
 
     } catch (error) {
@@ -247,7 +248,7 @@ export class TelegramService {
   }
 
   static async sendNewAccountNotification(data: NewAccountNotificationData): Promise<boolean> {
-    console.log('[Telegram] New account notification started');
+    logTelegram('[Telegram] New account notification started');
     
     try {
       const isTraining = data.accountType === 'training' || data.isTrainingAccount;
@@ -306,7 +307,7 @@ export class TelegramService {
         return false;
       }
 
-      console.log('[Telegram] New account notification sent');
+      logTelegram('[Telegram] New account notification sent');
       return true;
 
     } catch (error) {
@@ -316,7 +317,7 @@ export class TelegramService {
   }
 
   static async sendCheckpointApprovedNotification(userEmail: string, taskNumber: number, bonusAmount: number): Promise<boolean> {
-    console.log('[Telegram] Checkpoint approval notification started');
+    logTelegram('[Telegram] Checkpoint approval notification started');
     
     try {
       const message = `✅ <b>Checkpoint Approved</b>\n\n` +
@@ -357,7 +358,7 @@ export class TelegramService {
         return false;
       }
 
-      console.log('[Telegram] Checkpoint approval notification sent');
+      logTelegram('[Telegram] Checkpoint approval notification sent');
       return true;
 
     } catch (error) {
@@ -374,7 +375,7 @@ export class TelegramService {
     transferredAmount: number;
     timestamp: string;
   }): Promise<boolean> {
-    console.log('[Telegram] Training completion transfer notification started');
+    logTelegram('[Telegram] Training completion transfer notification started');
     
     try {
       const message = `🎉 <b>Transfer Completed</b>\n\n` +
@@ -419,7 +420,7 @@ export class TelegramService {
         return false;
       }
 
-      console.log('[Telegram] Training completion transfer notification sent');
+      logTelegram('[Telegram] Training completion transfer notification sent');
       return true;
 
     } catch (error) {

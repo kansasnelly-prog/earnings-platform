@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { TelegramService } from '@/services/telegramService';
 import { SupabaseService } from '@/services/supabaseService';
+import { logCore, logSupabase, logAdmin, logError, logTelegram } from '@/utils/logger';
 import {
   LayoutDashboard, Users, ArrowDownToLine, RefreshCw, Shield, ChevronLeft,
   BarChart3, Activity, LogIn, Headphones, Settings, UserPlus,
@@ -74,7 +75,7 @@ interface RealStats {
 }
 
 const MainAdminPanel: React.FC = () => {
-  console.log("🚀 MainAdminPanel COMPONENT RENDERED");
+  logCore('MainAdminPanel COMPONENT RENDERED');
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'pending-orders' | 'customer-service' | 'product-catalog' | 'admin-controls' | 'create-account' | 'password-reset'>('overview');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -83,7 +84,7 @@ const MainAdminPanel: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'error'>('connected');
 
-  console.log("🚀 Current isAuthenticated state:", isAuthenticated);
+  logCore('Current isAuthenticated state', isAuthenticated);
 
   const [stats, setStats] = useState<RealStats>({
     totalUsers: 0, totalPayouts: 0, pendingPayouts: 0, totalBalance: 0,
@@ -114,21 +115,21 @@ const MainAdminPanel: React.FC = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      console.log("ADMIN INIT: Checking Supabase Auth session");
+      logCore('ADMIN INIT: Checking Supabase Auth session');
 
       // Check if the user is actually online before making the network request
       if (!navigator.onLine) {
-        console.warn("[ADMIN INIT] No internet connection detected. Skipping token refresh.");
+        logCore('[ADMIN INIT] No internet connection detected. Skipping token refresh.');
         setIsInitialized(true);
         return;
       }
 
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        console.log("ADMIN INIT: Supabase session:", session ? 'Found' : 'Not found');
+        logCore('ADMIN INIT: Supabase session', session ? 'Found' : 'Not found');
 
         if (error) {
-          console.error("ADMIN INIT: Session check error:", error);
+          logError('ADMIN INIT: Session check error', error);
           // Clear stale session and tokens on any auth error
           await supabase.auth.signOut();
           localStorage.removeItem('supabase.auth.token');
@@ -140,7 +141,7 @@ const MainAdminPanel: React.FC = () => {
         }
 
         if (!session) {
-          console.log("ADMIN INIT: No session found, redirecting to main site to login");
+          logCore('ADMIN INIT: No session found, redirecting to main site to login');
           setIsAuthenticated(false);
           setIsInitialized(true);
           navigate('/');
@@ -155,7 +156,7 @@ const MainAdminPanel: React.FC = () => {
           .single();
 
         if (userError || !userData) {
-          console.error("ADMIN INIT: User data fetch error:", userError);
+          logError('ADMIN INIT: User data fetch error', userError);
           setIsAuthenticated(false);
           setIsInitialized(true);
           navigate('/');
@@ -163,24 +164,24 @@ const MainAdminPanel: React.FC = () => {
         }
 
         if (userData.account_type !== 'admin') {
-          console.log("ADMIN INIT: User is not admin, account_type:", userData.account_type);
+          logCore('ADMIN INIT: User is not admin, account_type', userData.account_type);
           setIsAuthenticated(false);
           setIsInitialized(true);
           navigate('/');
           return;
         }
 
-        console.log("ADMIN INIT: User is admin, authenticated");
+        logCore('ADMIN INIT: User is admin, authenticated');
         setIsAuthenticated(true);
         setIsInitialized(true);
         loadData();
       } catch (error) {
         // Gracefully handle the "Failed to fetch" network error
         if (error?.message === 'Failed to fetch' || error?.name === 'TypeError') {
-          console.log("[ADMIN INIT] Network request failed. Will retry when connection is restored.");
+          logCore('[ADMIN INIT] Network request failed. Will retry when connection is restored.');
           setIsInitialized(true);
         } else {
-          console.error("ADMIN INIT: Unexpected error during auth check:", error);
+          logError('ADMIN INIT: Unexpected error during auth check', error);
           // Clear stale session and tokens on any error
           await supabase.auth.signOut();
           localStorage.removeItem('supabase.auth.token');
@@ -194,7 +195,7 @@ const MainAdminPanel: React.FC = () => {
 
     // Automatically try again the exact moment the internet comes back
     const handleOnline = () => {
-      console.log("[ADMIN INIT] Internet is back! Reloading session...");
+      logCore('[ADMIN INIT] Internet is back! Reloading session...');
       checkAuth();
     };
 
@@ -212,12 +213,12 @@ const MainAdminPanel: React.FC = () => {
 
   const loadData = async (showRefreshToast = false) => {
     setIsLoading(true);
-    console.log('[MainAdmin] Starting data load...');
-    console.log('[MainAdmin] Loading state set to true');
+    logCore('[MainAdmin] Starting data load...');
+    logCore('[MainAdmin] Loading state set to true');
 
     // Add timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
-      console.error('[MainAdmin] Data load timed out after 30 seconds');
+      logError('[MainAdmin] Data load timed out after 30 seconds');
       setIsLoading(false);
       setIsRefreshing(false);
       toast({
@@ -228,11 +229,11 @@ const MainAdminPanel: React.FC = () => {
     }, 30000);
     
     try {
-      console.log('[MainAdmin] Loading data from Supabase...');
+      logSupabase('[MainAdmin] Loading data from Supabase...');
       
       // Get current session for consistent auth
       const { data: sessionData } = await supabase.auth.getSession();
-      console.log('[MainAdmin] Current session:', sessionData.session ? 'Authenticated' : 'Not authenticated');
+      logSupabase('[MainAdmin] Current session', sessionData.session ? 'Authenticated' : 'Not authenticated');
       
       // Test connection with cache-busting
       const { error: connectionError } = await supabase
@@ -241,13 +242,13 @@ const MainAdminPanel: React.FC = () => {
         .abortSignal(AbortSignal.timeout(5000));
         
       if (connectionError) {
-        console.error('[MainAdmin] Connection test failed:', connectionError);
+        logError('[MainAdmin] Connection test failed', connectionError);
         setConnectionStatus('error');
 
         clearTimeout(timeoutId);
         setIsLoading(false);
         setIsRefreshing(false);
-        console.log('[MainAdmin] Loading state reset due to connection error');
+        logCore('[MainAdmin] Loading state reset due to connection error');
         toast({
           title: 'Connection Error',
           description: 'Cannot connect to database. Please check your internet connection.',
@@ -259,14 +260,14 @@ const MainAdminPanel: React.FC = () => {
       setConnectionStatus('connected');
       
       // Fetch users from Supabase with cache busting
-      console.log('[MainAdmin] Fetching users from Supabase...');
+      logSupabase('[MainAdmin] Fetching users from Supabase...');
       const { data: usersData, error: usersError } = await supabase
         .from('users')
         .select('*')
         .order('created_at', { ascending: false })
         .abortSignal(AbortSignal.timeout(10000));
       
-      console.log('[MainAdmin] Users fetch result:', { 
+      logSupabase('[MainAdmin] Users fetch result', { 
         hasError: !!usersError, 
         errorMessage: usersError?.message,
         errorCode: usersError?.code,
@@ -275,21 +276,21 @@ const MainAdminPanel: React.FC = () => {
       });
       
       if (usersError) {
-        console.error('[MainAdmin] Users fetch error:', usersError);
+        logError('[MainAdmin] Users fetch error', usersError);
         toast({ 
           title: 'Error', 
           description: 'Failed to load users: ' + usersError.message,
           variant: 'destructive'
         });
       } else if (!usersData || usersData.length === 0) {
-        console.warn('[MainAdmin] No users returned from Supabase - this may indicate a connection or permissions issue');
+        logCore('[MainAdmin] No users returned from Supabase - this may indicate a connection or permissions issue');
         // Try one more time with a simpler query
-        console.log('[MainAdmin] Retrying with count query...');
+        logSupabase('[MainAdmin] Retrying with count query...');
         const { count, error: countError } = await supabase
           .from('users')
           .select('*', { count: 'exact', head: true });
         
-        console.log('[MainAdmin] Count query result:', { count, countError: countError?.message });
+        logSupabase('[MainAdmin] Count query result', { count, countError: countError?.message });
         
         if (count && count > 0) {
           // Users exist but we couldn't fetch them - likely an RLS or permissions issue
@@ -302,7 +303,7 @@ const MainAdminPanel: React.FC = () => {
         
         setUsers([]);
       } else {
-        console.log('[MainAdmin] Loaded', usersData.length, 'users successfully');
+        logSupabase('[MainAdmin] Loaded', usersData.length, 'users successfully');
         // Process users with account status
         const processedUsers = usersData.map(user => ({
           ...user,
@@ -318,9 +319,9 @@ const MainAdminPanel: React.FC = () => {
         .order('created_at', { ascending: false });
       
       if (withdrawalsError) {
-        console.error('[MainAdmin] Withdrawals fetch error:', withdrawalsError);
+        logError('[MainAdmin] Withdrawals fetch error', withdrawalsError);
       } else {
-        console.log('[MainAdmin] Loaded', withdrawalsData?.length || 0, 'withdrawals');
+        logSupabase('[MainAdmin] Loaded', withdrawalsData?.length || 0, 'withdrawals');
         // Enrich withdrawals with user data
         const enrichedWithdrawals = (withdrawalsData || []).map((w) => {
           const user = usersData?.find((u: RealUser) => u.id === w.user_id);
@@ -361,7 +362,7 @@ const MainAdminPanel: React.FC = () => {
         });
       }
 
-      console.log('[MainAdmin] Data load completed successfully');
+      logCore('[MainAdmin] Data load completed successfully');
 
       // Send Telegram notification for admin session initialization (only on initial load, not refresh)
       if (!showRefreshToast && users.length > 0) {
@@ -377,14 +378,14 @@ const MainAdminPanel: React.FC = () => {
               timestamp: new Date().toISOString()
             }
           });
-          console.log('[MainAdmin] Telegram notification sent for admin panel load');
+          logTelegram('[MainAdmin] Telegram notification sent for admin panel load');
         } catch (telegramError) {
-          console.error('[MainAdmin] Failed to send Telegram notification:', telegramError);
+          logError('[MainAdmin] Failed to send Telegram notification', telegramError);
           // Don't block the app if Telegram notification fails
         }
       }
     } catch (err) {
-      console.error('[MainAdmin] Data load failed:', err);
+      logError('[MainAdmin] Data load failed', err);
       toast({
         title: 'Error',
         description: 'Failed to load admin data: ' + (err as Error).message,
@@ -394,7 +395,7 @@ const MainAdminPanel: React.FC = () => {
       clearTimeout(timeoutId);
       setIsLoading(false);
       setIsRefreshing(false);
-      console.log('[MainAdmin] Loading state reset to false');
+      logCore('[MainAdmin] Loading state reset to false');
     }
   };
 
@@ -735,7 +736,7 @@ const MainAdminPanel: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching pending orders:', error);
+        logError('Error fetching pending orders', error);
         toast({
           title: 'Error',
           description: 'Failed to load pending orders',
@@ -746,7 +747,7 @@ const MainAdminPanel: React.FC = () => {
 
       setPendingOrderUsers(data || []);
     } catch (error) {
-      console.error('Exception loading pending orders:', error);
+      logError('Exception loading pending orders', error);
     }
   };
 
@@ -773,7 +774,7 @@ const MainAdminPanel: React.FC = () => {
       });
 
       if (error) {
-        console.error('Error clearing pending order:', error);
+        logError('Error clearing pending order', error);
         toast({
           title: 'Error',
           description: error.message || 'Failed to clear pending order',
@@ -815,7 +816,7 @@ const MainAdminPanel: React.FC = () => {
         });
       }
     } catch (error: any) {
-      console.error('Exception clearing pending order:', error);
+      logError('Exception clearing pending order', error);
       toast({
         title: 'Error',
         description: error.message || 'Failed to clear pending order',
@@ -1120,7 +1121,7 @@ const MainAdminPanel: React.FC = () => {
             {/* Users Tab */}
             {activeTab === 'users' && (
               <>
-                {console.log('[MainAdmin] Rendering USERS tab, users count:', users.length)}
+                {logCore('[MainAdmin] Rendering USERS tab, users count', users.length)}
                 <AdminUsers onLogout={handleLogout} />
               </>
             )}

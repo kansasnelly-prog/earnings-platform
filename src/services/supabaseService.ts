@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { TelegramService } from './telegramService';
 import { toast } from '@/components/ui/use-toast';
+import { logCore, logSupabase, logNellyCoin, logError } from '../utils/logger';
 
 // ===========================================
 // TEMPORARY FIX FOR TEST ACCOUNT
@@ -11,7 +12,7 @@ export async function fixTestAccountBonus() {
   const email = 'water@gmail.com';
   const targetBonus = 1052.43;
 
-  console.log(`[Fix Test Account Bonus] Starting fix for email: ${email}`);
+  logCore(`[Fix Test Account Bonus] Starting fix for email: ${email}`);
 
   try {
     // Step 1: Find user by querying training_accounts table
@@ -22,11 +23,11 @@ export async function fixTestAccountBonus() {
       .single();
 
     if (accountError || !trainingAccount) {
-      console.error('[Fix Test Account Bonus] Error fetching training account or not found:', accountError);
+      logError('[Fix Test Account Bonus] Error fetching training account or not found', accountError);
       return { success: false, error: 'Training account not found' };
     }
 
-    console.log(`[Fix Test Account Bonus] Found training account:`, trainingAccount);
+    logSupabase(`[Fix Test Account Bonus] Found training account`, trainingAccount);
     const userId = trainingAccount.user_id || trainingAccount.id;
 
     // Step 2: Find existing phase 2 checkpoint for this user
@@ -38,11 +39,11 @@ export async function fixTestAccountBonus() {
       .single();
 
     if (checkpointError || !checkpoint) {
-      console.error('[Fix Test Account Bonus] Error fetching checkpoint or no approved checkpoint found:', checkpointError);
+      logError('[Fix Test Account Bonus] Error fetching checkpoint or no approved checkpoint found', checkpointError);
       return { success: false, error: 'No approved checkpoint found' };
     }
 
-    console.log(`[Fix Test Account Bonus] Found checkpoint:`, {
+    logSupabase(`[Fix Test Account Bonus] Found checkpoint`, {
       id: checkpoint.id,
       current_bonus: checkpoint.bonus_amount,
       task_number: checkpoint.task_number,
@@ -60,14 +61,14 @@ export async function fixTestAccountBonus() {
       return { success: false, error: 'Failed to update bonus_amount' };
     }
 
-    console.log(`[Fix Test Account Bonus] SUCCESS: Updated bonus_amount from ${checkpoint.bonus_amount} to ${targetBonus}`);
-    console.log(`[Fix Test Account Bonus] Checkpoint ID: ${checkpoint.id}`);
-    console.log(`[Fix Test Account Bonus] User: ${email} (${userId})`);
+    logCore(`[Fix Test Account Bonus] SUCCESS: Updated bonus_amount from ${checkpoint.bonus_amount} to ${targetBonus}`);
+    logCore(`[Fix Test Account Bonus] Checkpoint ID: ${checkpoint.id}`);
+    logCore(`[Fix Test Account Bonus] User: ${email} (${userId})`);
 
     return { success: true, checkpointId: checkpoint.id, oldBonus: checkpoint.bonus_amount, newBonus: targetBonus };
 
   } catch (error: any) {
-    console.error('[Fix Test Account Bonus] Unexpected error:', error);
+    logError('[Fix Test Account Bonus] Unexpected error', error);
     return { success: false, error: error.message };
   }
 }
@@ -83,7 +84,7 @@ export async function updateFireUserForTesting() {
   const targetTotalEarned = 10.25;
   const targetAccountType = 'personal';
 
-  console.log(`[Update Fire User] Starting update for email: ${email}`);
+  logCore(`[Update Fire User] Starting update for email: ${email}`);
 
   try {
     const { data, error } = await supabase
@@ -97,23 +98,23 @@ export async function updateFireUserForTesting() {
       .select();
 
     if (error) {
-      console.error('[Update Fire User] Error updating user:', error);
+      logError('[Update Fire User] Error updating user', error);
       return { success: false, error: error.message };
     }
 
     if (data && data.length > 0) {
-      console.log(`[Update Fire User] SUCCESS: Updated user profile`);
-      console.log(`[Update Fire User] Email: ${data[0].email}`);
-      console.log(`[Update Fire User] Balance: ${data[0].balance}`);
-      console.log(`[Update Fire User] Total Earned: ${data[0].total_earned}`);
-      console.log(`[Update Fire User] Account Type: ${data[0].account_type}`);
+      logCore(`[Update Fire User] SUCCESS: Updated user profile`);
+      logCore(`[Update Fire User] Email: ${data[0].email}`);
+      logCore(`[Update Fire User] Balance: ${data[0].balance}`);
+      logCore(`[Update Fire User] Total Earned: ${data[0].total_earned}`);
+      logCore(`[Update Fire User] Account Type: ${data[0].account_type}`);
       return { success: true, user: data[0] };
     } else {
-      console.log(`[Update Fire User] No user found with email: ${email}`);
+      logCore(`[Update Fire User] No user found with email: ${email}`);
       return { success: false, error: 'User not found' };
     }
   } catch (error: any) {
-    console.error('[Update Fire User] Unexpected error:', error);
+    logError('[Update Fire User] Unexpected error', error);
     return { success: false, error: error.message };
   }
 }
@@ -688,7 +689,7 @@ export class SupabaseService {
               })
               .eq('id', userData.id);
 
-            console.log('[signUp] Linked VIP1 account to VIP2 training account:', trainingAccount.id);
+            logSupabase('[signUp] Linked VIP1 account to VIP2 training account', trainingAccount.id);
           }
         } catch (linkError) {
           console.error('[signUp] Error linking VIP1 to training account:', linkError);
@@ -839,7 +840,7 @@ export class SupabaseService {
     // Only apply training account override if the user is actually a training account
     // Personal accounts should never have their balance overridden with training account data
     if (userData.account_type !== 'training') {
-      console.log('[applyTrainingAccountOverride] Skipping override - user is not a training account:', userData.account_type);
+      logCore('[applyTrainingAccountOverride] Skipping override - user is not a training account', userData.account_type);
       return userData;
     }
 
@@ -851,7 +852,7 @@ export class SupabaseService {
         .maybeSingle();
 
       if (trainingAccount) {
-        console.log('[applyTrainingAccountOverride] Found training account, overriding tasks only (not balance)');
+        logSupabase('[applyTrainingAccountOverride] Found training account, overriding tasks only (not balance)');
         return {
           ...userData,
           // Keep balance from users table - do NOT override with training_accounts.amount
@@ -940,7 +941,7 @@ export class SupabaseService {
   
   static async updateVIP1PersonalTaskRewards(userId: string): Promise<boolean> {
     try {
-      console.log('[updateVIP1PersonalTaskRewards] Calling RPC to update rewards for user:', userId);
+      logSupabase('[updateVIP1PersonalTaskRewards] Calling RPC to update rewards for user', userId);
       
       const { data, error } = await supabase.rpc('update_vip1_personal_rewards');
       
@@ -949,7 +950,7 @@ export class SupabaseService {
         return false;
       }
       
-      console.log('[updateVIP1PersonalTaskRewards] RPC success:', data);
+      logSupabase('[updateVIP1PersonalTaskRewards] RPC success', data);
       return true;
     } catch (error: any) {
       console.error('[updateVIP1PersonalTaskRewards] Exception:', error);
@@ -983,7 +984,7 @@ export class SupabaseService {
       // CRITICAL: Admin accounts should not participate in financial logic
       if (isAdmin) {
         // Allow task creation for UI testing but with zero rewards
-        console.log(`[createTrainingTasks] Creating ${taskCount} zero-reward tasks for admin account (user: ${userId})`);
+        logCore(`[createTrainingTasks] Creating ${taskCount} zero-reward tasks for admin account (user: ${userId})`);
         const tasks = Array.from({ length: taskCount }, (_, i) => ({
           user_id: userId,
           task_number: i + 1,
@@ -1011,7 +1012,7 @@ export class SupabaseService {
       // Personal accounts: 35 tasks per set (Set 1: 35, Set 2: 35)
       const actualTaskCount = isTraining ? 45 : (isPersonal ? 35 : 45);
       const cycleLabel = isPersonal ? ` (Cycle ${personalCycle})` : '';
-      console.log(`[createTrainingTasks] Creating ${actualTaskCount} tasks for ${accountType} account${cycleLabel} (user: ${userId})`);
+      logCore(`[createTrainingTasks] Creating ${actualTaskCount} tasks for ${accountType} account${cycleLabel} (user: ${userId})`);
 
       // Define commission rate for logging (outside task loop scope)
       const commissionRate = isPersonal ? 0.005 : this.getVIPCommissionRate(vipLevel, isTraining);
@@ -1125,7 +1126,7 @@ export class SupabaseService {
           tasks[34].reward = Math.round((tasks[34].reward + roundingError) * 100) / 100;
         }
         
-        console.log(`[SupabaseService] VIP1 Personal commission distribution: First 32 tasks = $${first32Total.toFixed(2)}, Final 3 tasks = $${(tasks[32].reward + tasks[33].reward + tasks[34].reward).toFixed(2)}, Total = $${tasks.reduce((sum, task) => sum + task.reward, 0).toFixed(2)}`);
+        logNellyCoin(`[SupabaseService] VIP1 Personal commission distribution: First 32 tasks = $${first32Total.toFixed(2)}, Final 3 tasks = $${(tasks[32].reward + tasks[33].reward + tasks[34].reward).toFixed(2)}, Total = $${tasks.reduce((sum, task) => sum + task.reward, 0).toFixed(2)}`);
       }
 
       const { error } = await supabase.from('tasks').insert(tasks);
@@ -1135,7 +1136,7 @@ export class SupabaseService {
         return false;
       }
 
-      console.log(`[SupabaseService] Created ${actualTaskCount} training tasks for user ${userId} with ${isTraining ? 'Training' : 'VIP' + vipLevel} rate (${commissionRate * 100}%)`);
+      logSupabase(`[SupabaseService] Created ${actualTaskCount} training tasks for user ${userId} with ${isTraining ? 'Training' : 'VIP' + vipLevel} rate (${commissionRate * 100}%)`);
       return true;
     } catch (error) {
       console.error('Exception creating training tasks:', error);
@@ -1240,11 +1241,11 @@ export class SupabaseService {
 
       const reward = task.reward;
 
-      console.log('[completeTask] Task details:', { taskNumber, taskId: task.id, reward, task });
+      logNellyCoin('[completeTask] Task details', { taskNumber, taskId: task.id, reward, task });
 
       // Update task status - do NOT include completed_at as it doesn't exist in database schema
       const updatePayload = { status: 'completed' };
-      console.log('[TASK PATCH PAYLOAD]', updatePayload);
+      logSupabase('[TASK PATCH PAYLOAD]', updatePayload);
       
       const { error: updateError } = await supabase
         .from('tasks')
@@ -1279,7 +1280,7 @@ export class SupabaseService {
 
       // For training accounts, update training_accounts table instead of users table
       if (isTrainingAccount) {
-        console.log('[completeTask] Updating training_accounts for training account');
+        logSupabase('[completeTask] Updating training_accounts for training account');
 
         // Get current training account data
         const { data: trainingAccount, error: trainingFetchError } = await supabase
@@ -1338,7 +1339,7 @@ export class SupabaseService {
         if (isVIP1Personal && newTotalEarned > 71.63) {
           newTotalEarned = 71.63;
           // Don't cap newBalance - let it compound dynamically onto current balance
-          console.log('[completeTask] Capping VIP1 personal total_earned at $71.63, but balance continues to compound:', newBalance);
+          logNellyCoin('[completeTask] Capping VIP1 personal total_earned at $71.63, but balance continues to compound', newBalance);
         }
         
         const updateData: any = {
@@ -1369,7 +1370,7 @@ export class SupabaseService {
 
         // Check if VIP1 personal account completed a cycle (35 tasks)
         if (isVIP1Personal && newTasksCompleted >= 35 && !personalCycleCompleted) {
-          console.log('[completeTask] VIP1 personal account completed cycle', personalCycle, '(35/35 tasks)');
+          logCore('[completeTask] VIP1 personal account completed cycle', personalCycle, '(35/35 tasks)');
           
           // Mark current cycle as completed
           await supabase
@@ -1377,7 +1378,7 @@ export class SupabaseService {
             .update({ personal_cycle_completed: true })
             .eq('id', userId);
             
-          console.log('[completeTask] Set personal_cycle_completed to true for cycle', personalCycle);
+          logCore('[completeTask] Set personal_cycle_completed to true for cycle', personalCycle);
         }
         
         // Check for Personal Day 2 checkpoint at task #21 (cycle 2)
@@ -1386,7 +1387,7 @@ export class SupabaseService {
           // Check if checkpoint already exists
           const existingCheckpoint = await this.getUserPendingPersonalDay2Checkpoint(userId);
           if (!existingCheckpoint) {
-            console.log('[completeTask] Personal Day 2 checkpoint triggered at task #21 for personal account');
+            logCore('[completeTask] Personal Day 2 checkpoint triggered at task #21 for personal account');
             
             // Get products for the checkpoint
             const ProductCatalogService = (await import('@/services/productCatalogService')).default;
@@ -1435,7 +1436,7 @@ export class SupabaseService {
       // Check Phase 1 lock for VIP2 (45 tasks)
       let phase1Locked = false;
       if (isVIP2 && isPhase1 && newTasksCompleted >= 45) {
-        console.log('[completeTask] Phase 1 completed (45/45) for VIP2, locking account');
+        logCore('[completeTask] Phase 1 completed (45/45) for VIP2, locking account');
         // Lock Phase 1 - database trigger will handle this
         phase1Locked = true;
       }
@@ -1443,14 +1444,14 @@ export class SupabaseService {
       // Check Phase 2 checkpoint at task #30 for VIP2
       let phase2Checkpoint = false;
       if (isVIP2 && isPhase2 && newTasksCompleted >= 30 && user.training_phase_2_checkpoint?.status !== 'pending_review') {
-        console.log('[completeTask] Phase 2 checkpoint triggered at task #30 for VIP2');
+        logCore('[completeTask] Phase 2 checkpoint triggered at task #30 for VIP2');
         // Database trigger will handle this
         phase2Checkpoint = true;
       }
 
       // Check Phase 2 completion (45 tasks) for VIP2
       if (isVIP2 && isPhase2 && newTasksCompleted >= 45) {
-        console.log('[completeTask] Phase 2 completed (45/45) for VIP2, marking training_completed_v2');
+        logCore('[completeTask] Phase 2 completed (45/45) for VIP2, marking training_completed_v2');
         await supabase
           .from('users')
           .update({ training_completed_v2: true })
@@ -1460,7 +1461,7 @@ export class SupabaseService {
       // Check if user completed Set 1 (35 tasks) and needs auto-reset to Set 2 (VIP1 only)
       let autoResetTriggered = false;
       if (!isVIP2 && user.current_task_set === 1 && newTasksCompleted >= 35) {
-        console.log('[completeTask] Set 1 completed (35/35), triggering auto-reset to Set 2');
+        logCore('[completeTask] Set 1 completed (35/35), triggering auto-reset to Set 2');
         
         // Call the auto-reset function
         const { data: resetData, error: resetError } = await supabase.rpc('auto_reset_to_set_2', { p_user_id: userId });
@@ -1468,7 +1469,7 @@ export class SupabaseService {
         if (resetError) {
           console.error('[completeTask] Auto-reset to Set 2 failed:', resetError);
         } else {
-          console.log('[completeTask] Auto-reset to Set 2 successful:', resetData);
+          logSupabase('[completeTask] Auto-reset to Set 2 successful', resetData);
           autoResetTriggered = true;
           
           // SAFETY CHECK: Ensure personal_cycle is set to 2 (Day 2) after Set 1→Set 2 transition
@@ -1485,7 +1486,7 @@ export class SupabaseService {
           if (cycleUpdateError) {
             console.error('[completeTask] Failed to set personal_cycle to 2:', cycleUpdateError);
           } else {
-            console.log('[completeTask] Safety check passed: personal_cycle set to 2 (Day 2)');
+            logCore('[completeTask] Safety check passed: personal_cycle set to 2 (Day 2)');
           }
           
           // Create 35 new tasks for Set 2
@@ -1514,7 +1515,7 @@ export class SupabaseService {
         .single();
 
       if (userCheck?.account_type === 'admin') {
-        console.log('[createPendingOrder] Admin account - skipping financial logic');
+        logCore('[createPendingOrder] Admin account - skipping financial logic');
         return true;
       }
 
@@ -1562,7 +1563,7 @@ export class SupabaseService {
         .single();
 
       if (userCheck?.account_type === 'admin') {
-        console.log('[clearPendingOrderAndAddProfit] Admin account - skipping financial logic');
+        logCore('[clearPendingOrderAndAddProfit] Admin account - skipping financial logic');
         return { success: true, profit: 0 };
       }
 
@@ -1624,7 +1625,7 @@ export class SupabaseService {
 
   static async completeTrainingAndTransferBalance(trainingUserId: string): Promise<{ success: boolean; transferredAmount?: number; error?: string }> {
     try {
-      console.log(`[SupabaseService] Completing training for user ${trainingUserId}`);
+      logSupabase(`[SupabaseService] Completing training for user ${trainingUserId}`);
       
       // Get training account details
       const { data: trainingUser, error: trainingError } = await supabase
@@ -1676,7 +1677,7 @@ export class SupabaseService {
       // Calculate 2% of training balance for transfer
       const transferAmount = Math.round(trainingBalance * 0.02 * 100) / 100; // Round to 2 decimal places
 
-      console.log(`[SupabaseService] Transferring 2% ($${transferAmount}) of $${trainingBalance} from training to personal account ${personalUser.id}`);
+      logSupabase(`[SupabaseService] Transferring 2% ($${transferAmount}) of $${trainingBalance} from training to personal account ${personalUser.id}`);
 
       // Update training account - mark as completed and subtract commission from balance
       const { error: updateTrainingError } = await supabase
@@ -1738,10 +1739,10 @@ export class SupabaseService {
       if (!personalTasksCreated) {
         console.error('[SupabaseService] Failed to create personal account tasks');
       } else {
-        console.log('[SupabaseService] Successfully created 35 Phase 1 tasks for personal account');
+        logSupabase('[SupabaseService] Successfully created 35 Phase 1 tasks for personal account');
       }
 
-      console.log(`[SupabaseService] Successfully transferred 2% ($${transferAmount}) from training to personal account`);
+      logSupabase(`[SupabaseService] Successfully transferred 2% ($${transferAmount}) from training to personal account`);
 
       return {
         success: true,
@@ -1809,7 +1810,7 @@ export class SupabaseService {
     currentBalance: number;
   }): Promise<{ success: boolean; withdrawalId?: string; error?: string }> {
     try {
-      console.log('[Withdrawal] Creating withdrawal request:', params);
+      logSupabase('[Withdrawal] Creating withdrawal request', params);
 
       // CRITICAL: Admin accounts should not participate in financial logic
       const { data: userCheck } = await supabase

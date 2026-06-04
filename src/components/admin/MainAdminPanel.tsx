@@ -1173,6 +1173,81 @@ const MainAdminPanel: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Module 3: Monetization Analytics - Download & Device Tracking */}
+                <div>
+                  <h3 className="text-xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-4">Download & Device Analytics</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <CardHeader>
+                        <CardTitle className="bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent flex items-center text-lg">
+                          <span className="text-2xl mr-2">📱</span>
+                          Total Mobile Installs
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-slate-400">Total Downloads</p>
+                            <p className="text-2xl font-bold text-white">{revenueStats.totalAppInstalls.toLocaleString()}</p>
+                            <p className="text-xs text-slate-500">+{revenueStats.nellyCoinsFromInstalls.toLocaleString()} NellyCoins awarded</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-400">Bonus Conversion Rate</p>
+                            <p className="text-2xl font-bold text-green-400">{revenueStats.totalAppInstalls > 0 ? ((revenueStats.nellyCoinsFromInstalls / revenueStats.totalAppInstalls) * 10).toFixed(1) : '0.0'}%</p>
+                            <p className="text-xs text-slate-500">Install-to-bonus ratio</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <CardHeader>
+                        <CardTitle className="bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent flex items-center text-lg">
+                          <span className="text-2xl mr-2">📊</span>
+                          Device Distribution
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-slate-400">Android Devices</p>
+                            <p className="text-2xl font-bold text-green-400">{revenueStats.androidInstalls.toLocaleString()}</p>
+                            <p className="text-xs text-slate-500">{revenueStats.totalAppInstalls > 0 ? ((revenueStats.androidInstalls / revenueStats.totalAppInstalls) * 100).toFixed(1) : '0.0'}% of total</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-400">iOS Devices</p>
+                            <p className="text-2xl font-bold text-blue-400">{revenueStats.iosInstalls.toLocaleString()}</p>
+                            <p className="text-xs text-slate-500">{revenueStats.totalAppInstalls > 0 ? ((revenueStats.iosInstalls / revenueStats.totalAppInstalls) * 100).toFixed(1) : '0.0'}% of total</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <CardHeader>
+                        <CardTitle className="bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent flex items-center text-lg">
+                          <span className="text-2xl mr-2">⚡</span>
+                          Task Completion Speed
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-slate-400">Average Completion Time</p>
+                            <p className="text-2xl font-bold text-purple-400">2.5h</p>
+                            <p className="text-xs text-slate-500">Per 45-task cycle</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-400">Active Training Accounts</p>
+                            <p className="text-2xl font-bold text-amber-400">{stats.activeToday.toLocaleString()}</p>
+                            <p className="text-xs text-slate-500">Currently in progress</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
                 {/* Quick Summary */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Recent Users */}

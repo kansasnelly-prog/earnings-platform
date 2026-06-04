@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from './components/ui/tooltip';
@@ -16,6 +16,8 @@ import Index from './pages/Index';
 import Admin from './pages/Admin';
 import AIAssistantWorkspace from './pages/AIAssistantWorkspace';
 import NotFound from './pages/NotFound';
+import { supabase } from './lib/supabase';
+import { useAuth } from './contexts/SafeAuthProvider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +27,79 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// PWA Install Detection Hook
+const usePWAInstall = () => {
+  const { user } = useAuth();
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt || !user) return;
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+
+    if (outcome === 'accepted') {
+      // Award +10 NellyCoin bonus
+      await awardDownloadBonus(user.id);
+    }
+
+    setDeferredPrompt(null);
+  };
+
+  return { deferredPrompt, handleInstall };
+};
+
+// Award download bonus function
+const awardDownloadBonus = async (userId: string) => {
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('download_bonus_awarded, balance')
+      .eq('id', userId)
+      .single();
+
+    if (profile && !profile.download_bonus_awarded) {
+      // Detect device type
+      const userAgent = navigator.userAgent;
+      let deviceType = 'web';
+      if (/Android/i.test(userAgent)) {
+        deviceType = 'android';
+      } else if (/iPhone|iPad|iPod/i.test(userAgent)) {
+        deviceType = 'ios';
+      } else if (/Electron/i.test(userAgent)) {
+        deviceType = 'desktop';
+      }
+
+      // Update profile with device info and award bonus
+      await supabase
+        .from('profiles')
+        .update({
+          install_device_type: deviceType,
+          download_bonus_awarded: true,
+          balance: (profile.balance || 0) + 10,
+        })
+        .eq('id', userId);
+
+      console.log('[PWA] Download bonus awarded: +10 NellyCoins');
+    }
+  } catch (error) {
+    console.error('[PWA] Error awarding download bonus:', error);
+  }
+};
 
 const AppContent: React.FC = () => {
   const location = useLocation();

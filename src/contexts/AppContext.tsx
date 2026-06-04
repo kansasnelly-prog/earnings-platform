@@ -334,6 +334,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
 
+  // Module 2: The 45/45 Click Engine Implementation
+  const [currentTaskCount, setCurrentTaskCount] = useState(0);
+  const MAX_TASKS = 45;
+
   // ===========================================
   // INITIAL LOAD - Check Session
   // ===========================================
@@ -1289,6 +1293,56 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     let result: { success: boolean; reward?: number } | null = null;
+
+    // Module 2: Training Account Isolation - Track 45/45 task lifecycle
+    if (user.account_type === 'training') {
+      // Increment local task counter for training accounts
+      const newCount = currentTaskCount + 1;
+      setCurrentTaskCount(newCount);
+
+      // Check if reached 45/45 threshold
+      if (newCount >= MAX_TASKS) {
+        // Module 2: Personal Account Transition at 45/45
+        console.log('[45/45 Transition] Training complete, initiating personal account transition');
+        
+        try {
+          // Trigger asynchronous real-time recalculation handshake
+          const { error: transitionError } = await supabase
+            .from('users')
+            .update({
+              account_type: 'personal',
+              training_completed: true,
+              training_completed_v2: true,
+            })
+            .eq('id', user.id);
+
+          if (!transitionError) {
+            // Award final coin conversions
+            const { error: balanceError } = await supabase
+              .from('users')
+              .update({
+                balance: (user.balance || 0) + 100, // Final bonus
+              })
+              .eq('id', user.id);
+
+            if (!balanceError) {
+              console.log('[45/45 Transition] Successfully transitioned to personal account');
+              toast({
+                title: 'Training Complete!',
+                description: 'Congratulations! You have been upgraded to a personal account with +100 bonus coins.',
+                variant: 'default',
+              });
+              
+              // Clear the loop and refresh user data
+              setCurrentTaskCount(0);
+              await refreshUser();
+            }
+          }
+        } catch (error) {
+          console.error('[45/45 Transition] Error during account transition:', error);
+        }
+      }
+    }
 
     // For training accounts, handle completion by updating training_accounts table
     if (user.account_type === 'training') {

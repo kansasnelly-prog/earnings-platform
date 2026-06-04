@@ -312,8 +312,8 @@ const Dashboard: React.FC = () => {
                 <DollarSign size={20} className={user?.is_negative_balance ? 'text-red-400' : 'text-emerald-400'} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">Balance</h3>
-                <p className={`text-sm ${user?.is_negative_balance ? 'text-red-400' : 'text-gray-500'}`}>
+                <h3 className="text-lg font-semibold text-slate-200">Balance</h3>
+                <p className={`text-sm ${user?.is_negative_balance ? 'text-red-400' : 'text-slate-300'}`}>
                   {user?.is_negative_balance ? 'Negative Balance - Contact Support' : 'Available funds'}
                 </p>
               </div>
@@ -346,8 +346,8 @@ const Dashboard: React.FC = () => {
             </div>
             <Target size={14} className="text-indigo-400" />
           </div>
-          <p className="text-xs text-gray-500 font-medium">Tasks</p>
-          <p className="text-2xl font-bold text-white">{displayCompletedCount}<span className="text-sm text-gray-500 font-normal">/{isTraining ? trainingTotalTasks : displayTotalTasks}</span></p>
+          <p className="text-sm text-slate-300 font-semibold">Tasks</p>
+          <p className="text-2xl font-bold text-white">{displayCompletedCount}<span className="text-sm text-slate-400 font-normal">/{isTraining ? trainingTotalTasks : displayTotalTasks}</span></p>
         </div>
 
         <div className="p-5 bg-white/[0.03] border border-white/[0.06] rounded-2xl hover:border-indigo-500/20 transition-all group cursor-pointer" onClick={() => safeSetActiveTab('profile')}>
@@ -357,7 +357,7 @@ const Dashboard: React.FC = () => {
             </div>
             <TrendingUp size={14} className="text-purple-400" />
           </div>
-          <p className="text-xs text-gray-500 font-medium">Total Earned</p>
+          <p className="text-sm text-slate-300 font-semibold">Total Earned</p>
           <p className="text-2xl font-bold text-white">${(totalReward ?? 0).toFixed(2)}</p>
         </div>
 
@@ -368,7 +368,7 @@ const Dashboard: React.FC = () => {
             </div>
             <MessageCircle size={14} className="text-green-400" />
           </div>
-          <p className="text-xs text-gray-500 font-medium">My Referral Code</p>
+          <p className="text-sm text-slate-300 font-semibold">My Referral Code</p>
           <div className="space-y-1">
             <p className="text-lg font-bold text-white">{user?.referral_code || 'N/A'}</p>
             <button 
@@ -392,7 +392,7 @@ const Dashboard: React.FC = () => {
             </div>
             {primaryWallet ? <CheckCircle size={14} className="text-emerald-400" /> : <Lock size={14} className="text-amber-400" />}
           </div>
-          <p className="text-xs text-gray-500 font-medium">Wallet</p>
+          <p className="text-sm text-slate-300 font-semibold">Wallet</p>
           <p className="text-sm font-bold text-white truncate">{primaryWallet ? primaryWallet.wallet_type : 'Not Bound'}</p>
         </div>
       </div>
@@ -413,7 +413,7 @@ const Dashboard: React.FC = () => {
 
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">{displayCompletedCount} of {isTraining ? trainingTotalTasks : displayTotalTasks} tasks completed</span>
+            <span className="text-sm text-slate-300 font-semibold">{displayCompletedCount} of {isTraining ? trainingTotalTasks : displayTotalTasks} tasks completed</span>
             <span className="text-sm font-bold text-indigo-400">{(progress ?? 0).toFixed(0)}%</span>
           </div>
           <div className="h-3 bg-white/5 rounded-full overflow-hidden">

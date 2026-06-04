@@ -367,6 +367,7 @@ export class SupabaseService {
         referralCode: params.referralCode,
       });
 
+      // Module 2: Implement Resilient Safe Inserts - Handle PGRST204 schema cache errors
       // Try upsert (insert or update)
       const { data: createdUser, error: upsertError } = await supabase
         .from('users')
@@ -375,6 +376,42 @@ export class SupabaseService {
         .maybeSingle();
 
       if (upsertError) {
+        // Check for PGRST204 schema cache error or column mismatch
+        const isSchemaError = upsertError.code === 'PGRST204' || 
+                             upsertError.message?.includes('column') ||
+                             upsertError.message?.includes('schema');
+
+        if (isSchemaError) {
+          console.warn('[SupabaseService] Schema cache error detected, falling back to minimal payload:', upsertError.message);
+          
+          // Fallback to minimal payload without total_tasks to bypass schema cache issues
+          const minimalPayload = {
+            id: params.id,
+            email: params.email.trim().toLowerCase(),
+            display_name: params.displayName || params.email.split('@')[0] || 'User',
+            phone: params.phone || null,
+            vip_level: 1,
+            account_type: 'personal' as const,
+            tasks_completed: 0,
+            training_completed: false,
+            referral_code: `OPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+            referred_by: params.referralCode || null,
+            tasks_locked: false,
+          };
+
+          // Try insert with minimal payload
+          const { data: fallbackUser, error: fallbackError } = await supabase
+            .from('users')
+            .insert(minimalPayload)
+            .select()
+            .maybeSingle();
+
+          if (!fallbackError && fallbackUser) {
+            console.log('[SupabaseService] Successfully created user with minimal payload');
+            return fallbackUser as DatabaseUser;
+          }
+        }
+
         // Try a second approach: direct insert if upsert failed
         const { data: insertedUser, error: insertError } = await supabase
           .from('users')
@@ -383,6 +420,7 @@ export class SupabaseService {
           .maybeSingle();
         
         if (insertError) {
+          console.error('[SupabaseService] Failed to create user profile:', insertError);
           return null;
         }
         
@@ -391,6 +429,7 @@ export class SupabaseService {
 
       return (createdUser as DatabaseUser) || null;
     } catch (error) {
+      console.error('[SupabaseService] Exception in ensureUserProfile:', error);
       return null;
     }
   }

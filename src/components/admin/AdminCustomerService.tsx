@@ -609,9 +609,9 @@ Response:`;
     }
   };
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  // Module 1: Eliminate Auto-Scroll Loops - Scroll only on explicit user click
+  // Removed automatic scrollIntoView from useEffect to prevent aggressive viewport re-focus
+  // Scroll now only triggers when user explicitly selects a conversation
 
   // Fetch conversations on mount
   useEffect(() => {
@@ -1181,7 +1181,13 @@ Response:`;
               filteredConversations.map((conv) => (
               <button
                 key={conv.id}
-                onClick={() => setSelectedConversation(conv)}
+                onClick={() => {
+                  setSelectedConversation(conv);
+                  // Module 1: Scroll only on explicit user click - not during background fetches
+                  setTimeout(() => {
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }}
                 className={`w-full p-4 text-left border-b border-white/5 transition-colors ${
                   selectedConversation?.id === conv.id
                     ? 'bg-pink-500/20 border-l-4 border-l-pink-500'

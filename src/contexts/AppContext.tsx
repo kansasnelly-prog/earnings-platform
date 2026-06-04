@@ -1306,6 +1306,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         console.log('[45/45 Transition] Training complete, initiating personal account transition');
         
         try {
+          // Get current training balance for 2% calculation
+          const { data: trainingAccount } = await supabase
+            .from('training_accounts')
+            .select('amount')
+            .eq('auth_user_id', user.id)
+            .single();
+
+          const trainingBalance = trainingAccount?.amount || user.balance || 0;
+          const twoPercentBonus = trainingBalance * 0.02; // Module 2: 2% graduation ledger rule
+
           // Trigger asynchronous real-time recalculation handshake
           const { error: transitionError } = await supabase
             .from('users')
@@ -1317,19 +1327,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             .eq('id', user.id);
 
           if (!transitionError) {
-            // Award final coin conversions
+            // Award final coin conversions - 2% of accumulated training balance
             const { error: balanceError } = await supabase
               .from('users')
               .update({
-                balance: (user.balance || 0) + 100, // Final bonus
+                balance: (user.balance || 0) + twoPercentBonus, // 2% graduation bonus
               })
               .eq('id', user.id);
 
             if (!balanceError) {
-              console.log('[45/45 Transition] Successfully transitioned to personal account');
+              console.log('[45/45 Transition] Successfully transitioned to personal account with 2% bonus:', twoPercentBonus);
               toast({
                 title: 'Training Complete!',
-                description: 'Congratulations! You have been upgraded to a personal account with +100 bonus coins.',
+                description: `Congratulations! You have been upgraded to a personal account with +${twoPercentBonus.toFixed(2)} bonus coins (2% of training balance).`,
                 variant: 'default',
               });
               

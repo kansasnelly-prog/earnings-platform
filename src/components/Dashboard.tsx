@@ -10,7 +10,20 @@ import CSSelectionModal from './CSSelectionModal';
 
 const Dashboard: React.FC = () => {
   const context = useAppContext();
-  const { user, tasks, wallets, transactions, walletState, refreshTasks, refreshWallets, refreshTransactions, setActiveTab, refreshUser } = context;
+  const { user, tasks, wallets, transactions, walletState, refreshTasks, refreshWallets, refreshTransactions, setActiveTab, refreshUser, isLoading } = context;
+  
+  // Stage 1: Enforce Safe State Handshaking - Prevent mounting until auth resolves
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#060a14]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400">Authenticating...</p>
+        </div>
+      </div>
+    );
+  }
+  
   // Defensive loading guard for hard refreshes
   if (!user) {
     return <div className="p-4">Loading System Workspace...</div>;
@@ -114,11 +127,12 @@ const Dashboard: React.FC = () => {
   
   // For training accounts, use Supabase task_number as source of truth
   // completedTasks = task_number - 1 (task_number is the next task to complete)
-  const trainingTotalTasks = user?.total_tasks || 45;
+  // Stage 2: Synchronize Task Lifecycle Maps - Enforce strict 45 task ceiling for training accounts
+  const trainingTotalTasks = isTraining ? 45 : (user?.total_tasks || 35);
   const trainingCompletedCount = isTraining ? Math.max(0, (user?.task_number || 1) - 1) : 0;
   
   // Use trainingTotalTasks for training accounts, 35 for personal accounts
-  const totalTasks = isTraining ? trainingTotalTasks : 35;
+  const totalTasks = isTraining ? 45 : 35;
   
   // Use Supabase-derived count for training, tasks array for personal
   const completedCount = isTraining ? trainingCompletedCount : safeTasks.filter(t => t.status === 'completed').length;
@@ -312,7 +326,7 @@ const Dashboard: React.FC = () => {
                 <DollarSign size={20} className={user?.is_negative_balance ? 'text-red-400' : 'text-emerald-400'} />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-200">Balance</h3>
+                <h3 className="text-sm font-semibold text-slate-200">Balance</h3>
                 <p className={`text-sm ${user?.is_negative_balance ? 'text-red-400' : 'text-slate-300'}`}>
                   {user?.is_negative_balance ? 'Negative Balance - Contact Support' : 'Available funds'}
                 </p>
@@ -346,7 +360,7 @@ const Dashboard: React.FC = () => {
             </div>
             <Target size={14} className="text-indigo-400" />
           </div>
-          <p className="text-sm text-slate-300 font-semibold">Tasks</p>
+          <p className="text-sm font-semibold text-slate-300">Tasks</p>
           <p className="text-2xl font-bold text-white">{displayCompletedCount}<span className="text-sm text-slate-400 font-normal">/{isTraining ? trainingTotalTasks : displayTotalTasks}</span></p>
         </div>
 
@@ -357,7 +371,7 @@ const Dashboard: React.FC = () => {
             </div>
             <TrendingUp size={14} className="text-purple-400" />
           </div>
-          <p className="text-sm text-slate-300 font-semibold">Total Earned</p>
+          <p className="text-sm font-semibold text-slate-300">Total Earned</p>
           <p className="text-2xl font-bold text-white">${(totalReward ?? 0).toFixed(2)}</p>
         </div>
 

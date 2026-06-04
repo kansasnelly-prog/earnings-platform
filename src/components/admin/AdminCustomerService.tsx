@@ -292,7 +292,7 @@ Response:`;
 
       // Call Ollama API with timeout protection
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout (Protocol 12)
 
       const response = await fetch('http://localhost:11434/api/generate', {
         method: 'POST',

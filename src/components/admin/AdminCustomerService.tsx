@@ -935,7 +935,8 @@ Response:`;
     if (!conversationId) return;
 
     if (isPolling && isFetchingRef.current) {
-      console.log('[AdminCustomerService] Skipping polling: already fetching');
+      // Module 2: Sanitized residual logs - commented out to prevent cache hijack loops
+      // console.log('[AdminCustomerService] Skipping polling: already fetching');
       return;
     }
 
@@ -945,7 +946,8 @@ Response:`;
       setIsLoading(true);
     }
 
-    console.log('[AdminCustomerService] Fetching messages for conversation:', conversationId);
+    // Module 2: Sanitized residual logs - commented out to prevent cache hijack loops
+    // console.log('[AdminCustomerService] Fetching messages for conversation:', conversationId);
 
     try {
       const { data, error } = await supabase
@@ -961,7 +963,8 @@ Response:`;
         return;
       }
 
-      console.log('[AdminCustomerService] Fetched', data?.length || 0, 'messages');
+      // Module 2: Sanitized residual logs - commented out to prevent cache hijack loops
+      // console.log('[AdminCustomerService] Fetched', data?.length || 0, 'messages');
 
       // Track all message IDs to prevent duplicates
       data?.forEach(msg => processedMessageIds.current.add(msg.id));

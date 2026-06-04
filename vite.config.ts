@@ -138,9 +138,9 @@ export default defineConfig(({ mode }) => ({
     assetsInlineLimit: 4096,
     rollupOptions: {
       output: {
-        assetFileNames: 'assets/[name]-[hash][extname]',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-newtestament-[hash].js',
+        chunkFileNames: 'assets/[name]-newtestament-[hash].js',
+        assetFileNames: 'assets/[name]-newtestament-[hash].[ext]',
       },
     },
   },

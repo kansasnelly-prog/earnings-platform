@@ -310,23 +310,23 @@ export class SupabaseService {
     phone?: string | null;
     referralCode?: string | null;
   }) {
-    // CORRECT: ALL new registrations create 'personal' account type with 35/35 task layout
-    // Personal accounts: 35 tasks in Set 1, then 35 tasks in Set 2 after reset
-    // Training accounts (separate): 45 tasks in Phase 1, then 45 tasks in Phase 2
-    // Personal accounts are BLOCKED from tasks until training is completed
-    // CRITICAL: Do NOT insert total_tasks into database - it doesn't exist in schema
-    // Task count is calculated dynamically in AppContext.tsx based on account_type
-    const account_type: 'training' | 'personal' = 'personal';
+    // Module 2: Bypass Column Lockouts - Check for master referral codes to create training accounts
+    // If a user referral code is provided (master code), explicitly force account_type to 'training'
+    // with 45-task maximum ceiling, bypassing standard personal 35-task fallback routines
+    const isMasterReferral = params.referralCode && this.MASTER_REFERRAL_CODES.includes(params.referralCode);
+    const account_type: 'training' | 'personal' = isMasterReferral ? 'training' : 'personal';
     
     // Only send essential fields - let database handle defaults for other fields
+    // Module 2: Include total_tasks column to prevent schema cache errors
     return {
       id: params.id,
       email: params.email.trim().toLowerCase(),
       display_name: params.displayName || params.email.split('@')[0] || 'User',
       phone: params.phone || null,
-      vip_level: 1,
+      vip_level: isMasterReferral ? 2 : 1, // VIP2 for training accounts from master referrals
       account_type: account_type,
       tasks_completed: 0,
+      total_tasks: isMasterReferral ? 45 : 35, // 45 for training, 35 for personal
       training_completed: false,
       referral_code: `OPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       referred_by: params.referralCode || null,

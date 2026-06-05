@@ -1093,6 +1093,99 @@ const MainAdminPanel: React.FC = () => {
                   </Card>
                 </div>
 
+                {/* MODULE 3: Triple-Tier Banking Structure */}
+                <div>
+                  <h3 className="text-xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-4">Triple-Tier Banking Ledger</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Platform Funds Card */}
+                    <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <CardHeader>
+                        <CardTitle className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent flex items-center text-lg">
+                          <span className="text-2xl mr-2">🏦</span>
+                          Platform Funds
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-slate-400">Training Seed Capital</p>
+                            <p className="text-2xl font-bold text-blue-400">${(stats.totalBalance * 0.3).toFixed(2)}</p>
+                            <p className="text-xs text-slate-500">Virtual sandbox funds</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-400">Task Calculation Pool</p>
+                            <p className="text-2xl font-bold text-cyan-400">${(stats.totalBalance * 0.7).toFixed(2)}</p>
+                            <p className="text-xs text-slate-500">Virtual task parameters</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-400">Total Platform Funds</p>
+                            <p className="text-2xl font-bold text-white">${stats.totalBalance.toFixed(2)}</p>
+                            <p className="text-xs text-slate-500">Internal ledger only</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Real Cash Ledger Card */}
+                    <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <CardHeader>
+                        <CardTitle className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent flex items-center text-lg">
+                          <span className="text-2xl mr-2">💵</span>
+                          Real Cash Ledger
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-slate-400">Verified Network Deposits</p>
+                            <p className="text-2xl font-bold text-green-400">${(revenueStats.adRevenueUSD + revenueStats.vipRevenueUSD).toFixed(2)}</p>
+                            <p className="text-xs text-slate-500">Hard currency inflows</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-400">Liquid Escrow</p>
+                            <p className="text-2xl font-bold text-emerald-400">${stats.pendingPayouts.toFixed(2)}</p>
+                            <p className="text-xs text-slate-500">{stats.pendingWithdrawals} pending requests</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-400">Total Cash Balance</p>
+                            <p className="text-2xl font-bold text-white">${((revenueStats.adRevenueUSD + revenueStats.vipRevenueUSD) + stats.pendingPayouts).toFixed(2)}</p>
+                            <p className="text-xs text-slate-500">USD hard currency</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* NellyCoins Minted Card */}
+                    <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <CardHeader>
+                        <CardTitle className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent flex items-center text-lg">
+                          <span className="text-2xl mr-2">🪙</span>
+                          NellyCoins Minted
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-slate-400">Total Coins Minted</p>
+                            <p className="text-2xl font-bold text-amber-400">{revenueStats.nellyCoinsFromInstalls.toLocaleString()} 🪙</p>
+                            <p className="text-xs text-slate-500">Native token supply</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-400">Install Rewards</p>
+                            <p className="text-2xl font-bold text-orange-400">{revenueStats.totalAppInstalls.toLocaleString()}</p>
+                            <p className="text-xs text-slate-500">+10 coins per install</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-400">Token Value</p>
+                            <p className="text-2xl font-bold text-white">$0.50/coin</p>
+                            <p className="text-xs text-slate-500">Fixed exchange rate</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
                 {/* Revenue Engine Dashboard */}
                 <div>
                   <h3 className="text-xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-4">Seven-Engine Monetization Matrix</h3>

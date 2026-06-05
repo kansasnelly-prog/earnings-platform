@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
-import { User, Mail, Phone, Award, Copy, CheckCircle, Calendar, TrendingUp, DollarSign, Zap, Shield, LogOut, Wallet, X, AlertTriangle } from 'lucide-react';
+import { User, Mail, Phone, Award, Copy, CheckCircle, Calendar, TrendingUp, DollarSign, Zap, Shield, LogOut, Wallet, X, AlertTriangle, Download, Smartphone } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import TaskHistory from './TaskHistory';
 import { supabase } from '@/lib/supabase';
@@ -12,6 +12,98 @@ const ProfileSection: React.FC = () => {
   const [walletInput, setWalletInput] = useState('');
   const [isBinding, setIsBinding] = useState(false);
   const [showUnbindDialog, setShowUnbindDialog] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalling, setIsInstalling] = useState(false);
+
+  // MODULE 2: PWA Install Prompt Handler
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      console.log('[PWA] Install prompt available');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // Check if already installed
+    const checkInstalled = () => {
+      setDeferredPrompt(null);
+    };
+    
+    window.addEventListener('appinstalled', checkInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', checkInstalled);
+    };
+  }, []);
+
+  const handlePWAInstall = async () => {
+    if (!deferredPrompt) {
+      toast({
+        title: 'Not Available',
+        description: 'PWA installation is not available on this device',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsInstalling(true);
+    try {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        // MODULE 4: Platform Detection & Balance Reward
+        const userAgent = navigator.userAgent;
+        const platform = userAgent.includes('Android') ? 'Android' : 
+                         userAgent.includes('iPhone') || userAgent.includes('iPad') ? 'iPhone' : 'Desktop';
+        
+        console.log('[PWA] App installed on platform:', platform);
+        
+        // Credit user balance with promotional signup reward
+        const rewardAmount = 5.00; // $5 promotional reward
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ 
+            balance: (user?.balance || 0) + rewardAmount,
+            total_earned: (user?.total_earned || 0) + rewardAmount
+          })
+          .eq('id', user?.id);
+
+        if (updateError) {
+          console.error('[PWA] Failed to credit reward:', updateError);
+        } else {
+          toast({
+            title: 'Installation Successful!',
+            description: `You've earned $${rewardAmount.toFixed(2)} bonus reward for installing the app!`,
+            variant: 'default'
+          });
+          await refreshUser();
+        }
+        
+        // Send Telegram notification
+        await sendTelegramNotification({
+          type: 'pwa_install',
+          email: user?.email,
+          platform: platform,
+          rewardAmount: rewardAmount,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      setDeferredPrompt(null);
+    } catch (error) {
+      console.error('[PWA] Installation error:', error);
+      toast({
+        title: 'Installation Failed',
+        description: 'Failed to install the app',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsInstalling(false);
+    }
+  };
 
   const safeTasks = tasks || [];
   const completedCount = safeTasks.filter(t => t.status === 'completed').length;
@@ -142,6 +234,38 @@ const ProfileSection: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* MODULE 2: PWA Install Trigger Button */}
+      {deferredPrompt && (
+        <div className="p-6 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-xl shadow-emerald-500/30">
+              <Smartphone size={28} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-white mb-1">Download Mobile App</h3>
+              <p className="text-sm text-gray-400">Install the app & claim $5 balance reward!</p>
+            </div>
+            <button
+              onClick={handlePWAInstall}
+              disabled={isInstalling}
+              className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-emerald-500/25"
+            >
+              {isInstalling ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Installing...
+                </>
+              ) : (
+                <>
+                  <Download size={18} />
+                  Install App
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -359,6 +359,9 @@ export class SupabaseService {
         return null;
       }
 
+      // Magazine 2: Repair Training Payload & Fix Resilient Insertions
+      // Ensure account creation handles database schema safely by inserting matching records
+      // into both the users and profiles tables inside a strict try/catch block
       const profilePayload = this.buildDefaultProfile({
         id: params.id,
         email: params.email,
@@ -368,7 +371,7 @@ export class SupabaseService {
       });
 
       // Module 2: Implement Resilient Safe Inserts - Handle PGRST204 schema cache errors
-      // Try upsert (insert or update)
+      // Try upsert (insert or update) into users table
       const { data: createdUser, error: upsertError } = await supabase
         .from('users')
         .upsert(profilePayload, { onConflict: 'id' })
@@ -382,32 +385,34 @@ export class SupabaseService {
                              upsertError.message?.includes('schema');
 
         if (isSchemaError) {
-          console.warn('[SupabaseService] Schema cache error detected, falling back to minimal payload:', upsertError.message);
+          console.warn('[SupabaseService] Schema cache error detected, forcing training payload override:', upsertError.message);
           
-          // Fallback to minimal payload without total_tasks to bypass schema cache issues
-          const minimalPayload = {
+          // Magazine 2: Prevent Fallbacks - Explicitly override metadata parameters to force
+          // account_type: 'training' and total_tasks: 45 natively without crashing the front-end
+          const forcedTrainingPayload = {
             id: params.id,
             email: params.email.trim().toLowerCase(),
             display_name: params.displayName || params.email.split('@')[0] || 'User',
             phone: params.phone || null,
-            vip_level: 1,
-            account_type: 'personal' as const,
+            vip_level: 2,
+            account_type: 'training' as const, // Force training account type
             tasks_completed: 0,
+            total_tasks: 45, // Force 45 task ceiling
             training_completed: false,
             referral_code: `OPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
             referred_by: params.referralCode || null,
             tasks_locked: false,
           };
 
-          // Try insert with minimal payload
+          // Try insert with forced training payload
           const { data: fallbackUser, error: fallbackError } = await supabase
             .from('users')
-            .insert(minimalPayload)
+            .insert(forcedTrainingPayload)
             .select()
             .maybeSingle();
 
           if (!fallbackError && fallbackUser) {
-            console.log('[SupabaseService] Successfully created user with minimal payload');
+            console.log('[SupabaseService] Successfully created user with forced training payload');
             return fallbackUser as DatabaseUser;
           }
         }
@@ -425,6 +430,25 @@ export class SupabaseService {
         }
         
         return (insertedUser as DatabaseUser) || null;
+      }
+
+      // Magazine 2: Insert matching record into profiles table for schema alignment
+      try {
+        const { error: profilesError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: params.id,
+            email: params.email.trim().toLowerCase(),
+            display_name: params.displayName || params.email.split('@')[0] || 'User',
+            account_type: profilePayload.account_type,
+            total_tasks: profilePayload.total_tasks,
+          }, { onConflict: 'id' });
+
+        if (profilesError) {
+          console.warn('[SupabaseService] Profiles table insert failed (non-critical):', profilesError.message);
+        }
+      } catch (profilesException) {
+        console.warn('[SupabaseService] Profiles table insert exception (non-critical):', profilesException);
       }
 
       return (createdUser as DatabaseUser) || null;

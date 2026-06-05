@@ -1184,7 +1184,13 @@ Response:`;
               filteredConversations.map((conv) => (
               <button
                 key={conv.id}
-                onClick={() => {
+                onClick={(e) => {
+                  // Magazine 3: Fix Customer Service Selection Events
+                  // Inject propagation blockers to prevent click action from cascading up
+                  // to outer container links, holding viewport stable while loading chat threads
+                  e.stopPropagation();
+                  e.preventDefault();
+                  
                   setSelectedConversation(conv);
                   // Module 1: Scroll only on explicit user click - not during background fetches
                   setTimeout(() => {

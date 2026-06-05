@@ -8,7 +8,8 @@ import { logCore, logSupabase, logAdmin, logError, logTelegram } from '@/utils/l
 import {
   LayoutDashboard, Users, ArrowDownToLine, RefreshCw, Shield, ChevronLeft,
   BarChart3, Activity, LogIn, Headphones, Settings, UserPlus,
-  AlertTriangle, DollarSign, CheckCircle, Search, ShoppingBag, Sparkles, Key
+  AlertTriangle, DollarSign, CheckCircle, Search, ShoppingBag, Sparkles, Key,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -134,6 +135,11 @@ const MainAdminPanel: React.FC = () => {
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
   const [pendingOrderUsers, setPendingOrderUsers] = useState<RealUser[]>([]);
   const [pendingOrderSearch, setPendingOrderSearch] = useState('');
+
+  // MODULE 1: Accordion State Logic - Smooth Component Collapse
+  const [isUsersExpanded, setIsUsersExpanded] = useState(false);
+  const [isCustomerServiceExpanded, setIsCustomerServiceExpanded] = useState(false);
+  const [isProductCatalogExpanded, setIsProductCatalogExpanded] = useState(false);
 
   // User action modals state
   const [balanceModalOpen, setBalanceModalOpen] = useState(false);
@@ -1408,10 +1414,30 @@ const MainAdminPanel: React.FC = () => {
 
             {/* Users Tab */}
             {activeTab === 'users' && (
-              <>
-                {logCore('[MainAdmin] Rendering USERS tab, users count', users.length)}
-                <AdminUsers onLogout={handleLogout} />
-              </>
+              <div className="space-y-4">
+                {/* MODULE 2: Accordion Header - Registered Users */}
+                <div
+                  onClick={() => setIsUsersExpanded(!isUsersExpanded)}
+                  className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-xl cursor-pointer hover:bg-blue-500/20 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <Users className="w-5 h-5 text-blue-400" />
+                    <h2 className="text-lg font-bold text-white">Registered Users</h2>
+                    <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
+                      {users.length} Total Users
+                    </Badge>
+                  </div>
+                  {isUsersExpanded ? <ChevronUp className="w-5 h-5 text-blue-400" /> : <ChevronDown className="w-5 h-5 text-blue-400" />}
+                </div>
+                
+                {/* Accordion Content */}
+                {isUsersExpanded && (
+                  <>
+                    {logCore('[MainAdmin] Rendering USERS tab, users count', users.length)}
+                    <AdminUsers onLogout={handleLogout} />
+                  </>
+                )}
+              </div>
             )}
 
             {/* OLD Users Tab - DISABLED, using AdminUsers component instead */}
@@ -1858,14 +1884,48 @@ const MainAdminPanel: React.FC = () => {
 
             {/* Customer Service Tab */}
             {activeTab === 'customer-service' && (
-              <div className="h-[calc(100vh-180px)] -mx-4 -my-8">
-                <AdminCustomerService />
+              <div className="space-y-4">
+                {/* MODULE 2: Accordion Header - Customer Service */}
+                <div
+                  onClick={() => setIsCustomerServiceExpanded(!isCustomerServiceExpanded)}
+                  className="flex items-center justify-between p-4 bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-500/20 rounded-xl cursor-pointer hover:bg-pink-500/20 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <Headphones className="w-5 h-5 text-pink-400" />
+                    <h2 className="text-lg font-bold text-white">Customer Service Room</h2>
+                  </div>
+                  {isCustomerServiceExpanded ? <ChevronUp className="w-5 h-5 text-pink-400" /> : <ChevronDown className="w-5 h-5 text-pink-400" />}
+                </div>
+                
+                {/* Accordion Content */}
+                {isCustomerServiceExpanded && (
+                  <div className="h-[calc(100vh-180px)] -mx-4 -my-8">
+                    <AdminCustomerService />
+                  </div>
+                )}
               </div>
             )}
 
             {/* Product Catalog Tab - Uses Supabase training_products/personal_products tables */}
             {activeTab === 'product-catalog' && (
-              <ProductCatalogManager />
+              <div className="space-y-4">
+                {/* MODULE 2: Accordion Header - Product Catalog */}
+                <div
+                  onClick={() => setIsProductCatalogExpanded(!isProductCatalogExpanded)}
+                  className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl cursor-pointer hover:bg-amber-500/20 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <ShoppingBag className="w-5 h-5 text-amber-400" />
+                    <h2 className="text-lg font-bold text-white">Product Catalog Manager</h2>
+                  </div>
+                  {isProductCatalogExpanded ? <ChevronUp className="w-5 h-5 text-amber-400" /> : <ChevronDown className="w-5 h-5 text-amber-400" />}
+                </div>
+                
+                {/* Accordion Content */}
+                {isProductCatalogExpanded && (
+                  <ProductCatalogManager />
+                )}
+              </div>
             )}
 
             {/* Admin Controls Tab */}

@@ -347,7 +347,7 @@ const MainAdminPanel: React.FC = () => {
         
         setUsers([]);
       } else {
-        logSupabase('[MainAdmin] Loaded', usersData.length, 'users successfully');
+        logSupabase('[MainAdmin] Loaded', `${usersData.length} users successfully`);
         // Process users with account status
         const processedUsers = usersData.map(user => ({
           ...user,
@@ -365,7 +365,7 @@ const MainAdminPanel: React.FC = () => {
       if (withdrawalsError) {
         logError('[MainAdmin] Withdrawals fetch error', withdrawalsError);
       } else {
-        logSupabase('[MainAdmin] Loaded', withdrawalsData?.length || 0, 'withdrawals');
+        logSupabase('[MainAdmin] Loaded', `${withdrawalsData?.length || 0} withdrawals`);
         // Enrich withdrawals with user data
         const enrichedWithdrawals = (withdrawalsData || []).map((w) => {
           const user = usersData?.find((u: RealUser) => u.id === w.user_id);
@@ -1000,11 +1000,9 @@ const MainAdminPanel: React.FC = () => {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => tab.external ? navigate('/ai-assistant') : setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  tab.external
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25 hover:bg-purple-700'
-                    : activeTab === tab.id
+                  activeTab === tab.id
                     ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}

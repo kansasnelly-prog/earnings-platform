@@ -318,6 +318,7 @@ export class SupabaseService {
     
     // Only send essential fields - let database handle defaults for other fields
     // Module 2: Include total_tasks column to prevent schema cache errors
+    // CLINERULES FIX: Add user_status to prevent database trigger rejection during registration
     return {
       id: params.id,
       email: params.email.trim().toLowerCase(),
@@ -331,6 +332,7 @@ export class SupabaseService {
       referral_code: `OPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       referred_by: params.referralCode || null,
       tasks_locked: false,
+      user_status: 'active', // CLINERULES FIX: Explicitly set user_status to prevent database trigger rejection
     };
   }
 
@@ -389,6 +391,7 @@ export class SupabaseService {
           
           // Magazine 2: Prevent Fallbacks - Explicitly override metadata parameters to force
           // account_type: 'training' and total_tasks: 45 natively without crashing the front-end
+          // CLINERULES FIX: Add user_status to prevent database trigger rejection during registration
           const forcedTrainingPayload = {
             id: params.id,
             email: params.email.trim().toLowerCase(),
@@ -402,6 +405,7 @@ export class SupabaseService {
             referral_code: `OPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
             referred_by: params.referralCode || null,
             tasks_locked: false,
+            user_status: 'active', // CLINERULES FIX: Explicitly set user_status to prevent database trigger rejection
           };
 
           // Try insert with forced training payload

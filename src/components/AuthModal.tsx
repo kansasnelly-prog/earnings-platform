@@ -35,34 +35,49 @@ const AuthModal: React.FC = () => {
       e.stopPropagation();
     }
     setSubmitError(null);
-    
+
     const isValid = validate();
     if (!isValid) {
       return;
     }
-    
-    if (authModalTab === 'login') {
-      const result = await login(email, password);
-      if (!result.success) {
-        setSubmitError(result.error || 'Login failed');
-      } else {
-        resetForm();
-        setAuthModalOpen(false);
+
+    // Fallback catch timer wrapper: Reset loading state if server response is delayed past 5 seconds
+    const timeoutId = setTimeout(() => {
+      if (authLoading) {
+        console.warn('[AuthModal] Request timeout after 5 seconds, resetting loading state');
+        setSubmitError('Request timed out. Please try again.');
       }
-    } else {
-      const result = await register(email, password, displayName, phone);
-      if (!result.success) {
-        const errorMessage = result.error || 'Registration failed';
-        if (/already registered|already exists|user already/i.test(errorMessage)) {
-          setAuthModalTab('login');
-          setSubmitError('Account already exists. Please log in with this email.');
-          return;
+    }, 5000);
+
+    try {
+      if (authModalTab === 'login') {
+        const result = await login(email, password);
+        clearTimeout(timeoutId);
+        if (!result.success) {
+          setSubmitError(result.error || 'Login failed');
+        } else {
+          resetForm();
+          setAuthModalOpen(false);
         }
-        setSubmitError(errorMessage);
       } else {
-        resetForm();
-        setAuthModalOpen(false);
+        const result = await register(email, password, displayName, phone);
+        clearTimeout(timeoutId);
+        if (!result.success) {
+          const errorMessage = result.error || 'Registration failed';
+          if (/already registered|already exists|user already/i.test(errorMessage)) {
+            setAuthModalTab('login');
+            setSubmitError('Account already exists. Please log in with this email.');
+            return;
+          }
+          setSubmitError(errorMessage);
+        } else {
+          resetForm();
+          setAuthModalOpen(false);
+        }
       }
+    } catch (error) {
+      clearTimeout(timeoutId);
+      setSubmitError('An unexpected error occurred. Please try again.');
     }
   };
 

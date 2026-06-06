@@ -134,12 +134,22 @@ const useURLParameterCleaner = () => {
 const AppContent: React.FC = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isMatchAdminRoute = location.pathname === '/match-admin';
 
   // Apply case-insensitive router firewall
   useCaseInsensitiveRouter();
 
   // Apply URL parameter cleaner interceptor
   useURLParameterCleaner();
+
+  // Isolate match-admin route from home dashboard redirect hooks
+  if (isMatchAdminRoute) {
+    return (
+      <Routes>
+        <Route path="/match-admin" element={<MatchDashboard />} />
+      </Routes>
+    );
+  }
 
   if (isAdminRoute) {
     return (
@@ -156,7 +166,6 @@ const AppContent: React.FC = () => {
       <Route path="/" element={<Index />} />
       <Route element={<ProtectedRoute />}> 
         <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
-        <Route path="/match-admin" element={<MatchDashboard />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

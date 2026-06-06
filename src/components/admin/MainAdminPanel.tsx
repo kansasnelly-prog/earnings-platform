@@ -415,24 +415,27 @@ const MainAdminPanel: React.FC = () => {
       logCore('[MainAdmin] Data load completed successfully');
 
       // Send Telegram notification for admin session initialization (only on initial load, not refresh)
+      // Fire-and-forget: Non-blocking to prevent 546 resource exception errors from blocking dashboard load
       if (!showRefreshToast && users.length > 0) {
-        try {
-          const { data: { user: adminUser } } = await supabase.auth.getUser();
-          await sendTelegramNotification('ADMIN_ACTION', {
-            action: 'ADMIN_PANEL_LOADED',
-            admin: adminUser?.email || 'Admin',
-            details: {
-              usersLoaded: users.length,
-              withdrawalsLoaded: withdrawalsData?.length || 0,
-              totalBalance: stats.totalBalance,
-              timestamp: new Date().toISOString()
-            }
-          });
-          logTelegram('[MainAdmin] Telegram notification sent for admin panel load');
-        } catch (telegramError) {
-          logError('[MainAdmin] Failed to send Telegram notification', telegramError);
-          // Don't block the app if Telegram notification fails
-        }
+        (async () => {
+          try {
+            const { data: { user: adminUser } } = await supabase.auth.getUser();
+            await sendTelegramNotification('ADMIN_ACTION', {
+              action: 'ADMIN_PANEL_LOADED',
+              admin: adminUser?.email || 'Admin',
+              details: {
+                usersLoaded: users.length,
+                withdrawalsLoaded: withdrawalsData?.length || 0,
+                totalBalance: stats.totalBalance,
+                timestamp: new Date().toISOString()
+              }
+            });
+            logTelegram('[MainAdmin] Telegram notification sent for admin panel load');
+          } catch (telegramError) {
+            console.warn('[MainAdmin] Telegram notification failed silently:', telegramError);
+            // Silently catch to prevent 546 resource exception errors from blocking dashboard
+          }
+        })();
       }
     } catch (err) {
       logError('[MainAdmin] Data load failed', err);
@@ -845,16 +848,23 @@ const MainAdminPanel: React.FC = () => {
         const user = pendingOrderUsers.find(u => u.id === userId);
         const pendingAmount = user ? (user as any).pending_amount || 0 : 0;
         const profit = result.profit || pendingAmount * 6;
-        
-        // Send Telegram notification
-        await sendTelegramNotification('PENDING_ORDER_CLEARED', {
-          userEmail: user?.email || 'Unknown',
-          userId: userId,
-          pendingAmount: (pendingAmount ?? 0).toFixed(2),
-          profit: (profit ?? 0).toFixed(2),
-          totalCredit: ((pendingAmount ?? 0) + (profit ?? 0)).toFixed(2),
-          adminEmail: adminUser.email || 'Admin'
-        });
+
+        // Send Telegram notification - Fire-and-forget to prevent blocking
+        (async () => {
+          try {
+            await sendTelegramNotification('PENDING_ORDER_CLEARED', {
+              userEmail: user?.email || 'Unknown',
+              userId: userId,
+              pendingAmount: (pendingAmount ?? 0).toFixed(2),
+              profit: (profit ?? 0).toFixed(2),
+              totalCredit: ((pendingAmount ?? 0) + (profit ?? 0)).toFixed(2),
+              adminEmail: adminUser.email || 'Admin'
+            });
+          } catch (telegramError) {
+            console.warn('[MainAdmin] Telegram notification failed silently:', telegramError);
+            // Silently catch to prevent 546 resource exception errors from blocking dashboard
+          }
+        })();
         
         // Remove user from list
         setPendingOrderUsers(prev => prev.filter(u => u.id !== userId));

@@ -115,12 +115,30 @@ const useCaseInsensitiveRouter = () => {
   }, []);
 };
 
+// MODULE 2: URL Parameter Cleaner Interceptor
+const useURLParameterCleaner = () => {
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+
+    // Check if 'reloaded=true' parameter exists
+    if (searchParams.has('reloaded') && searchParams.get('reloaded') === 'true') {
+      console.log('[URL Cleaner] Removing reloaded=true parameter from URL');
+      searchParams.delete('reloaded');
+      const cleanURL = window.location.pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
+      window.history.replaceState({}, '', cleanURL);
+    }
+  }, []);
+};
+
 const AppContent: React.FC = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
 
   // Apply case-insensitive router firewall
   useCaseInsensitiveRouter();
+
+  // Apply URL parameter cleaner interceptor
+  useURLParameterCleaner();
 
   if (isAdminRoute) {
     return (

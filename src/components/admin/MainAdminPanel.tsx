@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, ArrowDownToLine, RefreshCw, Shield, ChevronLeft,
   BarChart3, Activity, LogIn, Headphones, Settings, UserPlus,
   AlertTriangle, DollarSign, CheckCircle, Search, ShoppingBag, Sparkles, Key,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, ChevronRight
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -974,6 +974,15 @@ const MainAdminPanel: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/match-admin')}
+                className="border-purple-500/50 text-purple-300 hover:bg-purple-600/10 hover:scale-105 transition-all duration-300"
+              >
+                🔮 Switch to Dating Cockpit
+                <ChevronRight size={14} className="ml-2" />
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

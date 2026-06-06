@@ -1,15 +1,30 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { ChevronRight } from 'lucide-react';
 
 const MatchDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'chats' | 'discovery' | 'revenue'>('chats');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Matchmaking Admin Console</h1>
-          <p className="text-gray-400">Premium triple-theme administrative interface</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">Matchmaking Admin Console</h1>
+            <p className="text-gray-400">Premium triple-theme administrative interface</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/admin')}
+            className="border-yellow-500/50 text-yellow-300 hover:bg-yellow-600/10 hover:scale-105 transition-all duration-300"
+          >
+            💼 Switch to Task Office
+            <ChevronRight size={14} className="ml-2" />
+          </Button>
         </div>
 
         {/* Tab Toggles */}
@@ -172,6 +187,213 @@ const MatchDashboard: React.FC = () => {
         {/* VIP Revenue Console Tab - Gleaming Frosted Gold Acrylic */}
         {activeTab === 'revenue' && (
           <div className="space-y-6">
+            {/* TikTok-Style Diamond Stream Console */}
+            <Card
+              className="backdrop-blur-xl border-2 border-pink-500/30"
+              style={{
+                background: 'rgba(236, 72, 153, 0.1)',
+                boxShadow: '0 0 30px rgba(236, 72, 153, 0.3)',
+              }}
+            >
+              <CardHeader>
+                <CardTitle className="text-pink-400 text-2xl">💎 TikTok-Style Diamond Stream Console</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-pink-900/20 border border-pink-500/30 rounded-lg p-4 hover:bg-pink-900/30 transition-all duration-300">
+                      <p className="text-pink-300 text-sm mb-1">Virtual Gifts Exchanged</p>
+                      <p className="text-3xl font-bold text-pink-400">12,847</p>
+                      <div className="mt-2 h-2 bg-pink-900 rounded-full overflow-hidden">
+                        <div className="h-full bg-pink-500 animate-pulse" style={{ width: '78%' }}></div>
+                      </div>
+                    </div>
+                    <div className="bg-pink-900/20 border border-pink-500/30 rounded-lg p-4 hover:bg-pink-900/30 transition-all duration-300">
+                      <p className="text-pink-300 text-sm mb-1">Luxury Crown Cash-Outs</p>
+                      <p className="text-3xl font-bold text-pink-400">$89,432</p>
+                      <div className="mt-2 h-2 bg-pink-900 rounded-full overflow-hidden">
+                        <div className="h-full bg-pink-500 animate-pulse" style={{ width: '65%' }}></div>
+                      </div>
+                    </div>
+                    <div className="bg-pink-900/20 border border-pink-500/30 rounded-lg p-4 hover:bg-pink-900/30 transition-all duration-300">
+                      <p className="text-pink-300 text-sm mb-1">Platform 30% Curation Fee</p>
+                      <p className="text-3xl font-bold text-pink-400">$26,829</p>
+                      <div className="mt-2 h-2 bg-pink-900 rounded-full overflow-hidden">
+                        <div className="h-full bg-pink-500 animate-pulse" style={{ width: '30%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Litmatch-Style Blind Box Match Matrix */}
+            <Card
+              className="backdrop-blur-xl border-2 border-cyan-500/30"
+              style={{
+                background: 'rgba(6, 182, 212, 0.1)',
+                boxShadow: '0 0 30px rgba(6, 182, 212, 0.3)',
+              }}
+            >
+              <CardHeader>
+                <CardTitle className="text-cyan-400 text-2xl">🎁 Litmatch-Style Blind Box Match Matrix</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-cyan-900/20 border border-cyan-500/30 rounded-lg p-4 hover:bg-cyan-900/30 transition-all duration-300">
+                      <p className="text-cyan-300 text-sm mb-1">Active Audio Matches (7-min)</p>
+                      <p className="text-3xl font-bold text-cyan-400">3,421</p>
+                      <div className="mt-2 h-2 bg-cyan-900 rounded-full overflow-hidden">
+                        <div className="h-full bg-cyan-500 animate-pulse" style={{ width: '85%' }}></div>
+                      </div>
+                    </div>
+                    <div className="bg-cyan-900/20 border border-cyan-500/30 rounded-lg p-4 hover:bg-cyan-900/30 transition-all duration-300">
+                      <p className="text-cyan-300 text-sm mb-1">Soul Cards Swapped Today</p>
+                      <p className="text-3xl font-bold text-cyan-400">8,932</p>
+                      <div className="mt-2 h-2 bg-cyan-900 rounded-full overflow-hidden">
+                        <div className="h-full bg-cyan-500 animate-pulse" style={{ width: '72%' }}></div>
+                      </div>
+                    </div>
+                    <div className="bg-cyan-900/20 border border-cyan-500/30 rounded-lg p-4 hover:bg-cyan-900/30 transition-all duration-300">
+                      <p className="text-cyan-300 text-sm mb-1">Speed Match Card Sales</p>
+                      <p className="text-3xl font-bold text-cyan-400">1,247 NellyCoins</p>
+                      <div className="mt-2 h-2 bg-cyan-900 rounded-full overflow-hidden">
+                        <div className="h-full bg-cyan-500 animate-pulse" style={{ width: '45%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Conversational Fee Interceptor Deep Analytics Desk */}
+            <Card
+              className="backdrop-blur-xl border-2 border-emerald-500/30"
+              style={{
+                background: 'rgba(16, 185, 129, 0.1)',
+                boxShadow: '0 0 30px rgba(16, 185, 129, 0.3)',
+              }}
+            >
+              <CardHeader>
+                <CardTitle className="text-emerald-400 text-2xl">💬 Conversational Fee Interceptor Analytics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4 hover:bg-emerald-900/30 transition-all duration-300">
+                      <p className="text-emerald-300 text-sm mb-1">Singles Tax</p>
+                      <p className="text-2xl font-bold text-emerald-400">$4,821</p>
+                      <p className="text-emerald-500 text-xs mt-1">2,341 messages</p>
+                    </div>
+                    <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4 hover:bg-emerald-900/30 transition-all duration-300">
+                      <p className="text-emerald-300 text-sm mb-1">Couples Tax</p>
+                      <p className="text-2xl font-bold text-emerald-400">$3,247</p>
+                      <p className="text-emerald-500 text-xs mt-1">1,892 messages</p>
+                    </div>
+                    <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4 hover:bg-emerald-900/30 transition-all duration-300">
+                      <p className="text-emerald-300 text-sm mb-1">Travelers Tax</p>
+                      <p className="text-2xl font-bold text-emerald-400">$2,891</p>
+                      <p className="text-emerald-500 text-xs mt-1">1,423 messages</p>
+                    </div>
+                    <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4 hover:bg-emerald-900/30 transition-all duration-300">
+                      <p className="text-emerald-300 text-sm mb-1">Communities Tax</p>
+                      <p className="text-2xl font-bold text-emerald-400">$1,847</p>
+                      <p className="text-emerald-500 text-xs mt-1">892 messages</p>
+                    </div>
+                  </div>
+                  <div className="bg-emerald-950/30 border border-emerald-500/20 rounded-lg p-4">
+                    <p className="text-emerald-400 font-semibold mb-3">Regional Distribution (Cambodia/Nigeria)</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-gray-300">Cambodia Singles</p>
+                        <p className="text-emerald-400 text-sm">$2,847</p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-gray-300">Nigeria Singles</p>
+                        <p className="text-emerald-400 text-sm">$1,974</p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-gray-300">Cambodia Couples</p>
+                        <p className="text-emerald-400 text-sm">$1,892</p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-gray-300">Nigeria Couples</p>
+                        <p className="text-emerald-400 text-sm">$1,355</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Anti-Scam Guard Bot High-Fidelity Alert Desk */}
+            <Card
+              className="backdrop-blur-xl border-2 border-yellow-500/30"
+              style={{
+                background: 'rgba(234, 179, 8, 0.05)',
+                boxShadow: '0 0 30px rgba(234, 179, 8, 0.3)',
+              }}
+            >
+              <CardHeader>
+                <CardTitle className="text-yellow-400 text-2xl">🛡️ Anti-Scam Guard Bot Alert Desk</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-yellow-950/30 border border-yellow-500/20 rounded-lg p-4">
+                    <p className="text-yellow-400 font-semibold mb-3">Recently Flagged Profiles</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between bg-red-900/20 border border-red-500/30 rounded p-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                          <p className="text-gray-300 text-sm">user_8921@suspicious.com</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-red-400 text-xs">FROZEN</span>
+                          <span className="text-yellow-400 text-xs">High Risk</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between bg-yellow-900/20 border border-yellow-500/30 rounded p-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                          <p className="text-gray-300 text-sm">user_7342@flagged.com</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-yellow-400 text-xs">MONITORED</span>
+                          <span className="text-orange-400 text-xs">Medium Risk</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between bg-orange-900/20 border border-orange-500/30 rounded p-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                          <p className="text-gray-300 text-sm">user_6129@review.com</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-orange-400 text-xs">REVIEW</span>
+                          <span className="text-yellow-400 text-xs">Low Risk</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 hover:bg-yellow-900/30 transition-all duration-300">
+                      <p className="text-yellow-300 text-sm mb-1">Protection Rate</p>
+                      <p className="text-3xl font-bold text-yellow-400">99.8%</p>
+                    </div>
+                    <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 hover:bg-yellow-900/30 transition-all duration-300">
+                      <p className="text-yellow-300 text-sm mb-1">Scammers Blocked Today</p>
+                      <p className="text-3xl font-bold text-yellow-400">47</p>
+                    </div>
+                    <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 hover:bg-yellow-900/30 transition-all duration-300">
+                      <p className="text-yellow-300 text-sm mb-1">Suspicious Accounts</p>
+                      <p className="text-3xl font-bold text-yellow-400">156</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Original VIP Revenue Console */}
             <Card
               className="backdrop-blur-xl border-2 border-yellow-500/30"
               style={{
@@ -196,30 +418,6 @@ const MatchDashboard: React.FC = () => {
                     <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 hover:bg-yellow-900/30 transition-all duration-300">
                       <p className="text-yellow-300 text-sm mb-1">Active VIPs</p>
                       <p className="text-3xl font-bold text-yellow-400">892</p>
-                    </div>
-                  </div>
-                  <div className="bg-yellow-950/30 border border-yellow-500/20 rounded-lg p-4">
-                    <p className="text-yellow-400 font-semibold mb-3">Anti-Scam Guard Bot Status</p>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-gray-300">Bot Active</p>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                          <p className="text-green-400 text-sm">Online</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-gray-300">Scammers Blocked Today</p>
-                        <p className="text-red-400 text-sm font-semibold">47</p>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-gray-300">Suspicious Accounts Flagged</p>
-                        <p className="text-yellow-400 text-sm font-semibold">156</p>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-gray-300">Protection Rate</p>
-                        <p className="text-green-400 text-sm font-semibold">99.8%</p>
-                      </div>
                     </div>
                   </div>
                 </div>

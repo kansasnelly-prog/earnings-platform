@@ -15,6 +15,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Index from './pages/Index';
 import Admin from './pages/Admin';
 import AIAssistantWorkspace from './pages/AIAssistantWorkspace';
+import MatchDashboard from './components/matchmaking/MatchDashboard';
 import NotFound from './pages/NotFound';
 import { supabase } from './lib/supabase';
 import { useAuth } from './contexts/SafeAuthProvider';
@@ -155,6 +156,7 @@ const AppContent: React.FC = () => {
       <Route path="/" element={<Index />} />
       <Route element={<ProtectedRoute />}> 
         <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
+        <Route path="/match-admin" element={<MatchDashboard />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

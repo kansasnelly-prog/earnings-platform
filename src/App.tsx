@@ -101,9 +101,26 @@ const awardDownloadBonus = async (userId: string) => {
   }
 };
 
+// MODULE 1: Case-Insensitive Router Firewall
+const useCaseInsensitiveRouter = () => {
+  useEffect(() => {
+    const pathname = window.location.pathname;
+    const lowercasePath = pathname.toLowerCase();
+
+    // If the current pathname contains uppercase letters, force lowercase
+    if (pathname !== lowercasePath) {
+      console.log('[Router Firewall] Forcing lowercase URL:', pathname, '->', lowercasePath);
+      window.history.replaceState({}, '', lowercasePath);
+    }
+  }, []);
+};
+
 const AppContent: React.FC = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+
+  // Apply case-insensitive router firewall
+  useCaseInsensitiveRouter();
 
   if (isAdminRoute) {
     return (

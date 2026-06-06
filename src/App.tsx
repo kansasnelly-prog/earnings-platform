@@ -16,6 +16,9 @@ import Index from './pages/Index';
 import Admin from './pages/Admin';
 import AIAssistantWorkspace from './pages/AIAssistantWorkspace';
 import MatchDashboard from './components/matchmaking/MatchDashboard';
+import MatchingFeed from './components/social/MatchingFeed';
+import AudioMatchRoom from './components/social/AudioMatchRoom';
+import PremiumChatView from './components/social/PremiumChatView';
 import NotFound from './pages/NotFound';
 import { supabase } from './lib/supabase';
 import { useAuth } from './contexts/SafeAuthProvider';
@@ -166,6 +169,9 @@ const AppContent: React.FC = () => {
       <Route path="/" element={<Index />} />
       <Route element={<ProtectedRoute />}> 
         <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
+        <Route path="/match-feed" element={<MatchingFeed />} />
+        <Route path="/voice-match" element={<AudioMatchRoom />} />
+        <Route path="/premium-chat" element={<PremiumChatView />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

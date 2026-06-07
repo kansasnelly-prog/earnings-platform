@@ -1,0 +1,42 @@
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(245, 158, 11, 0.5),
+                 0 0 20px rgba(245, 158, 11, 0.3),
+                 0 0 30px rgba(245, 158, 11, 0.2);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(245, 158, 11, 0.8),
+                 0 0 30px rgba(245, 158, 11, 0.5),
+                 0 0 40px rgba(245, 158, 11, 0.3);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}

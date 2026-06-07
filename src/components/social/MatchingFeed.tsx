@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
 
 interface Profile {
   id: string;
@@ -17,6 +18,11 @@ const MatchingFeed: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [nellyCoins, setNellyCoins] = useState(0);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignup, setIsSignup] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     loadProfiles();
@@ -161,6 +167,68 @@ const MatchingFeed: React.FC = () => {
     }
   };
 
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+
+    try {
+      if (isSignup) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Registration Successful",
+          description: "Please check your email to verify your account.",
+          variant: "default",
+        });
+
+        // Process referral if exists
+        if (data.user) {
+          await processReferralAttribution(data.user.id);
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Login Successful",
+          description: "Welcome back to Nelly Social Hub!",
+          variant: "default",
+        });
+
+        // Process referral if exists
+        if (data.user) {
+          await processReferralAttribution(data.user.id);
+        }
+
+        // Reload profiles and balance after successful auth
+        loadProfiles();
+        loadUserBalance();
+      }
+
+      // Clear form
+      setEmail('');
+      setPassword('');
+    } catch (error: any) {
+      console.error('Auth error:', error);
+      toast({
+        title: isSignup ? "Registration Failed" : "Login Failed",
+        description: error.message || "An error occurred during authentication.",
+        variant: "destructive",
+      });
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   const currentProfile = profiles[currentIndex];
 
   if (loading) {
@@ -256,6 +324,47 @@ const MatchingFeed: React.FC = () => {
                 </svg>
                 Log In with Google
               </Button>
+
+              <form onSubmit={handleEmailAuth} className="mb-6">
+                <div className="bg-white/10 backdrop-blur-sm border-2 border-yellow-500/30 rounded-xl p-6 space-y-4">
+                  <div>
+                    <label className="block text-white font-bold mb-2">Email Address</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      required
+                      className="w-full bg-white/10 backdrop-blur-sm border-2 border-yellow-500/50 rounded-lg px-4 py-3 text-white placeholder-gray-300 focus:outline-none focus:border-yellow-400 transition-all duration-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white font-bold mb-2">Password</label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      required
+                      className="w-full bg-white/10 backdrop-blur-sm border-2 border-yellow-500/50 rounded-lg px-4 py-3 text-white placeholder-gray-300 focus:outline-none focus:border-yellow-400 transition-all duration-300"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-white font-bold py-4 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg shadow-yellow-500/50"
+                  >
+                    {authLoading ? 'Processing...' : isSignup ? '🔐 Create Dating Profile' : '🔐 Log In to Social Hub'}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setIsSignup(!isSignup)}
+                    className="w-full text-pink-300 hover:text-pink-200 text-sm font-semibold transition-all duration-300"
+                  >
+                    {isSignup ? 'Already have an account? Log In here' : 'New user? Create a Dating Profile here'}
+                  </button>
+                </div>
+              </form>
 
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-6">
                 <p className="text-white text-lg leading-relaxed">

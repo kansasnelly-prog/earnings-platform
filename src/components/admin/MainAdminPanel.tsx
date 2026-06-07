@@ -5,6 +5,7 @@ import { toast } from '@/components/ui/use-toast';
 import { TelegramService } from '@/services/telegramService';
 import { SupabaseService } from '@/services/supabaseService';
 import { logCore, logSupabase, logAdmin, logError, logTelegram } from '@/utils/logger';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   LayoutDashboard, Users, ArrowDownToLine, RefreshCw, Shield, ChevronLeft,
   BarChart3, Activity, LogIn, Headphones, Settings, UserPlus,
@@ -102,6 +103,7 @@ const MainAdminPanel: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'error'>('connected');
+  const { currentLanguage, setLanguage } = useLanguage();
 
   logCore('Current isAuthenticated state', isAuthenticated);
 
@@ -974,6 +976,14 @@ const MainAdminPanel: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLanguage(currentLanguage.code === 'en' ? { code: 'km', name: 'Khmer', nativeName: 'ខ្មែរ', flag: '🇰🇭' } : { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' })}
+                className="border-slate-600 text-slate-300 hover:bg-slate-800/50"
+              >
+                {currentLanguage.code === 'en' ? '🇬🇧' : '🇰🇭'}
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

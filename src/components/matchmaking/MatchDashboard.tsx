@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const MatchDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { currentLanguage, setLanguage } = useLanguage();
   const [activeTab, setActiveTab] = useState<'chats' | 'discovery' | 'revenue'>('chats');
   const [walletTransactions, setWalletTransactions] = useState<any[]>([]);
 
@@ -88,15 +90,25 @@ const MatchDashboard: React.FC = () => {
             <h1 className="text-4xl font-bold text-white mb-2">Matchmaking Admin Console</h1>
             <p className="text-gray-400">Premium triple-theme administrative interface</p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/admin')}
-            className="border-yellow-500/50 text-yellow-300 hover:bg-yellow-600/10 hover:scale-105 transition-all duration-300"
-          >
-            💼 Switch to Task Office
-            <ChevronRight size={14} className="ml-2" />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLanguage(currentLanguage.code === 'en' ? { code: 'km', name: 'Khmer', nativeName: 'ខ្មែរ', flag: '🇰🇭' } : { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' })}
+              className="border-slate-600 text-slate-300 hover:bg-slate-800/50"
+            >
+              {currentLanguage.code === 'en' ? '🇬🇧' : '🇰🇭'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/admin')}
+              className="border-yellow-500/50 text-yellow-300 hover:bg-yellow-600/10 hover:scale-105 transition-all duration-300"
+            >
+              💼 Switch to Task Office
+              <ChevronRight size={14} className="ml-2" />
+            </Button>
+          </div>
         </div>
 
         {/* Tab Toggles */}

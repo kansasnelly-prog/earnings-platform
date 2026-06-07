@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { supabase } from '@/lib/supabase';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Globe } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -12,10 +14,12 @@ interface Message {
 }
 
 const PremiumChatView: React.FC = () => {
+  const { currentLanguage, setLanguage } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [nellyCoins, setNellyCoins] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [translatedMessages, setTranslatedMessages] = useState<Record<string, string>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -118,14 +122,52 @@ const PremiumChatView: React.FC = () => {
     }
   };
 
+  const handleTranslateMessage = (messageId: string, content: string) => {
+    // Mock translation - in production, this would call a translation API
+    const mockTranslations: Record<string, string> = {
+      'Hello': 'សួស្តី',
+      'Hi': 'សួស្តី',
+      'How are you?': 'តើអ្នកសុខសប្បាយជាមណា?',
+      'Good morning': 'អរុណសួស្តី',
+      'Good night': 'រកសុខសប្បាយ',
+      'Thank you': 'សូមអរគុណ',
+      'Yes': 'បាទ/ចាស',
+      'No': 'ទេ',
+      'I love you': 'ខ្ញុំស្រល់អ្នក',
+      'See you later': 'ជួបគ្នាពេលក្រោយ',
+    };
+
+    // Simple mock translation - check if content matches any known phrase
+    let translated = mockTranslations[content];
+    if (!translated) {
+      // If no exact match, add a prefix to indicate it's translated
+      translated = `[KH] ${content}`;
+    }
+
+    setTranslatedMessages(prev => ({
+      ...prev,
+      [messageId]: translated
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-900 via-pink-900 to-red-900 p-4">
       <div className="max-w-md mx-auto h-screen flex flex-col">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-white">Premium Chat</h1>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
-            <span className="text-yellow-400 font-bold">{nellyCoins}</span>
-            <span className="text-white text-sm ml-1">NC</span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLanguage(currentLanguage.code === 'en' ? { code: 'km', name: 'Khmer', nativeName: 'ខ្មែរ', flag: '🇰🇭' } : { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' })}
+              className="border-slate-600 text-slate-300 hover:bg-slate-800/50"
+            >
+              {currentLanguage.code === 'en' ? '🇬🇧' : '🇰🇭'}
+            </Button>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+              <span className="text-yellow-400 font-bold">{nellyCoins}</span>
+              <span className="text-white text-sm ml-1">NC</span>
+            </div>
           </div>
         </div>
 
@@ -152,17 +194,32 @@ const PremiumChatView: React.FC = () => {
                     key={message.id}
                     className={`flex ${message.is_own ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div
-                      className={`max-w-[80%] rounded-2xl p-3 ${
-                        message.is_own
-                          ? 'bg-gradient-to-r from-red-600 to-pink-600 text-white'
-                          : 'bg-white/10 text-white'
-                      }`}
-                    >
-                      <p className="text-sm">{message.content}</p>
-                      <p className="text-xs mt-1 opacity-70">
-                        {new Date(message.created_at).toLocaleTimeString()}
-                      </p>
+                    <div className="flex flex-col items-end gap-1">
+                      <div
+                        className={`max-w-[80%] rounded-2xl p-3 ${
+                          message.is_own
+                            ? 'bg-gradient-to-r from-red-600 to-pink-600 text-white'
+                            : 'bg-white/10 text-white'
+                        }`}
+                      >
+                        <p className="text-sm">{message.content}</p>
+                        {translatedMessages[message.id] && (
+                          <p className="text-sm mt-2 text-yellow-300 font-semibold">
+                            {translatedMessages[message.id]}
+                          </p>
+                        )}
+                        <p className="text-xs mt-1 opacity-70">
+                          {new Date(message.created_at).toLocaleTimeString()}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleTranslateMessage(message.id, message.content)}
+                        className="text-slate-400 hover:text-white hover:bg-white/10"
+                      >
+                        <Globe size={14} />
+                      </Button>
                     </div>
                   </div>
                 ))}

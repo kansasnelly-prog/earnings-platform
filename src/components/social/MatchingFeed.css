@@ -67,3 +67,16 @@
 .animate-spin-note {
   animation: spin-note 12s linear infinite;
 }
+
+@keyframes spin-header-note {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-header-note {
+  animation: spin-header-note 8s linear infinite;
+}

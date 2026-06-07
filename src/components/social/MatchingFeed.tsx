@@ -350,7 +350,7 @@ const MatchingFeed: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-purple-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-purple-900 relative overflow-y-auto overflow-x-hidden" style={{ minHeight: '100vh', height: 'auto !important' }}>
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0di0yaDJ2MmgtMnptMC0zaDJ2MmgtMnYtMnptMC0zaDJ2MmgtMnYtMnptLTQgMGgydjJoLTJ2LTJ6bTAtM2gydjJoLTJ2LTJ6bTAtM2gydjJoLTJ2LTJ6bS00IDBoMnYyaC0ydi0yem0wLTNoMnYyaC0ydi0yem0wLTNoMnYyaC0ydi0yeiIvPjwvZz48L2c+PC9zdmc+')] opacity-30 animate-pulse-slow"></div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
       
@@ -369,7 +369,7 @@ const MatchingFeed: React.FC = () => {
         </div>
       </div>
 
-      <div className="relative z-10 w-full max-w-[1200px] mx-auto p-4 md:p-8">
+      <div className="relative z-10 w-full max-w-[1200px] mx-auto p-4 md:p-8 pb-24">
         {/* Top Header with Spinning Music Note and Live Time */}
         <div className="flex items-center justify-between mb-8">
           {/* Left: Spinning Music Note with 6 Badge */}
@@ -415,44 +415,50 @@ const MatchingFeed: React.FC = () => {
                 <div className="space-y-3">
                   <Button
                     variant="outline"
-                    className="w-full border-slate-600 text-slate-300 hover:bg-slate-800/50 hover:border-amber-500/50 transition-all duration-300"
+                    className="w-full border-slate-600 text-white font-semibold hover:bg-slate-800/50 hover:border-amber-500/50 transition-all duration-300"
+                    style={{ background: '#000000 !important', color: '#ffffff !important', fontWeight: 600 }}
                   >
                     Use QR code
                   </Button>
                   
                   <Button
                     variant="outline"
-                    className="w-full border-slate-600 text-slate-300 hover:bg-slate-800/50 hover:border-amber-500/50 transition-all duration-300"
+                    className="w-full border-slate-600 text-white font-semibold hover:bg-slate-800/50 hover:border-amber-500/50 transition-all duration-300"
                     onClick={() => setShowEmailForm(!showEmailForm)}
+                    style={{ background: '#000000 !important', color: '#ffffff !important', fontWeight: 600 }}
                   >
                     Use phone / email / username
                   </Button>
                   
                   <Button
                     variant="outline"
-                    className="w-full border-slate-600 text-slate-300 hover:bg-slate-800/50 hover:border-blue-500/50 transition-all duration-300"
+                    className="w-full border-slate-600 text-white font-semibold hover:bg-slate-800/50 hover:border-blue-500/50 transition-all duration-300"
+                    style={{ background: '#000000 !important', color: '#ffffff !important', fontWeight: 600 }}
                   >
                     Continue with Facebook
                   </Button>
                   
                   <Button
                     variant="outline"
-                    className="w-full border-slate-600 text-slate-300 hover:bg-slate-800/50 hover:border-red-500/50 transition-all duration-300"
+                    className="w-full border-slate-600 text-white font-semibold hover:bg-slate-800/50 hover:border-red-500/50 transition-all duration-300"
+                    style={{ background: '#000000 !important', color: '#ffffff !important', fontWeight: 600 }}
                   >
                     Continue with Google
                   </Button>
                   
                   <Button
                     variant="outline"
-                    className="w-full border-slate-600 text-slate-300 hover:bg-slate-800/50 hover:border-green-500/50 transition-all duration-300"
+                    className="w-full border-slate-600 text-white font-semibold hover:bg-slate-800/50 hover:border-green-500/50 transition-all duration-300"
+                    style={{ background: '#000000 !important', color: '#ffffff !important', fontWeight: 600 }}
                   >
                     Continue with LINE
                   </Button>
                   
                   <Button
                     variant="outline"
-                    className="w-full border-amber-500/50 text-amber-400 hover:bg-amber-500/20 transition-all duration-300 font-bold"
+                    className="w-full border-amber-500/50 text-white font-semibold hover:bg-amber-500/20 transition-all duration-300"
                     onClick={handleTaskHubBypass}
+                    style={{ background: '#000000 !important', color: '#ffffff !important', fontWeight: 600 }}
                   >
                     Continue with Task Hub
                   </Button>

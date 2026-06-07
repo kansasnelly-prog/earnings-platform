@@ -9,9 +9,11 @@ const MatchDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'chats' | 'discovery' | 'revenue'>('chats');
   const [walletTransactions, setWalletTransactions] = useState<any[]>([]);
+  const [referralAnalytics, setReferralAnalytics] = useState<any[]>([]);
 
   useEffect(() => {
     loadWalletTransactions();
+    loadReferralAnalytics();
   }, []);
 
   const loadWalletTransactions = async () => {
@@ -77,6 +79,19 @@ const MatchDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error rejecting transaction:', error);
       alert('Failed to reject transaction. Please try again.');
+    }
+  };
+
+  const loadReferralAnalytics = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('influencer_referrals')
+        .select('*');
+
+      if (error) throw error;
+      setReferralAnalytics(data || []);
+    } catch (error) {
+      console.error('Error loading referral analytics:', error);
     }
   };
 
@@ -575,6 +590,84 @@ const MatchDashboard: React.FC = () => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Influencer Traffic Analytics Grid */}
+            <Card
+              className="backdrop-blur-xl border-2 border-indigo-500/30"
+              style={{
+                background: 'rgba(99, 102, 241, 0.1)',
+                boxShadow: '0 0 30px rgba(99, 102, 241, 0.3)',
+              }}
+            >
+              <CardHeader>
+                <CardTitle className="text-indigo-400 text-2xl">📈 Influencer Traffic Analytics Grid</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {referralAnalytics.length === 0 ? (
+                  <div className="text-center text-gray-400 py-8">
+                    <p className="text-4xl mb-2">📊</p>
+                    <p>No referral data available</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Aggregate analytics by referrer code */}
+                    {(() => {
+                      const aggregatedData = referralAnalytics.reduce((acc: any, ref: any) => {
+                        if (!acc[ref.referrer_code]) {
+                          acc[ref.referrer_code] = {
+                            referrer_code: ref.referrer_code,
+                            total_referrals: 0,
+                            completed_referrals: 0,
+                            total_coins: 0
+                          };
+                        }
+                        acc[ref.referrer_code].total_referrals += 1;
+                        if (ref.status === 'completed') {
+                          acc[ref.referrer_code].completed_referrals += 1;
+                          acc[ref.referrer_code].total_coins += ref.coins_awarded || 0;
+                        }
+                        return acc;
+                      }, {});
+
+                      return Object.values(aggregatedData).map((data: any) => {
+                        const conversionRate = data.total_referrals > 0 
+                          ? ((data.completed_referrals / data.total_referrals) * 100).toFixed(1) 
+                          : '0.0';
+                        
+                        return (
+                          <div
+                            key={data.referrer_code}
+                            className="bg-white/10 border border-indigo-500/30 rounded-lg p-4 hover:bg-white/20 transition-all duration-300"
+                            style={{
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                            }}
+                          >
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                              <div>
+                                <p className="text-indigo-300 text-xs mb-1">Creator Tracking Tag</p>
+                                <p className="text-white text-sm font-bold">{data.referrer_code}</p>
+                              </div>
+                              <div>
+                                <p className="text-indigo-300 text-xs mb-1">Total Users Referred</p>
+                                <p className="text-white text-sm font-semibold">{data.total_referrals}</p>
+                              </div>
+                              <div>
+                                <p className="text-indigo-300 text-xs mb-1">Conversion Success Rate</p>
+                                <p className="text-white text-sm font-semibold">{conversionRate}%</p>
+                              </div>
+                              <div>
+                                <p className="text-indigo-300 text-xs mb-1">Gross Platform Coins Generated</p>
+                                <p className="text-white text-sm font-semibold">{data.total_coins} NC</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 )}
               </CardContent>

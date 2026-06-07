@@ -21,7 +21,71 @@ const MatchingFeed: React.FC = () => {
   useEffect(() => {
     loadProfiles();
     loadUserBalance();
+    parseReferralCode();
   }, []);
+
+  const parseReferralCode = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    
+    if (refCode) {
+      localStorage.setItem('referral_code', refCode);
+      console.log('Referral code saved:', refCode);
+    }
+  };
+
+  const processReferralAttribution = async (userId: string) => {
+    const refCode = localStorage.getItem('referral_code');
+    
+    if (!refCode) return;
+
+    try {
+      // Insert referral record
+      const { error: referralError } = await supabase
+        .from('influencer_referrals')
+        .insert({
+          referrer_code: refCode,
+          referred_user_id: userId,
+          referred_at: new Date().toISOString(),
+          status: 'pending',
+          coins_awarded: 0
+        });
+
+      if (referralError) throw referralError;
+
+      // Award 5 NellyCoins as onboarding bonus
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('balance')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const { error: balanceError } = await supabase
+        .from('users')
+        .update({ balance: (userData?.balance || 0) + 5 })
+        .eq('id', userId);
+
+      if (balanceError) throw balanceError;
+
+      // Update referral record with coins awarded
+      await supabase
+        .from('influencer_referrals')
+        .update({ 
+          status: 'completed',
+          coins_awarded: 5 
+        })
+        .eq('referred_user_id', userId);
+
+      // Clear referral code from localStorage
+      localStorage.removeItem('referral_code');
+      
+      console.log('Referral processed successfully');
+    } catch (error) {
+      console.error('Error processing referral:', error);
+    }
+  };
 
   const loadProfiles = async () => {
     setLoading(true);
@@ -45,6 +109,9 @@ const MatchingFeed: React.FC = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Process referral attribution if user has a referral code
+      await processReferralAttribution(user.id);
 
       const { data, error } = await supabase
         .from('users')

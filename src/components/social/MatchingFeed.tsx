@@ -246,6 +246,21 @@ const MatchingFeed: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-purple-900 relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0di0yaDJ2MmgtMnptMC0zaDJ2MmgtMnYtMnptMC0zaDJ2MmgtMnYtMnptLTQgMGgydjJoLTJ2LTJ6bTAtM2gydjJoLTJ2LTJ6bTAtM2gydjJoLTJ2LTJ6bS00IDBoMnYyaC0ydi0yem0wLTNoMnYyaC0ydi0yem0wLTNoMnYyaC0ydi0yeiIvPjwvZz48L2c+PC9zdmc+')] opacity-30 animate-pulse-slow"></div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+      
+      {/* TikTok6 Network Official Watermark */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none mix-blend-overlay" style={{ opacity: 0.05 }}>
+        <div className="text-center transform -rotate-12">
+          <h1 className="text-8xl md:text-9xl font-black text-white tracking-wider" style={{ 
+            textShadow: '0 0 40px rgba(255, 255, 255, 0.3)',
+            letterSpacing: '0.2em'
+          }}>
+            TIKTOK6
+          </h1>
+          <p className="text-3xl md:text-4xl font-bold text-white tracking-widest mt-4" style={{ letterSpacing: '0.3em' }}>
+            NETWORK OFFICIAL
+          </p>
+        </div>
+      </div>
       <div className="relative z-10 w-full max-w-[1200px] mx-auto p-4 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         {/* Left Column - Login/Profile Cards */}
         <div className="space-y-6">
@@ -427,6 +442,22 @@ const MatchingFeed: React.FC = () => {
                 <p className="text-amber-300 text-sm mt-4 leading-relaxed animate-glow">
                   សូមស្វាគមន៍មកកាន់បទពិសោធន៍នៃការតភ្ជាប់ដ៏ល្អឥតខ្ចោះ។ ចូលរួមទស្សនាវីដេអូខ្លីៗកម្រិតច្បាស់ (Video Reels) 🎬, បទពិសោធន៍នៃការផ្សាយផ្ទាល់រំភើបៗ (Interactive Live Streams) 📡, ចែចង់ 🫦 និងលង់ស្រឡាញ់ 💕 ជាមួយអ្នកនៅលីវលំដាប់ប្រណីត និងអ្នកធ្វើដំណើរជុំវិញពិភពលោក។ ចូលរួមបន្ទប់សហគមន៍ផ្តាច់មុខ ក្រុមជជែកកំសាន្តឯកជន និងឆានែលផ្គូផ្គងសំឡេងដែលមានម៉ោងកំណត់ត្រូវបានរចនាឡើងសម្រាប់ការតភ្ជាប់ពិតប្រាកដ។
                 </p>
+                
+                {/* TikTok6 Corporate Emblem */}
+                <div className="mt-8 flex items-center justify-center">
+                  <div className="relative bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 rounded-2xl p-8 shadow-2xl border-4 border-amber-500/50 transform hover:scale-105 transition-all duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-400/20 to-orange-500/20 rounded-2xl blur-xl opacity-50"></div>
+                    <div className="relative">
+                      <h2 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 animate-glow" style={{ 
+                        textShadow: '0 0 20px rgba(251, 191, 36, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.2)',
+                        letterSpacing: '0.05em'
+                      }}>
+                        TikTok6
+                      </h2>
+                      <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 rounded-full blur-sm"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

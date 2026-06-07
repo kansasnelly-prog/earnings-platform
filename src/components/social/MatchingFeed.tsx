@@ -445,11 +445,17 @@ const MatchingFeed: React.FC = () => {
                 
                 {/* TikTok6 Corporate Emblem */}
                 <div className="mt-8 flex items-center justify-center">
-                  <div className="relative bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 rounded-2xl p-8 shadow-2xl border-4 border-amber-500/50 transform hover:scale-105 transition-all duration-500">
-                    <div className="absolute inset-0 bg-gradient-to-br from-amber-400/20 to-orange-500/20 rounded-2xl blur-xl opacity-50"></div>
+                  <div className="relative bg-gradient-to-br from-slate-900 via-slate-950 to-black rounded-2xl p-8 shadow-2xl border border-amber-500/30 transform hover:scale-105 transition-all duration-500" style={{ 
+                    boxShadow: '0 0 25px rgba(245, 158, 11, 0.25)'
+                  }}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 to-orange-500/10 rounded-2xl blur-xl opacity-50"></div>
                     <div className="relative">
-                      <h2 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 animate-glow" style={{ 
-                        textShadow: '0 0 20px rgba(251, 191, 36, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.2)',
+                      <h2 className="text-5xl md:text-6xl font-black animate-shimmering-reflection" style={{ 
+                        background: 'linear-gradient(135deg, #1e293b 0%, #030712 100%)',
+                        color: 'transparent',
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        textShadow: '0 4px 10px rgba(0,0,0,0.9), 0px 0px 20px rgba(245, 158, 11, 0.45)',
                         letterSpacing: '0.05em'
                       }}>
                         TikTok6

@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { supabase } from '@/lib/supabase';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 const AudioMatchRoom: React.FC = () => {
-  const { currentLanguage, setLanguage } = useLanguage();
   const [timeLeft, setTimeLeft] = useState(420); // 7 minutes in seconds
   const [isActive, setIsActive] = useState(false);
   const [soulCardsRevealed, setSoulCardsRevealed] = useState(0);
@@ -98,10 +96,8 @@ const AudioMatchRoom: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setLanguage(currentLanguage.code === 'en' ? { code: 'km', name: 'Khmer', nativeName: 'ខ្មែរ', flag: '🇰🇭' } : { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' })}
               className="border-slate-600 text-slate-300 hover:bg-slate-800/50"
             >
-              {currentLanguage.code === 'en' ? '🇬🇧' : '🇰🇭'}
             </Button>
             <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
               <span className="text-yellow-400 font-bold">{nellyCoins}</span>

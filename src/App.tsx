@@ -5,7 +5,6 @@ import { TooltipProvider } from './components/ui/tooltip';
 import { Toaster } from './components/ui/toaster';
 import { Toaster as Sonner } from './components/ui/sonner';
 import { ThemeProvider } from './components/theme-provider';
-import { LanguageProvider } from './contexts/LanguageContext';
 import { CSNotificationProvider } from './contexts/CSNotificationContext';
 import { AuthProvider } from './contexts/SafeAuthProvider';
 import { AppProvider } from './contexts/AppContext';
@@ -247,13 +246,11 @@ const App: React.FC = () => (
             <AuthProvider>
               {/* AppProvider now envelops the entire routing tree */}
               <AppProvider>
-                <LanguageProvider>
-                  <CSNotificationProvider>
-                    <Toaster />
-                    <Sonner />
-                    <AppContent />
-                  </CSNotificationProvider>
-                </LanguageProvider>
+                <CSNotificationProvider>
+                  <Toaster />
+                  <Sonner />
+                  <AppContent />
+                </CSNotificationProvider>
               </AppProvider>
             </AuthProvider>
           </TooltipProvider>

@@ -4,11 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 const MatchDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { currentLanguage, setLanguage } = useLanguage();
   const [activeTab, setActiveTab] = useState<'chats' | 'discovery' | 'revenue'>('chats');
   const [walletTransactions, setWalletTransactions] = useState<any[]>([]);
 
@@ -94,10 +92,8 @@ const MatchDashboard: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setLanguage(currentLanguage.code === 'en' ? { code: 'km', name: 'Khmer', nativeName: 'ខ្មែរ', flag: '🇰🇭' } : { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' })}
               className="border-slate-600 text-slate-300 hover:bg-slate-800/50"
             >
-              {currentLanguage.code === 'en' ? '🇬🇧' : '🇰🇭'}
             </Button>
             <Button
               variant="outline"

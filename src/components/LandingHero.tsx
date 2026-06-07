@@ -1,91 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
-import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
 import { Zap, Shield, TrendingUp, Wallet, CheckCircle, Users, Globe, Clock, ArrowRight, Star, Award, BarChart3, MessageCircle, ChevronDown } from 'lucide-react';
-
-// Click-based Language Dropdown Component
-const LanguageDropdown: React.FC = () => {
-  const { currentLanguage, setLanguage, t } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  
-  // Get top 12 languages with flags for the dropdown
-  const topLanguages = LANGUAGES.slice(0, 12).map(lang => ({
-    ...lang,
-    flag: lang.code === 'en' ? '🇺🇸' :
-          lang.code === 'es' ? '🇪🇸' :
-          lang.code === 'fr' ? '🇫🇷' :
-          lang.code === 'de' ? '🇩🇪' :
-          lang.code === 'zh' ? '🇨🇳' :
-          lang.code === 'hi' ? '🇮🇳' :
-          lang.code === 'ar' ? '🇸🇦' :
-          lang.code === 'pt' ? '🇵🇹' :
-          lang.code === 'bn' ? '🇧🇩' :
-          lang.code === 'ru' ? '🇷🇺' :
-          lang.code === 'ja' ? '🇯🇵' :
-          lang.code === 'pa' ? '🇮🇳' : '�'
-  }));
-  
-  const currentLang = topLanguages.find(l => l.code === currentLanguage.code) || topLanguages[0];
-  
-  const handleLanguageChange = (lang: typeof LANGUAGES[0]) => {
-    setLanguage(lang);
-    setIsOpen(false);
-    // No reload needed - React will re-render with new language
-  };
-  
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-  
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all duration-200"
-        title={t('selectLanguage')}
-      >
-        <span className="text-lg">{currentLang.flag}</span>
-        <span className="text-sm text-white font-medium hidden sm:inline">{currentLang.nativeName}</span>
-        <ChevronDown size={14} className={`text-white/60 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-      
-      {isOpen && (
-        <div className="absolute top-full right-0 mt-2 z-50">
-          <div className="bg-[#0d111c]/95 backdrop-blur-xl border border-white/10 rounded-xl p-2 shadow-2xl w-[200px]">
-            <p className="text-xs text-gray-400 px-3 py-2 border-b border-white/10 mb-1">
-              {t('selectLanguage')}
-            </p>
-            <div className="max-h-[280px] overflow-y-auto">
-              {topLanguages.map((lang) => (
-                <button
-                  key={lang.code}
-                  onClick={() => handleLanguageChange(lang)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                    currentLanguage.code === lang.code 
-                      ? 'bg-indigo-500/20 text-indigo-400' 
-                      : 'text-slate-300 hover:bg-white/5'
-                  }`}
-                >
-                  <span className="text-lg">{lang.flag}</span>
-                  <span className="text-sm">{lang.nativeName}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 // Customer Service button component
 const CSButton: React.FC = () => {
@@ -104,30 +19,29 @@ const CSButton: React.FC = () => {
 
 const LandingHero: React.FC = () => {
   const { setAuthModalOpen, setAuthModalTab } = useAppContext();
-  const { t } = useLanguage();
 
   const openRegister = () => { setAuthModalTab('register'); setAuthModalOpen(true); };
   const openLogin = () => { setAuthModalTab('login'); setAuthModalOpen(true); };
 
   const features = [
-    { icon: Zap, title: t('quickTasks'), desc: t('quickTasksDesc'), color: 'from-amber-500 to-orange-500' },
-    { icon: Shield, title: t('securePlatform'), desc: t('securePlatformDesc'), color: 'from-emerald-500 to-teal-500' },
-    { icon: TrendingUp, title: t('earnRewards'), desc: t('earnRewardsDesc'), color: 'from-blue-500 to-indigo-500' },
-    { icon: Wallet, title: t('digitalWallet'), desc: t('digitalWalletDesc'), color: 'from-purple-500 to-pink-500' },
+    { icon: Zap, title: 'Quick Tasks', desc: 'Complete simple tasks in minutes and earn rewards instantly', color: 'from-amber-500 to-orange-500' },
+    { icon: Shield, title: 'Secure Platform', desc: 'Your data and earnings are protected with enterprise-grade security', color: 'from-emerald-500 to-teal-500' },
+    { icon: TrendingUp, title: 'Earn Rewards', desc: 'Progress through VIP tiers and unlock higher earning potential', color: 'from-blue-500 to-indigo-500' },
+    { icon: Wallet, title: 'Digital Wallet', desc: 'Withdraw your earnings instantly to your preferred digital wallet', color: 'from-purple-500 to-pink-500' },
   ];
 
   const stats = [
-    { value: '50K+', label: t('activeUsers'), icon: Users },
-    { value: '$2.5M+', label: t('totalPaidOut'), icon: TrendingUp },
-    { value: '150+', label: t('countries'), icon: Globe },
-    { value: '24/7', label: t('support'), icon: Clock },
+    { value: '50K+', label: 'Active Users', icon: Users },
+    { value: '$2.5M+', label: 'Total Paid Out', icon: TrendingUp },
+    { value: '150+', label: 'Countries', icon: Globe },
+    { value: '24/7', label: 'Support', icon: Clock },
   ];
 
   const steps = [
-    { step: '01', title: t('step1Title'), desc: t('step1Desc') },
-    { step: '02', title: t('step2Title'), desc: t('step2Desc') },
-    { step: '03', title: t('step3Title'), desc: t('step3Desc') },
-    { step: '04', title: t('step4Title'), desc: t('step4Desc') },
+    { step: '01', title: 'Create Account', desc: 'Sign up in seconds and get instant access to your dashboard' },
+    { step: '02', title: 'Complete Tasks', desc: 'Choose from a variety of simple tasks and complete them at your own pace' },
+    { step: '03', title: 'Earn Rewards', desc: 'Get paid instantly for each completed task with transparent tracking' },
+    { step: '04', title: 'Withdraw', desc: 'Cash out your earnings to your digital wallet anytime, anywhere' },
   ];
 
   const tiers = [
@@ -148,28 +62,28 @@ const LandingHero: React.FC = () => {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24">
-          {/* Top right controls - Language only */}
+          {/* Top right controls - CS only */}
           <div className="absolute top-4 right-4 flex items-center gap-3 z-10">
-            <LanguageDropdown />
+            <CSButton />
           </div>
           
           <div className="text-center max-w-4xl mx-auto">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full mb-8">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-sm text-indigo-300 font-medium">{t('platformActive')} — 12,847 {t('usersOnline')}</span>
+              <span className="text-sm text-indigo-300 font-medium">Platform Active — 12,847 Users Online</span>
             </div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-tight mb-6">
-              <span className="text-white">{t('optimizeYour')}</span>
+              <span className="text-white">Optimize Your</span>
               <br />
               <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                {t('digitalEarnings')}
+                Digital Earnings
               </span>
             </h1>
 
             <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              {t('heroDescription')}
+              Join thousands of users earning through our optimized task platform. Complete your VIP tasks, bind your digital wallet, and withdraw your earnings easily.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
@@ -177,14 +91,14 @@ const LandingHero: React.FC = () => {
                 onClick={openRegister}
                 className="group w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 flex items-center justify-center gap-2"
               >
-                {t('startEarningNow')}
+                Start Earning Now
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
               <button
                 onClick={openLogin}
                 className="w-full sm:w-auto px-8 py-4 bg-white/5 border border-white/10 text-white font-semibold rounded-xl hover:bg-white/10 transition-all"
               >
-                {t('signInToDashboard')}
+                Sign In to Dashboard
               </button>
             </div>
 
@@ -206,9 +120,9 @@ const LandingHero: React.FC = () => {
       <section className="py-24 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <span className="text-indigo-400 font-semibold text-sm tracking-wider uppercase">{t('whyChooseUs')}</span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mt-3 mb-4">{t('builtForEarners')}</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">{t('featuresDescription')}</p>
+            <span className="text-indigo-400 font-semibold text-sm tracking-wider uppercase">Why Choose Us</span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mt-3 mb-4">Built For Earners</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">Everything you need to maximize your earning potential in one platform</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((f, i) => (
@@ -228,8 +142,8 @@ const LandingHero: React.FC = () => {
       <section className="py-24 bg-gradient-to-b from-transparent via-indigo-500/[0.03] to-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <span className="text-indigo-400 font-semibold text-sm tracking-wider uppercase">{t('simpleSteps')}</span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mt-3 mb-4">{t('howItWorks')}</h2>
+            <span className="text-indigo-400 font-semibold text-sm tracking-wider uppercase">Simple Steps</span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mt-3 mb-4">How It Works</h2>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {steps.map((s, i) => (

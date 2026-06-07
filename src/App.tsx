@@ -134,16 +134,74 @@ const useURLParameterCleaner = () => {
   }, []);
 };
 
+// MODULE 3: Dynamic Dual-Language OpenGraph Meta Tags
+const useMetaTags = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    const pathname = location.pathname;
+
+    // Default meta tags
+    let title = 'Nelly Earnings Platform - Optimize Your Digital Income';
+    let description = 'Join thousands of users earning through our optimized task platform. Complete your VIP tasks, bind your digital wallet, and withdraw your earnings easily.';
+    let ogTitle = 'Nelly Earnings Platform - Optimize Your Digital Income';
+    let ogDescription = description;
+
+    // Match Feed specific meta tags with dual-language EN/KM
+    if (pathname === '/match-feed') {
+      title = 'Nelly Social Hub - Find Your Global Soulmate 🔮❤️‍🔥';
+      description = 'Step inside the world\'s most exclusive premium connection network. Meet, flirt 🫦, and fall in love 💕 with breathtaking singles and global travelers instantly. Unlock timed blind audio matching rooms, group chats, and community exclusive rooms with seamless global chats right inside your hands! ស្វែងរកគូស្នេហ៍ពិតរបស់អ្នកនៅទីនេះ, ចែចង់ 🫦 ធ្លាក់ក្នុងអន្លង់ស្នេហ៍ 💕 ជាមួយអ្នកនៅលីវ និងអ្នកធ្វើដំណើរជុំវិញពិភពលោក, រួមទាំងក្រុមជជែកកំសាន្ត និងបន្ទប់សហគមន៍ផ្តាច់មុខ!';
+      ogTitle = 'Nelly Social Hub - Find Your Global Soulmate 🔮❤️‍🔥';
+      ogDescription = description;
+    }
+
+    // Update document title
+    document.title = title;
+
+    // Update or create OpenGraph meta tags
+    const updateMetaTag = (property: string, content: string) => {
+      let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('property', property);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    const updateNameTag = (name: string, content: string) => {
+      let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement;
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', name);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    updateMetaTag('og:title', ogTitle);
+    updateMetaTag('og:description', ogDescription);
+    updateMetaTag('og:type', 'website');
+    updateMetaTag('og:url', window.location.href);
+    updateNameTag('description', description);
+
+  }, [location]);
+};
+
 const AppContent: React.FC = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isMatchAdminRoute = location.pathname === '/match-admin';
+  const isSocialRoute = ['/match-feed', '/voice-match', '/premium-chat'].includes(location.pathname);
 
   // Apply case-insensitive router firewall
   useCaseInsensitiveRouter();
 
   // Apply URL parameter cleaner interceptor
   useURLParameterCleaner();
+
+  // Apply dynamic meta tags
+  useMetaTags();
 
   // Isolate match-admin route from home dashboard redirect hooks
   if (isMatchAdminRoute) {
@@ -157,7 +215,7 @@ const AppContent: React.FC = () => {
   if (isAdminRoute) {
     return (
       <Routes>
-        <Route path="/admin/*" element={<AdminLayout />}> 
+        <Route path="/admin/*" element={<AdminLayout />}>
           <Route index element={<AIAssistantWorkspace />} />
         </Route>
       </Routes>
@@ -167,12 +225,13 @@ const AppContent: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
-      <Route element={<ProtectedRoute />}> 
+      <Route element={<ProtectedRoute />}>
         <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
-        <Route path="/match-feed" element={<MatchingFeed />} />
-        <Route path="/voice-match" element={<AudioMatchRoom />} />
-        <Route path="/premium-chat" element={<PremiumChatView />} />
       </Route>
+      {/* Social routes - accessible directly without ProtectedRoute */}
+      <Route path="/match-feed" element={<MatchingFeed />} />
+      <Route path="/voice-match" element={<AudioMatchRoom />} />
+      <Route path="/premium-chat" element={<PremiumChatView />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

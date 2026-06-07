@@ -422,10 +422,10 @@ const MatchingFeed: React.FC = () => {
             <CardContent className="p-8">
               <div className="bg-gradient-to-br from-purple-950/85 to-pink-950/90 backdrop-blur-xl border-2 border-amber-500/40 rounded-xl p-6 shadow-2xl shadow-amber-500/20">
                 <p className="text-amber-100 text-lg leading-relaxed animate-glow">
-                  Find your soulmate here, flirt 🫦, fall in love 💕 with singles and global travelers, group chats and community exclusive rooms.
+                  Welcome to the ultimate connection experience. Dive into high-definition Local Video Reels 🎬, experience real-time Interactive Live Streams 📡, flirt 🫦, and fall in love 💕 with premium singles and global travelers. Join community exclusive rooms, private group chats, and timed voice match channels engineered for real connection.
                 </p>
                 <p className="text-amber-300 text-sm mt-4 leading-relaxed animate-glow">
-                  ស្វែងរកគូស្នេហ៍ពិតរបស់អ្នកនៅទីនេះ, ចែចង់ 🫦 ធ្លាក់ក្នុងអន្លង់ស្នេហ៍ 💕 ជាមួយអ្នកនៅលីវ និងអ្នកធ្វើដំណើរជុំវិញពិភពលោក, រួមទាំងក្រុមជជែកកំសាន្ត និងបន្ទប់សហគមន៍ផ្តាច់មុខ
+                  សូមស្វាគមន៍មកកាន់បទពិសោធន៍នៃការតភ្ជាប់ដ៏ល្អឥតខ្ចោះ។ ចូលរួមទស្សនាវីដេអូខ្លីៗកម្រិតច្បាស់ (Video Reels) 🎬, បទពិសោធន៍នៃការផ្សាយផ្ទាល់រំភើបៗ (Interactive Live Streams) 📡, ចែចង់ 🫦 និងលង់ស្រឡាញ់ 💕 ជាមួយអ្នកនៅលីវលំដាប់ប្រណីត និងអ្នកធ្វើដំណើរជុំវិញពិភពលោក។ ចូលរួមបន្ទប់សហគមន៍ផ្តាច់មុខ ក្រុមជជែកកំសាន្តឯកជន និងឆានែលផ្គូផ្គងសំឡេងដែលមានម៉ោងកំណត់ត្រូវបានរចនាឡើងសម្រាប់ការតភ្ជាប់ពិតប្រាកដ។
                 </p>
               </div>
             </CardContent>

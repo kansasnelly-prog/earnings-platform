@@ -92,6 +92,8 @@ const MatchingFeed: React.FC = () => {
       console.log('Referral processed successfully');
     } catch (error) {
       console.error('Error processing referral:', error);
+      // Fallback: Clear referral code to prevent retry loops
+      localStorage.removeItem('referral_code');
     }
   };
 
@@ -108,6 +110,8 @@ const MatchingFeed: React.FC = () => {
       setProfiles(data || []);
     } catch (error) {
       console.error('Error loading profiles:', error);
+      // Fallback: Set empty profiles to prevent infinite loading
+      setProfiles([]);
     } finally {
       setLoading(false);
     }
@@ -131,6 +135,8 @@ const MatchingFeed: React.FC = () => {
       setNellyCoins(data?.balance || 0);
     } catch (error) {
       console.error('Error loading balance:', error);
+      // Fallback: Set balance to 0 to prevent UI hang
+      setNellyCoins(0);
     }
   };
 

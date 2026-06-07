@@ -443,20 +443,51 @@ const MatchingFeed: React.FC = () => {
                   សូមស្វាគមន៍មកកាន់បទពិសោធន៍នៃការតភ្ជាប់ដ៏ល្អឥតខ្ចោះ។ ចូលរួមទស្សនាវីដេអូខ្លីៗកម្រិតច្បាស់ (Video Reels) 🎬, បទពិសោធន៍នៃការផ្សាយផ្ទាល់រំភើបៗ (Interactive Live Streams) 📡, ចែចង់ 🫦 និងលង់ស្រឡាញ់ 💕 ជាមួយអ្នកនៅលីវលំដាប់ប្រណីត និងអ្នកធ្វើដំណើរជុំវិញពិភពលោក។ ចូលរួមបន្ទប់សហគមន៍ផ្តាច់មុខ ក្រុមជជែកកំសាន្តឯកជន និងឆានែលផ្គូផ្គងសំឡេងដែលមានម៉ោងកំណត់ត្រូវបានរចនាឡើងសម្រាប់ការតភ្ជាប់ពិតប្រាកដ។
                 </p>
                 
-                {/* TikTok6 Corporate Emblem */}
-                <div className="mt-8 flex items-center justify-center">
-                  <div className="relative bg-gradient-to-br from-slate-900 via-slate-950 to-black rounded-2xl p-8 shadow-2xl border border-amber-500/30 transform hover:scale-105 transition-all duration-500" style={{ 
-                    boxShadow: '0 0 25px rgba(245, 158, 11, 0.25)'
-                  }}>
-                    <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 to-orange-500/10 rounded-2xl blur-xl opacity-50"></div>
+                {/* TikTok6 3D Rotating Corporate Emblem */}
+                <div className="mt-8 flex items-center justify-center" style={{ width: '100%', minHeight: '320px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="relative flex flex-col items-center justify-center">
+                    {/* Upper Note Layer - Spinning Musical Note */}
+                    <div className="relative mb-6 animate-spin-note">
+                      <div className="relative">
+                        {/* Musical Note Symbol with Brushed Silver Finish */}
+                        <div className="text-8xl md:text-9xl font-black relative" style={{
+                          background: 'linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 25%, #a8a8a8 50%, #d4d4d4 75%, #b8b8b8 100%)',
+                          WebkitBackgroundClip: 'text',
+                          backgroundClip: 'text',
+                          color: 'transparent',
+                          filter: 'drop-shadow(-3px 0 0 rgba(0, 255, 255, 0.8)) drop-shadow(3px 0 0 rgba(255, 0, 255, 0.8))',
+                          textShadow: 'none'
+                        }}>
+                          ♪
+                        </div>
+                        {/* 3D Chromatic Offsets */}
+                        <div className="absolute top-0 left-0 text-8xl md:text-9xl font-black opacity-50" style={{
+                          color: 'rgba(0, 255, 255, 0.6)',
+                          transform: 'translateX(-4px)',
+                          filter: 'blur(1px)'
+                        }}>
+                          ♪
+                        </div>
+                        <div className="absolute top-0 left-0 text-8xl md:text-9xl font-black opacity-50" style={{
+                          color: 'rgba(255, 0, 255, 0.6)',
+                          transform: 'translateX(4px)',
+                          filter: 'blur(1px)'
+                        }}>
+                          ♪
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Lower Text Layer - Metallic Gold TikTok6 */}
                     <div className="relative">
-                      <h2 className="text-5xl md:text-6xl font-black animate-shimmering-reflection" style={{ 
-                        background: 'linear-gradient(135deg, #1e293b 0%, #030712 100%)',
-                        color: 'transparent',
-                        backgroundClip: 'text',
+                      <h2 className="text-5xl md:text-6xl font-black animate-glow" style={{
+                        background: 'linear-gradient(135deg, #ffd700 0%, #ffec8b 25%, #daa520 50%, #f0e68c 75%, #b8860b 100%)',
                         WebkitBackgroundClip: 'text',
-                        textShadow: '0 4px 10px rgba(0,0,0,0.9), 0px 0px 20px rgba(245, 158, 11, 0.45)',
-                        letterSpacing: '0.05em'
+                        backgroundClip: 'text',
+                        color: 'transparent',
+                        textShadow: '0 4px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.5)',
+                        letterSpacing: '0.05em',
+                        filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5))'
                       }}>
                         TikTok6
                       </h2>

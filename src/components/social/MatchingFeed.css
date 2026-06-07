@@ -54,3 +54,16 @@
   animation: shimmering-reflection 3s linear infinite;
   background-size: 200% auto;
 }
+
+@keyframes spin-note {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-note {
+  animation: spin-note 12s linear infinite;
+}

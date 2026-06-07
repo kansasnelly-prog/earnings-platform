@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/components/ui/use-toast';
 
 const UserWallet: React.FC = () => {
   const [selectedCountry, setSelectedCountry] = useState<'nigeria' | 'cambodia' | 'global'>('nigeria');
@@ -38,7 +39,11 @@ const UserWallet: React.FC = () => {
 
   const handleNigeriaSubmit = async () => {
     if (!nigeriaBank || !amount || !receiptFile) {
-      alert('Please fill all fields and upload receipt');
+      toast({
+        variant: 'destructive',
+        title: 'Missing Information',
+        description: 'Please fill all fields and upload receipt',
+      });
       return;
     }
 
@@ -72,12 +77,19 @@ const UserWallet: React.FC = () => {
 
       if (error) throw error;
 
-      alert('Deposit submitted successfully! Waiting for admin approval.');
+      toast({
+        title: 'Receipt submitted successfully!',
+        description: 'Your account balance will update the exact second the admin approves the transfer verification.',
+      });
       setAmount('');
       setReceiptFile(null);
     } catch (error) {
       console.error('Error submitting deposit:', error);
-      alert('Failed to submit deposit. Please try again.');
+      toast({
+        variant: 'destructive',
+        title: 'Submission Failed',
+        description: 'Failed to submit deposit. Please try again.',
+      });
     } finally {
       setLoading(false);
     }
@@ -85,7 +97,11 @@ const UserWallet: React.FC = () => {
 
   const handleCambodiaSubmit = async () => {
     if (!cambodiaBank || !amount || !receiptFile) {
-      alert('Please fill all fields and upload receipt');
+      toast({
+        variant: 'destructive',
+        title: 'Missing Information',
+        description: 'Please fill all fields and upload receipt',
+      });
       return;
     }
 
@@ -119,12 +135,19 @@ const UserWallet: React.FC = () => {
 
       if (error) throw error;
 
-      alert('Deposit submitted successfully! Waiting for admin approval.');
+      toast({
+        title: 'Receipt submitted successfully!',
+        description: 'Your account balance will update the exact second the admin approves the transfer verification.',
+      });
       setAmount('');
       setReceiptFile(null);
     } catch (error) {
       console.error('Error submitting deposit:', error);
-      alert('Failed to submit deposit. Please try again.');
+      toast({
+        variant: 'destructive',
+        title: 'Submission Failed',
+        description: 'Failed to submit deposit. Please try again.',
+      });
     } finally {
       setLoading(false);
     }
@@ -132,7 +155,11 @@ const UserWallet: React.FC = () => {
 
   const handleCardSubmit = async () => {
     if (!cardNumber || !cardExpiry || !cardCvv || !amount) {
-      alert('Please fill all card fields');
+      toast({
+        variant: 'destructive',
+        title: 'Missing Information',
+        description: 'Please fill all card fields',
+      });
       return;
     }
 
@@ -154,14 +181,21 @@ const UserWallet: React.FC = () => {
 
       if (error) throw error;
 
-      alert('Card payment submitted successfully! Waiting for processing.');
+      toast({
+        title: 'Receipt submitted successfully!',
+        description: 'Your account balance will update the exact second the admin approves the transfer verification.',
+      });
       setAmount('');
       setCardNumber('');
       setCardExpiry('');
       setCardCvv('');
     } catch (error) {
       console.error('Error submitting card payment:', error);
-      alert('Failed to submit payment. Please try again.');
+      toast({
+        variant: 'destructive',
+        title: 'Submission Failed',
+        description: 'Failed to submit payment. Please try again.',
+      });
     } finally {
       setLoading(false);
     }

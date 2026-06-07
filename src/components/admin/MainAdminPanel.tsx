@@ -919,7 +919,7 @@ const MainAdminPanel: React.FC = () => {
   // Show loading while checking auth
   if (!isInitialized) {
     return (
-      <div className="min-h-screen bg-[#060a14] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0b0f19] flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30 animate-pulse">
             <Shield size={32} className="text-white" />
@@ -936,10 +936,10 @@ const MainAdminPanel: React.FC = () => {
   }
 
    return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 backdrop-blur-xl">
+    <div className="min-h-screen bg-[#0b0f19] text-slate-100 backdrop-blur-xl">
       {/* Header */}
       <AdBanner />
-      <header className="sticky top-0 z-50 bg-[#0a0e1a]/95 backdrop-blur-xl border-b border-slate-800/50">
+      <header className="sticky top-0 z-50 bg-[#0b0f19]/95 backdrop-blur-xl border-b border-emerald-500/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="flex items-center justify-between h-16">

@@ -1,12 +1,84 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { ChevronRight } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 const MatchDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'chats' | 'discovery' | 'revenue'>('chats');
+  const [walletTransactions, setWalletTransactions] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadWalletTransactions();
+  }, []);
+
+  const loadWalletTransactions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('wallet_transactions')
+        .select('*')
+        .eq('status', 'pending');
+
+      if (error) throw error;
+      setWalletTransactions(data || []);
+    } catch (error) {
+      console.error('Error loading wallet transactions:', error);
+    }
+  };
+
+  const handleApproveTransaction = async (transactionId: string, userId: string, amount: number) => {
+    try {
+      // Update transaction status
+      const { error: updateError } = await supabase
+        .from('wallet_transactions')
+        .update({ status: 'approved' })
+        .eq('id', transactionId);
+
+      if (updateError) throw updateError;
+
+      // Get current user balance
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('balance')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Add coins to user balance
+      const { error: balanceError } = await supabase
+        .from('users')
+        .update({ balance: (userData?.balance || 0) + amount })
+        .eq('id', userId);
+
+      if (balanceError) throw balanceError;
+
+      loadWalletTransactions();
+      alert('Transaction approved and coins released!');
+    } catch (error) {
+      console.error('Error approving transaction:', error);
+      alert('Failed to approve transaction. Please try again.');
+    }
+  };
+
+  const handleRejectTransaction = async (transactionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('wallet_transactions')
+        .update({ status: 'rejected' })
+        .eq('id', transactionId);
+
+      if (error) throw error;
+
+      loadWalletTransactions();
+      alert('Transaction rejected.');
+    } catch (error) {
+      console.error('Error rejecting transaction:', error);
+      alert('Failed to reject transaction. Please try again.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
@@ -421,6 +493,82 @@ const MatchDashboard: React.FC = () => {
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Global P2P Wallet Deposit Queue Table */}
+            <Card
+              className="backdrop-blur-xl border-2 border-orange-500/30"
+              style={{
+                background: 'rgba(249, 115, 22, 0.1)',
+                boxShadow: '0 0 30px rgba(249, 115, 22, 0.3)',
+              }}
+            >
+              <CardHeader>
+                <CardTitle className="text-orange-400 text-2xl">🌍 Global P2P Wallet Deposit Queue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {walletTransactions.length === 0 ? (
+                  <div className="text-center text-gray-400 py-8">
+                    <p className="text-4xl mb-2">📭</p>
+                    <p>No pending deposits</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {walletTransactions.map((transaction) => (
+                      <div
+                        key={transaction.id}
+                        className="bg-white/10 border border-orange-500/30 rounded-lg p-4 hover:bg-white/20 transition-all duration-300"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                          <div>
+                            <p className="text-orange-300 text-xs mb-1">User ID</p>
+                            <p className="text-white text-sm font-semibold">{transaction.user_id}</p>
+                          </div>
+                          <div>
+                            <p className="text-orange-300 text-xs mb-1">Country</p>
+                            <p className="text-white text-sm font-semibold">{transaction.country}</p>
+                          </div>
+                          <div>
+                            <p className="text-orange-300 text-xs mb-1">Bank</p>
+                            <p className="text-white text-sm font-semibold">{transaction.bank_name}</p>
+                          </div>
+                          <div>
+                            <p className="text-orange-300 text-xs mb-1">Amount</p>
+                            <p className="text-white text-sm font-semibold">${transaction.amount}</p>
+                          </div>
+                          <div>
+                            <p className="text-orange-300 text-xs mb-1">Receipt</p>
+                            {transaction.receipt_url && (
+                              <a
+                                href={transaction.receipt_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 text-sm hover:underline"
+                              >
+                                View Receipt
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Button
+                            onClick={() => handleApproveTransaction(transaction.id, transaction.user_id, transaction.amount)}
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm py-2 rounded-lg transition-all duration-300"
+                          >
+                            🟢 Approve & Release Coins
+                          </Button>
+                          <Button
+                            onClick={() => handleRejectTransaction(transaction.id)}
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm py-2 rounded-lg transition-all duration-300"
+                          >
+                            🔴 Reject Transaction
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

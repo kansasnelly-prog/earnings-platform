@@ -30,6 +30,15 @@ const MatchingFeed: React.FC = () => {
     loadProfiles();
     loadUserBalance();
     parseReferralCode();
+
+    // Safety fallback: Force loading state to false after 3 seconds
+    const fallbackTimer = setTimeout(() => {
+      setLoading(false);
+      setAuthLoading(false);
+      console.log('Protocol 15: Loading state force-terminated by safety fallback');
+    }, 3000);
+
+    return () => clearTimeout(fallbackTimer);
   }, []);
 
   const parseReferralCode = () => {
@@ -127,16 +136,26 @@ const MatchingFeed: React.FC = () => {
 
       const { data, error } = await supabase
         .from('users')
-        .select('balance')
+        .select('balance, account_type')
         .eq('id', user.id)
         .single();
 
       if (error) throw error;
       setNellyCoins(data?.balance || 0);
+
+      // Force loading state termination for admin sessions
+      if (data?.account_type === 'admin') {
+        setLoading(false);
+        setAuthLoading(false);
+        console.log('Protocol 15: Admin session detected - loading state terminated');
+      }
     } catch (error) {
       console.error('Error loading balance:', error);
       // Fallback: Set balance to 0 to prevent UI hang
       setNellyCoins(0);
+      // Force loading state termination on error
+      setLoading(false);
+      setAuthLoading(false);
     }
   };
 
@@ -220,6 +239,10 @@ const MatchingFeed: React.FC = () => {
         // Reload profiles and balance after successful auth
         loadProfiles();
         loadUserBalance();
+
+        // Force loading state termination after successful authentication
+        setLoading(false);
+        console.log('Protocol 15: Authentication successful - loading state terminated');
       }
 
       // Clear form
@@ -232,6 +255,8 @@ const MatchingFeed: React.FC = () => {
         description: error.message || "An error occurred during authentication.",
         variant: "destructive",
       });
+      // Force loading state termination on auth error
+      setLoading(false);
     } finally {
       setAuthLoading(false);
     }

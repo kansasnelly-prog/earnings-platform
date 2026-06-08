@@ -28,6 +28,7 @@ const ShortVideoFeed: React.FC = () => {
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
   const [likedVideos, setLikedVideos] = useState<Set<string>>(new Set());
+  const [videoError, setVideoError] = useState<Set<string>>(new Set());
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   useEffect(() => {
@@ -36,9 +37,14 @@ const ShortVideoFeed: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Auto-play current video
+    // Auto-play current video with bulletproof promise handling
     if (videoRefs.current[currentIndex]) {
-      videoRefs.current[currentIndex]?.play().catch(() => {});
+      const playPromise = videoRefs.current[currentIndex]?.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.log("Autoplay playback intercepted safely:", error);
+        });
+      }
     }
   }, [currentIndex]);
 
@@ -231,23 +237,58 @@ const ShortVideoFeed: React.FC = () => {
                 </div>
               ) : (
                 <>
+                  {videoError.has(currentVideo.id) ? (
+                    /* Video Error Fallback */
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-purple-900/90 to-pink-900/90 backdrop-blur-xl">
+                      {currentVideo.thumbnail_url ? (
+                        <img
+                          src={currentVideo.thumbnail_url}
+                          alt="Video thumbnail"
+                          className="w-full h-full object-cover opacity-50"
+                        />
+                      ) : (
+                        <div className="text-6xl mb-4 animate-pulse">🎬</div>
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          <p className="text-white text-xl font-bold mb-2">Video Loading Error</p>
+                          <p className="text-gray-300 text-sm">Please try refreshing or check your connection</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
                   <video
                     ref={el => videoRefs.current[currentIndex] = el}
                     src={currentVideo.video_url}
                     className="w-full h-full object-cover"
                     loop
+                    playsInline={true}
+                    webkit-playsinline="true"
                     muted={muted}
+                    autoPlay={true}
+                    preload="auto"
+                    crossOrigin="anonymous"
+                    onError={() => {
+                      setVideoError(prev => new Set([...prev, currentVideo.id]));
+                      console.error("Video loading error for:", currentVideo.id);
+                    }}
                     onClick={() => {
                       const video = videoRefs.current[currentIndex];
                       if (video) {
                         if (video.paused) {
-                          video.play();
+                          const playPromise = video.play();
+                          if (playPromise !== undefined) {
+                            playPromise.catch(error => {
+                              console.log("Manual play intercepted safely:", error);
+                            });
+                          }
                         } else {
                           video.pause();
                         }
                       }
                     }}
                   />
+                  )}
                   
                   {/* Mute Toggle */}
                   <Button

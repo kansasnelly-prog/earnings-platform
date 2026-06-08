@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { supabase } from '@/lib/supabase';
-import { Heart, MessageCircle, Gift, Volume2, VolumeX, Lock } from 'lucide-react';
+import { Heart, MessageCircle, Gift, Volume2, VolumeX, Lock, Home, UserPlus, Plus, MessageSquare, User, Bookmark, Share2, MapPin } from 'lucide-react';
 import { useTikTokAutoplay } from '@/hooks/useTikTokAutoplay';
 
 interface CreatorVideo {
@@ -206,7 +206,7 @@ const ShortVideoFeed: React.FC = () => {
       </div>
 
       {/* Video Feed */}
-      <div className="flex-1 relative overflow-y-auto scroll-snap-type-y-mandatory" style={{ scrollSnapType: 'y mandatory', overflowY: 'auto', height: '100vh' }}>
+      <div className="flex-1 relative overflow-y-auto scroll-snap-type-y-mandatory" style={{ scrollSnapType: 'y mandatory', overflowY: 'auto', height: 'calc(100vh - 80px)' }}>
         {videos.length > 0 ? (
           <div className="relative w-full">
             {videos.map((video, index) => (
@@ -249,61 +249,103 @@ const ShortVideoFeed: React.FC = () => {
                         }}
                       />
                       
+                      {/* Top Notification Banner */}
+                      <div className="absolute top-4 left-4 right-4 bg-black/60 backdrop-blur-sm rounded-xl p-3 flex items-center gap-3 z-10">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                          OD
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white text-sm font-semibold">Obong Declan, DROP_BOI sent you new messages.</p>
+                        </div>
+                        <Button className="bg-white text-black px-4 py-1 rounded-full text-sm font-semibold hover:bg-gray-200 transition-all">
+                          Reply
+                        </Button>
+                      </div>
+
                       {/* Mute Toggle */}
                       <Button
                         onClick={() => setMuted(!muted)}
-                        className="absolute top-4 right-4 bg-black/30 backdrop-blur-sm text-white p-2 rounded-full hover:bg-black/50 transition-all"
+                        className="absolute top-4 right-4 bg-black/30 backdrop-blur-sm text-white p-2 rounded-full hover:bg-black/50 transition-all z-20"
                       >
                         {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
                       </Button>
 
-                      {/* Creator Info */}
-                      <div className="absolute bottom-20 left-4 right-20">
-                        <div className="flex items-center gap-3 mb-3">
-                          {video.creator_avatar && (
-                            <img
-                              src={video.creator_avatar}
-                              alt={video.creator_name}
-                              className="w-10 h-10 rounded-full border-2 border-white"
-                            />
-                          )}
-                          <div>
-                            <p className="text-white font-semibold">{video.creator_name || 'Creator'}</p>
-                            <p className="text-gray-300 text-sm">@{video.creator_id}</p>
-                          </div>
+                      {/* Lower-Left Metadata Metrics */}
+                      <div className="absolute bottom-24 left-4 right-20 z-10">
+                        {/* Status Badge */}
+                        <div className="mb-2">
+                          <span className="bg-white/20 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full font-semibold">
+                            Your friend
+                          </span>
                         </div>
-                        {video.caption && (
-                          <p className="text-white text-sm mb-2">{video.caption}</p>
-                        )}
+                        
+                        {/* Creator Info */}
+                        <div className="flex items-center gap-3 mb-2">
+                          <p className="text-white font-bold text-lg">{video.creator_name || 'Creator'}</p>
+                        </div>
+                        
+                        {/* Location Tag */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <MapPin size={14} className="text-white" />
+                          <p className="text-white text-sm">ខ្មែរក្រហម - Angkol beach - n.a. (1564)</p>
+                        </div>
+                        <p className="text-gray-300 text-xs mb-3">7.0M likes on posts of this place</p>
+                        
+                        {/* Typography Text Lines */}
+                        <p className="text-white font-semibold mb-1">Jani Fyy ❤️👩‍❤️‍👨📃 Photo</p>
+                        <p className="text-white text-sm mb-2">#Me @24h 🌞 #fan</p>
+                        <p className="text-gray-400 text-xs mb-1">Paid partnership</p>
+                        <p className="text-gray-400 text-xs">Creator labeled as AI-generated</p>
                       </div>
 
-                      {/* Action Buttons */}
-                      <div className="absolute right-4 bottom-20 flex flex-col gap-4">
-                        <Button
-                          onClick={() => handleLike(video.id)}
-                          className={`bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all ${
-                            likedVideos.has(video.id) ? 'text-red-500' : 'text-white'
-                          }`}
-                        >
-                          <Heart size={24} fill={likedVideos.has(video.id) ? 'currentColor' : 'none'} />
-                        </Button>
-                        <p className="text-white text-xs text-center">{video.likes_count}</p>
+                      {/* Right-Hand Floating Engagement Column */}
+                      <div className="absolute right-4 bottom-24 flex flex-col gap-5 items-center z-10">
+                        {/* Creator Avatar with Follow */}
+                        <div className="relative">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold border-2 border-white">
+                            {video.creator_name?.charAt(0) || 'C'}
+                          </div>
+                          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-red-500 rounded-full p-1">
+                            <UserPlus size={12} className="text-white" />
+                          </div>
+                        </div>
                         
-                        <Button className="bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all text-white">
-                          <MessageCircle size={24} />
-                        </Button>
-                        <p className="text-white text-xs text-center">{video.comments_count}</p>
+                        {/* Like */}
+                        <div className="flex flex-col items-center">
+                          <Button
+                            onClick={() => handleLike(video.id)}
+                            className={`bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all ${
+                              likedVideos.has(video.id) ? 'text-red-500' : 'text-white'
+                            }`}
+                          >
+                            <Heart size={28} fill={likedVideos.has(video.id) ? 'currentColor' : 'none'} />
+                          </Button>
+                          <p className="text-white text-xs font-semibold mt-1">24</p>
+                        </div>
                         
-                        <Button
-                          onClick={() => {
-                            setSelectedCreatorId(video.creator_id);
-                            setShowGiftPopup(true);
-                          }}
-                          className="bg-gradient-to-r from-yellow-500 to-amber-600 p-3 rounded-full hover:scale-105 transition-all text-white shadow-lg"
-                        >
-                          <Gift size={24} />
-                        </Button>
-                        <p className="text-white text-xs text-center">Gift</p>
+                        {/* Comment */}
+                        <div className="flex flex-col items-center">
+                          <Button className="bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all text-white">
+                            <MessageCircle size={28} />
+                          </Button>
+                          <p className="text-white text-xs font-semibold mt-1">6</p>
+                        </div>
+                        
+                        {/* Bookmark */}
+                        <div className="flex flex-col items-center">
+                          <Button className="bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all text-white">
+                            <Bookmark size={28} />
+                          </Button>
+                          <p className="text-white text-xs font-semibold mt-1">2</p>
+                        </div>
+                        
+                        {/* Share */}
+                        <div className="flex flex-col items-center">
+                          <Button className="bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all text-white">
+                            <Share2 size={28} />
+                          </Button>
+                          <p className="text-white text-xs font-semibold mt-1">4</p>
+                        </div>
                       </div>
                     </>
                   )}
@@ -316,6 +358,51 @@ const ShortVideoFeed: React.FC = () => {
             <p className="text-white text-xl">No videos available</p>
           </div>
         )}
+      </div>
+
+      {/* Bottom Navigation Dock */}
+      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-sm border-t border-gray-800 px-2 py-3 z-50">
+        <div className="flex items-center justify-around max-w-lg mx-auto">
+          {/* Home - Active */}
+          <div className="flex flex-col items-center gap-1">
+            <div className="relative">
+              <Home size={24} className="text-white" />
+              <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full"></div>
+            </div>
+            <span className="text-white text-xs font-semibold">Home</span>
+          </div>
+          
+          {/* Friends - Badge 59 */}
+          <div className="flex flex-col items-center gap-1">
+            <div className="relative">
+              <UserPlus size={24} className="text-white" />
+              <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">59</span>
+            </div>
+            <span className="text-white text-xs">Friends</span>
+          </div>
+          
+          {/* Center Publish Button */}
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-12 h-8 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
+              <Plus size={20} className="text-white" />
+            </div>
+          </div>
+          
+          {/* Inbox - Badge 83 */}
+          <div className="flex flex-col items-center gap-1">
+            <div className="relative">
+              <MessageSquare size={24} className="text-white" />
+              <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">83</span>
+            </div>
+            <span className="text-white text-xs">Inbox</span>
+          </div>
+          
+          {/* Profile */}
+          <div className="flex flex-col items-center gap-1">
+            <User size={24} className="text-white" />
+            <span className="text-white text-xs">Profile</span>
+          </div>
+        </div>
       </div>
 
       {/* Gift Popup */}

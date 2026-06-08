@@ -30,7 +30,6 @@ const MatchingFeed: React.FC = () => {
   const [language, setLanguage] = useState('en-US');
   const [user, setUser] = useState<any>(null);
   const [session, setSession] = useState<any>(null);
-  const [activeSlide, setActiveSlide] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -472,19 +471,8 @@ const MatchingFeed: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Content - Full-Screen Slider for ALL Devices */}
-        <div className="overflow-hidden relative w-full" style={{ width: '100vw', maxWidth: '100vw' }}>
-          {/* Master Transition Container - 200vw width for 2 full-screen slides */}
-          <div 
-            className="flex"
-            style={{
-              width: '200vw',
-              transform: `translateX(-${activeSlide * 100}vw)`,
-              transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
-            }}
-          >
-            {/* Slide 1: Authentication Console - Full 100vw */}
-            <div className="w-full flex-shrink-0 space-y-6" style={{ width: '100vw' }}>
+        {/* Main Content - Full-Screen Vertical Stack Layout */}
+        <div className="w-full space-y-6" style={{ minHeight: '100vh', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                 {/* TikTok6 Login/Sign-Up Card */}
             <Card className="backdrop-blur-xl border-2 border-amber-500/30 shadow-2xl bg-gradient-to-br from-slate-900/95 to-black/95">
               <CardContent className="p-8">
@@ -782,103 +770,6 @@ const MatchingFeed: React.FC = () => {
               </Card>
             )}
               </div>
-
-            {/* Slide 2: Description Text Cards - Full 100vw */}
-            <div className="w-full flex-shrink-0 space-y-6" style={{ width: '100vw' }}>
-                <Card className="backdrop-blur-xl border-2 border-amber-500/30 shadow-2xl bg-gradient-to-br from-purple-950/85 to-pink-950/90 h-full">
-                  <CardContent className="p-8">
-                <div className="bg-gradient-to-br from-purple-950/85 to-pink-950/90 backdrop-blur-xl border-2 border-amber-500/40 rounded-xl p-6 shadow-2xl shadow-amber-500/20">
-                  <p className="text-amber-100 text-lg leading-relaxed animate-glow">
-                    Welcome to the ultimate connection experience. Dive into high-definition Local Video Reels 🎬, experience real-time Interactive Live Streams 📡, flirt 🫦, and fall in love 💕 with premium singles and global travelers. Join community exclusive rooms, private group chats, and timed voice match channels engineered for real connection.
-                  </p>
-                  <p className="text-amber-300 text-sm mt-4 leading-relaxed animate-glow">
-                    សូមស្វាគមន៍មកកាន់បទពិសោធន៍នៃការតភ្ជាប់ដ៏ល្អឥតខ្ចោះ។ ចូលរួមទស្សនាវីដេអូខ្លីៗកម្រិតច្បាស់ (Video Reels) 🎬, បទពិសោធន៍នៃការផ្សាយផ្ទាល់រំភើបៗ (Interactive Live Streams) 📡, ចែចង់ 🫦 និងលង់ស្រឡាញ់ 💕 ជាមួយអ្នកនៅលីវលំដាប់ប្រណីត និងអ្នកធ្វើដំណើរជុំវិញពិភពលោក។ ចូលរួមបន្ទប់សហគមន៍ផ្តាច់មុខ ក្រុមជជែកកំសាន្តឯកជន និងឆានែលផ្គូផ្គងសំឡេងដែលមានម៉ោងកំណត់ត្រូវបានរចនាឡើងសម្រាប់ការតភ្ជាប់ពិតប្រាកដ។
-                  </p>
-                  
-                  {/* TikTok6 3D Rotating Corporate Emblem */}
-                  <div className="mt-8 flex items-center justify-center" style={{ width: '100%', minHeight: '320px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <div className="relative flex flex-col items-center justify-center">
-                      {/* Upper Note Layer - Spinning Musical Note */}
-                      <div className="relative mb-6 animate-spin-note">
-                        <div className="relative">
-                          {/* Musical Note Symbol with Brushed Silver Finish */}
-                          <div className="text-8xl md:text-9xl font-black relative" style={{
-                            background: 'linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 25%, #a8a8a8 50%, #d4d4d4 75%, #b8b8b8 100%)',
-                            WebkitBackgroundClip: 'text',
-                            backgroundClip: 'text',
-                            color: 'transparent',
-                            filter: 'drop-shadow(-3px 0 0 rgba(0, 255, 255, 0.8)) drop-shadow(3px 0 0 rgba(255, 0, 255, 0.8))',
-                            textShadow: 'none'
-                          }}>
-                            ♪
-                          </div>
-                          {/* 3D Chromatic Offsets */}
-                          <div className="absolute top-0 left-0 text-8xl md:text-9xl font-black opacity-50" style={{
-                            color: 'rgba(0, 255, 255, 0.6)',
-                            transform: 'translateX(-4px)',
-                            filter: 'blur(1px)'
-                          }}>
-                            ♪
-                          </div>
-                          <div className="absolute top-0 left-0 text-8xl md:text-9xl font-black opacity-50" style={{
-                            color: 'rgba(255, 0, 255, 0.6)',
-                            transform: 'translateX(4px)',
-                            filter: 'blur(1px)'
-                          }}>
-                            ♪
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Lower Text Layer - Metallic Gold TikTok6 */}
-                      <div className="relative">
-                        <h2 className="text-5xl md:text-6xl font-black animate-glow" style={{
-                          background: 'linear-gradient(135deg, #ffd700 0%, #ffec8b 25%, #daa520 50%, #f0e68c 75%, #b8860b 100%)',
-                          WebkitBackgroundClip: 'text',
-                          backgroundClip: 'text',
-                          color: 'transparent',
-                          textShadow: '0 4px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.5)',
-                          letterSpacing: '0.05em',
-                          filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5))'
-                        }}>
-                          TikTok6
-                        </h2>
-                        <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 rounded-full blur-sm"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Admin-Style Slide Toggle Navigation Control */}
-          <div className="flex items-center justify-center gap-4 mt-6 mb-4">
-            <button
-              onClick={() => setActiveSlide(0)}
-              className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 ${
-                activeSlide === 0
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/50 scale-105'
-                  : 'bg-slate-900/80 text-amber-400 border border-amber-500/30 hover:bg-slate-800/80'
-              }`}
-            >
-              🔐 Login Console
-            </button>
-            <button
-              onClick={() => setActiveSlide(1)}
-              className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 ${
-                activeSlide === 1
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/50 scale-105'
-                  : 'bg-slate-900/80 text-amber-400 border border-amber-500/30 hover:bg-slate-800/80'
-              }`}
-            >
-              📖 Welcome Info
-            </button>
-          </div>
-
         </div>
 
         {/* Bottom Language Selector Dock */}

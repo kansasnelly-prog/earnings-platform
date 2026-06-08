@@ -548,6 +548,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Close auth modal and redirect after successful signup
   useEffect(() => {
+    console.log('[AppContext] Redirect useEffect triggered - user:', !!user, 'isAuthenticated:', isAuthenticated, 'redirectHandled:', redirectHandledRef.current);
     if (user && isAuthenticated) {
       if (!redirectHandledRef.current) {
         redirectHandledRef.current = true;
@@ -556,14 +557,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setAuthModalOpen(false);
         // Redirect to dashboard or reload data
         // Use refreshUser and refreshTasks as dashboard reload
+        console.log('[AppContext] Calling refreshUser and refreshTasks...');
         refreshUser().then(() => {
+          console.log('[AppContext] refreshUser completed, calling refreshTasks...');
           refreshTasks();
         }).catch(err => {
           console.error('[AppContext] Error refreshing user/tasks after login:', err);
         });
+      } else {
+        console.log('[AppContext] Redirect already handled, skipping');
       }
     } else {
       // Reset redirect flag if user logs out or is not authenticated
+      console.log('[AppContext] User not authenticated, resetting redirectHandled flag');
       redirectHandledRef.current = false;
     }
   }, [user, isAuthenticated]);
@@ -1084,19 +1090,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (email: string, password: string, displayName: string, phone?: string, referralCode?: string | null): Promise<{ success: boolean; error?: string }> => {
+    console.log('[AppContext] Starting registration for email:', email);
     setAuthLoading(true);
     try {
+      console.log('[AppContext] Calling SupabaseService.signUp...');
       const { user: dbUser, error } = await SupabaseService.signUp(email, password, displayName, phone, referralCode);
 
       if (error || !dbUser) {
+        console.error('[AppContext] Registration failed:', error);
         setAuthLoading(false);
         return { success: false, error: error || 'Registration failed' };
       }
 
+      console.log('[AppContext] Registration successful, user ID:', dbUser.id, 'account_type:', dbUser.account_type);
       const mappedUser = mapDatabaseUserToUser(dbUser);
       setUser(mappedUser);
       setIsAuthenticated(true);
+      console.log('[AppContext] Calling loadUserData for user:', dbUser.id);
       await loadUserData(dbUser.id, dbUser.email);
+      console.log('[AppContext] loadUserData completed');
 
       setAuthLoading(false);
 
@@ -1105,8 +1117,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         description: 'Account created successfully'
       });
 
+      console.log('[AppContext] Registration flow completed successfully');
       return { success: true };
     } catch (error: any) {
+      console.error('[AppContext] Registration exception:', error);
       setAuthLoading(false);
       return { success: false, error: error.message };
     }

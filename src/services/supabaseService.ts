@@ -623,9 +623,11 @@ export class SupabaseService {
   // ===========================================
   
   static async signUp(email: string, password: string, displayName: string, phone?: string, referralCode?: string | null): Promise<{ user: DatabaseUser | null; error: string | null }> {
+    console.log('[SupabaseService.signUp] Starting signup for email:', email);
     const emailLower = email.trim().toLowerCase();
 
     try {
+      console.log('[SupabaseService.signUp] Calling supabase.auth.signUp...');
       const { data, error } = await supabase.auth.signUp({
         email: emailLower,
         password,
@@ -639,18 +641,22 @@ export class SupabaseService {
       });
 
       if (error) {
+        console.error('[SupabaseService.signUp] Auth signup error:', error);
         const signupMessage = error.message || '';
         const alreadyRegistered = /already registered|already exists|user already/i.test(signupMessage);
         if (alreadyRegistered) {
+          console.log('[SupabaseService.signUp] User already registered, attempting sign in...');
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: emailLower,
             password,
           });
 
           if (signInError || !signInData.user) {
+            console.error('[SupabaseService.signUp] Sign in after already-registered failed:', signInError);
             return { user: null, error: signInError?.message || 'User already registered. Please log in.' };
           }
 
+          console.log('[SupabaseService.signUp] Sign in successful, recovering profile...');
           const recoveredUser = await this.ensureUserProfile({
             id: signInData.user.id,
             email: signInData.user.email || emailLower,
@@ -660,24 +666,29 @@ export class SupabaseService {
           });
 
           if (!recoveredUser) {
+            console.error('[SupabaseService.signUp] Profile recovery failed');
             return { user: null, error: 'User exists in auth, but profile recovery failed.' };
           }
 
+          console.log('[SupabaseService.signUp] Profile recovered successfully');
           return { user: recoveredUser, error: null };
         }
 
-        console.error('Signup error:', signupMessage);
+        console.error('[SupabaseService.signUp] Signup error:', signupMessage);
         return { user: null, error: signupMessage };
       }
 
       if (!data?.user) {
+        console.error('[SupabaseService.signUp] No user data returned from signup');
         return { user: null, error: 'Could not create account. Try again or use a different email.' };
       }
 
       const authUserId = data.user.id;
+      console.log('[SupabaseService.signUp] Auth user created with ID:', authUserId);
       let session = data.session;
 
       if (!session) {
+        console.log('[SupabaseService.signUp] No session from signup, attempting sign in...');
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: emailLower,
           password,
@@ -686,19 +697,22 @@ export class SupabaseService {
         if (signInError) {
           const msg = signInError.message || '';
           if (/confirm|verify|not confirmed|email.*not.*confirmed/i.test(msg)) {
+            console.log('[SupabaseService.signUp] Email confirmation required');
             return {
               user: null,
               error: 'Account created. Confirm the link sent to your email, then sign in.',
             };
           }
-          console.error('Sign in after signup failed:', signInError);
+          console.error('[SupabaseService.signUp] Sign in after signup failed:', signInError);
           return { user: null, error: signInError.message };
         }
 
         session = signInData.session;
+        console.log('[SupabaseService.signUp] Sign in after signup successful');
       }
 
       if (!session) {
+        console.error('[SupabaseService.signUp] Still no session after sign in attempt');
         return {
           user: null,
           error:
@@ -706,6 +720,7 @@ export class SupabaseService {
         };
       }
 
+      console.log('[SupabaseService.signUp] Calling ensureUserProfile...');
       const userData = await this.ensureUserProfile({
         id: authUserId,
         email: emailLower,
@@ -715,25 +730,32 @@ export class SupabaseService {
       });
 
       if (!userData) {
+        console.error('[SupabaseService.signUp] ensureUserProfile failed');
         return { user: null, error: 'Failed to create or fetch public.users profile after signup.' };
       }
 
+      console.log('[SupabaseService.signUp] User profile created/ensured, account_type:', userData.account_type);
+
       // Create training account for the fixed training flow (only for VIP2 training accounts)
-      const trainingAccountCreated = userData.account_type === 'training' 
+      console.log('[SupabaseService.signUp] Creating training account if needed...');
+      const trainingAccountCreated = userData.account_type === 'training'
         ? await this.ensureTrainingAccount({
             authUserId,
             email: emailLower,
             displayName
           })
         : null;
-      
+
       if (userData.account_type === 'training' && !trainingAccountCreated) {
-        console.error('[signUp] Failed to create training account for:', authUserId);
+        console.error('[SupabaseService.signUp] Failed to create training account for:', authUserId);
         // Don't block signup if training account fails - will be created on first login
+      } else if (userData.account_type === 'training' && trainingAccountCreated) {
+        console.log('[SupabaseService.signUp] Training account created successfully');
       }
 
       // Link VIP1 personal accounts to VIP2 training accounts if a referral code was provided
       if (userData.account_type === 'personal' && userData.vip_level === 1 && referralCode) {
+        console.log('[SupabaseService.signUp] Attempting to link VIP1 to VIP2 training account...');
         try {
           // Find the VIP2 training account that used this personal account's referral code
           // The personal account's referral_code is generated during profile creation
@@ -756,30 +778,36 @@ export class SupabaseService {
               })
               .eq('id', userData.id);
 
-            logSupabase('[signUp] Linked VIP1 account to VIP2 training account', trainingAccount.id);
+            logSupabase('[SupabaseService.signUp] Linked VIP1 account to VIP2 training account', trainingAccount.id);
           }
         } catch (linkError) {
-          console.error('[signUp] Error linking VIP1 to training account:', linkError);
+          console.error('[SupabaseService.signUp] Error linking VIP1 to training account:', linkError);
           // Don't block signup if linking fails
         }
       }
 
+      // Determine task count based on account_type
+      // Training accounts: 45 tasks per phase (Phase 1: 45, Phase 2: 45)
+      // Personal accounts: 35 tasks per set (Set 1: 35, Set 2: 35) - only if training completed
+      const taskCount = userData.account_type === 'training' ? 45 : 35;
+      console.log('[SupabaseService.signUp] Task count determined:', taskCount, 'for account_type:', userData.account_type);
+
       // TRAINING COMPLETION GATE: Only create tasks for training accounts or personal accounts with completed training
       // Personal accounts are BLOCKED from task generation until training is completed
       if (userData.account_type === 'personal' && !userData.training_completed) {
-        // Skip task creation for personal accounts without completed training
+        console.log('[SupabaseService.signUp] Skipping task creation for personal account without completed training');
       } else {
-        // Determine task count based on account_type
-        // Training accounts: 45 tasks per phase (Phase 1: 45, Phase 2: 45)
-        // Personal accounts: 35 tasks per set (Set 1: 35, Set 2: 35) - only if training completed
-        const taskCount = userData.account_type === 'training' ? 45 : 35;
+        console.log(`[SupabaseService.signUp] Creating ${taskCount} tasks for ${userData.account_type} account`);
         const tasksCreated = await this.createTrainingTasks(authUserId, taskCount);
         if (!tasksCreated) {
-          console.error('Failed to create training tasks');
+          console.error('[SupabaseService.signUp] Failed to create training tasks');
+        } else {
+          console.log('[SupabaseService.signUp] Tasks created successfully');
         }
       }
 
       // Send detailed Telegram notification for new account (don't block on failure)
+      console.log('[SupabaseService.signUp] Sending Telegram notification...');
       TelegramService.sendNewAccountNotification({
         userId: userData.id,
         email: userData.email,
@@ -794,10 +822,12 @@ export class SupabaseService {
         trainingBalance: userData.balance,
         taskNumber: userData.tasks_completed || 0,
         totalTasks: taskCount
-      }).catch(() => {
+      }).catch((err) => {
+        console.error('[SupabaseService.signUp] Telegram notification failed:', err);
         // Silently handle notification errors
       });
 
+      console.log('[SupabaseService.signUp] Signup completed successfully for user:', userData.id);
       return { user: userData as DatabaseUser, error: null };
     } catch (error: unknown) {
       console.error('Signup exception:', error);

@@ -56,8 +56,9 @@ const AuthModal: React.FC = () => {
         if (!result.success) {
           setSubmitError(result.error || 'Login failed');
         } else {
+          console.log('[AuthModal] Login successful, letting AppContext handle modal closing and redirect');
           resetForm();
-          setAuthModalOpen(false);
+          // Don't close modal here - let AppContext useEffect handle it after user state is set
         }
       } else {
         const result = await register(email, password, displayName, phone);
@@ -71,8 +72,9 @@ const AuthModal: React.FC = () => {
           }
           setSubmitError(errorMessage);
         } else {
+          console.log('[AuthModal] Registration successful, letting AppContext handle modal closing and redirect');
           resetForm();
-          setAuthModalOpen(false);
+          // Don't close modal here - let AppContext useEffect handle it after user state is set
         }
       }
     } catch (error) {

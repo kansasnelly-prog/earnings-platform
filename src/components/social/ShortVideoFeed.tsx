@@ -29,7 +29,9 @@ const ShortVideoFeed: React.FC = () => {
   const [muted, setMuted] = useState(true);
   const [likedVideos, setLikedVideos] = useState<Set<string>>(new Set());
   const [videoError, setVideoError] = useState<Set<string>>(new Set());
+  const [retryCount, setRetryCount] = useState<Record<string, number>>({});
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const retryTimers = useRef<Record<string, NodeJS.Timeout>>({});
 
   useEffect(() => {
     loadVideos();
@@ -195,6 +197,94 @@ const ShortVideoFeed: React.FC = () => {
     }
   };
 
+  // Self-healing auto-buffering engine with retry handler loop
+  const handleVideoError = (videoId: string, videoElement: HTMLVideoElement | null) => {
+    console.error(`[Self-Healing Engine] Video error detected for: ${videoId}`);
+    
+    // Clear existing retry timer for this video
+    if (retryTimers.current[videoId]) {
+      clearTimeout(retryTimers.current[videoId]);
+      delete retryTimers.current[videoId];
+    }
+
+    // Increment retry count
+    const currentRetries = retryCount[videoId] || 0;
+    if (currentRetries >= 3) {
+      console.error(`[Self-Healing Engine] Max retries reached for: ${videoId}`);
+      setVideoError(prev => new Set([...prev, videoId]));
+      return;
+    }
+
+    // Clear buffer cache
+    if (videoElement) {
+      videoElement.pause();
+      videoElement.currentTime = 0;
+      videoElement.load();
+      // Force garbage collection of buffer
+      if (videoElement.src) {
+        videoElement.removeAttribute('src');
+        videoElement.load();
+      }
+    }
+
+    // Set retry count and schedule retry
+    setRetryCount(prev => ({ ...prev, [videoId]: currentRetries + 1 }));
+    
+    // Exponential backoff: 1s, 2s, 4s
+    const backoffDelay = Math.pow(2, currentRetries) * 1000;
+    
+    console.log(`[Self-Healing Engine] Scheduling retry ${currentRetries + 1} for ${videoId} in ${backoffDelay}ms`);
+    
+    retryTimers.current[videoId] = setTimeout(() => {
+      console.log(`[Self-Healing Engine] Executing retry ${currentRetries + 1} for: ${videoId}`);
+      
+      // Force reload the video source
+      if (videoElement && videos.find(v => v.id === videoId)) {
+        const videoData = videos.find(v => v.id === videoId);
+        if (videoData) {
+          // Add timestamp to force fresh fetch
+          const timestampedUrl = videoData.video_url.includes('?') 
+            ? `${videoData.video_url}&_t=${Date.now()}`
+            : `${videoData.video_url}?_t=${Date.now()}`;
+          
+          videoElement.src = timestampedUrl;
+          videoElement.load();
+          
+          const playPromise = videoElement.play();
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                console.log(`[Self-Healing Engine] Successfully recovered video: ${videoId}`);
+                setVideoError(prev => {
+                  const newSet = new Set(prev);
+                  newSet.delete(videoId);
+                  return newSet;
+                });
+                setRetryCount(prev => {
+                  const newCount = { ...prev };
+                  delete newCount[videoId];
+                  return newCount;
+                });
+              })
+              .catch(err => {
+                console.error(`[Self-Healing Engine] Retry playback failed for ${videoId}:`, err);
+                handleVideoError(videoId, videoElement);
+              });
+          }
+        }
+      }
+      
+      delete retryTimers.current[videoId];
+    }, backoffDelay);
+  };
+
+  // Cleanup retry timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(retryTimers.current).forEach(timer => clearTimeout(timer));
+    };
+  }, []);
+
   const currentVideo = videos[currentIndex];
 
   if (loading) {
@@ -267,9 +357,39 @@ const ShortVideoFeed: React.FC = () => {
                     muted={muted}
                     autoPlay={true}
                     preload="auto"
+                    crossOrigin="anonymous"
                     onError={() => {
-                      setVideoError(prev => new Set([...prev, currentVideo.id]));
-                      console.error("Video loading error for:", currentVideo.id);
+                      handleVideoError(currentVideo.id, videoRefs.current[currentIndex]);
+                    }}
+                    onStalled={() => {
+                      console.log(`[Self-Healing Engine] Video stalled for: ${currentVideo.id}`);
+                      handleVideoError(currentVideo.id, videoRefs.current[currentIndex]);
+                    }}
+                    onAbort={() => {
+                      console.log(`[Self-Healing Engine] Video aborted for: ${currentVideo.id}`);
+                      handleVideoError(currentVideo.id, videoRefs.current[currentIndex]);
+                    }}
+                    onSuspend={() => {
+                      console.log(`[Self-Healing Engine] Video suspended for: ${currentVideo.id}`);
+                      // Auto-recover from suspension
+                      const video = videoRefs.current[currentIndex];
+                      if (video && video.readyState < 3) {
+                        handleVideoError(currentVideo.id, video);
+                      }
+                    }}
+                    onWaiting={() => {
+                      console.log(`[Self-Healing Engine] Video waiting for data: ${currentVideo.id}`);
+                      // Extended waiting triggers recovery
+                      const video = videoRefs.current[currentIndex];
+                      if (video) {
+                        const waitingTimer = setTimeout(() => {
+                          if (video.readyState < 3) {
+                            console.log(`[Self-Healing Engine] Extended wait timeout, triggering recovery for: ${currentVideo.id}`);
+                            handleVideoError(currentVideo.id, video);
+                          }
+                        }, 5000);
+                        video.onplaying = () => clearTimeout(waitingTimer);
+                      }
                     }}
                     onClick={() => {
                       const video = videoRefs.current[currentIndex];
@@ -279,6 +399,8 @@ const ShortVideoFeed: React.FC = () => {
                           if (playPromise !== undefined) {
                             playPromise.catch(error => {
                               console.log("Manual play intercepted safely:", error);
+                              // Trigger self-healing on manual play failure
+                              handleVideoError(currentVideo.id, video);
                             });
                           }
                         } else {

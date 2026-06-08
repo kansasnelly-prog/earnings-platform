@@ -3,7 +3,7 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { ShortVideoFeed } from './ShortVideoFeed';
+import ShortVideoFeed from './ShortVideoFeed';
 import './MatchingFeed.css';
 
 interface Profile {

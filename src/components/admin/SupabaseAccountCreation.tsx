@@ -5,7 +5,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { toast } from 'sonner';
-import { SupabaseService, DatabaseUser, DatabaseTask } from '../../services/supabaseService';
+import { SupabaseService, DatabaseUser, DatabaseTask, generateReferralCode } from '../../services/supabaseService';
 import { SecurityManager } from '../../utils/security';
 import { supabase } from '../../lib/supabase';
 
@@ -33,11 +33,6 @@ const SupabaseAccountCreation: React.FC<SupabaseAccountCreationProps> = ({
   const [personalPhone, setPersonalPhone] = useState('');
   const [personalReferral, setPersonalReferral] = useState('');
   const personalReferralPattern = /^OPT-[A-Z0-9]{6}$/;
-
-  // Generate referral codes
-  const generateReferralCode = () => {
-    return 'TRN-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-  };
 
   // Create training account
   const createTrainingAccount = async () => {
@@ -215,7 +210,7 @@ const SupabaseAccountCreation: React.FC<SupabaseAccountCreationProps> = ({
     setIsCreating(true);
     try {
       // Generate personal referral code
-      const referralCode = 'OPT-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const referralCode = generateReferralCode();
 
       // Create user in Supabase Auth (passwords hashed by Supabase)
       const { data: authData, error: authError } = await supabase.auth.signUp({

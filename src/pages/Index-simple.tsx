@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { SupabaseService } from '@/services/supabaseService';
 
 // Simple working landing page with authentication
 const Index: React.FC = () => {
@@ -50,21 +51,18 @@ const Index: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Sign up the user
-      const { error: signUpError } = await supabase.auth.signUp({
+      // Use SupabaseService.signUp() to ensure referral code generation
+      const { user, error } = await SupabaseService.signUp(
         email,
         password,
-        options: {
-          data: {
-            display_name: displayName,
-            phone_number: phoneNumber
-          }
-        }
-      });
+        displayName,
+        phoneNumber,
+        null
+      );
       
-      if (signUpError) {
+      if (error) {
         // If user already exists, just log them in
-        if (signUpError.message?.includes('already registered') || signUpError.message?.includes('User already registered')) {
+        if (error?.includes('already registered') || error?.includes('User already registered')) {
           // Try to sign in instead
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email,
@@ -78,24 +76,11 @@ const Index: React.FC = () => {
           setAuthModalOpen(false);
           return;
         }
-        throw signUpError;
-      }
-      
-      // Immediately try to sign in (no delay)
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (signInError) {
-        // If rate limited, switch to login with email pre-filled
-        toast.success('Account created! Please sign in.');
-        setAuthTab('login');
-        return;
+        throw error;
       }
       
       // Success - user is logged in
-      setUser(signInData.user);
+      setUser(user);
       toast.success('Account created and logged in!');
       setAuthModalOpen(false);
       

@@ -41,7 +41,7 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Generate helpers
 const generateId = () => crypto.randomUUID()
-const generateReferralCode = () => Math.random().toString(36).substring(2, 8).toUpperCase()
+const generateReferralCode = () => `OPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
 
 // ===== MAIN HANDLER =====
 serve(async (req: Request) => {

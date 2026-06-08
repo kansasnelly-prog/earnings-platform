@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { useToast } from '../ui/use-toast';
 import { Mail, UserPlus, Lock, GraduationCap, AlertCircle, CheckCircle, DollarSign, Send, Hash, RefreshCw, Database } from 'lucide-react';
+import { generateReferralCode } from '../../services/supabaseService';
 
 interface AccountCreationProps {
   onAccountCreated: () => void;
@@ -117,7 +118,7 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
       }
 
       // Generate a unique tracking referral code for the training account
-      const trackingReferralCode = `TRN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      const trackingReferralCode = generateReferralCode();
 
       // Find the user associated with the provided referral code to link the account
       const { data: linkedUser, error: linkError } = await supabase
@@ -297,7 +298,7 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
 
     try {
       // Generate referral code
-      const referralCode = `OPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      const referralCode = generateReferralCode();
 
       // Check if user already exists in users table
       const { data: existingUser, error: checkError } = await supabase
@@ -455,7 +456,7 @@ ${userReferral ? `• Referred by: ${userReferral}` : ''}
           }
           
           // Generate referral code if not present
-          const referralCode = localData.trainingReferralCode || `TRN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          const referralCode = localData.trainingReferralCode || generateReferralCode();
           
           // Insert into database
           const { error: insertError } = await supabase

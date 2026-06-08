@@ -3,6 +3,7 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { SupabaseService } from '@/services/supabaseService';
 import ShortVideoFeed from './ShortVideoFeed';
 import './MatchingFeed.css';
 
@@ -300,46 +301,36 @@ const MatchingFeed: React.FC = () => {
 
     try {
       if (isSignUpMode) {
-        const { data, error } = await supabase.auth.signUp({
+        // Use SupabaseService.signUp() to ensure referral code generation
+        const { user, error } = await SupabaseService.signUp(
           email,
           password,
-        });
+          email.split('@')[0] || 'User',
+          null,
+          null
+        );
 
         if (error) throw error;
 
-        // Auto-login bypass: Immediately sign in after successful signup
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+        // SupabaseService.signUp() already handles profile creation and returns the user
+        toast({
+          title: "Account Created & Logged In",
+          description: "Welcome to Nelly Social Hub!",
+          variant: "default",
         });
 
-        if (signInError) {
-          console.error('Auto-login bypass failed:', signInError);
-          toast({
-            title: "Registration Successful",
-            description: "Please check your email to verify your account.",
-            variant: "default",
-          });
-        } else {
-          toast({
-            title: "Account Created & Logged In",
-            description: "Welcome to Nelly Social Hub!",
-            variant: "default",
-          });
-
-          // Process referral if exists
-          if (signInData.user) {
-            await processReferralAttribution(signInData.user.id);
-          }
-
-          // Reload profiles and balance after successful auto-login
-          loadProfiles();
-          loadUserBalance();
-
-          // Force loading state termination after successful authentication
-          setLoading(false);
-          console.log('Protocol 15: Auto-login bypass successful - loading state terminated');
+        // Process referral if exists
+        if (user) {
+          await processReferralAttribution(user.id);
         }
+
+        // Reload profiles and balance after successful auto-login
+        loadProfiles();
+        loadUserBalance();
+
+        // Force loading state termination after successful authentication
+        setLoading(false);
+        console.log('Protocol 15: Auto-login bypass successful - loading state terminated');
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
@@ -395,7 +386,6 @@ const MatchingFeed: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-purple-900 flex items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0di0yaDJ2MmgtMnptMC0zaDJ2MmgtMnYtMnptMC0zaDJ2MmgtMnYtMnptLTQgMGgydjJoLTJ2LTJ6bTAtM2gydjJoLTJ2LTJ6bTAtM2gydjJoLTJ2LTJ6bS00IDBoMnYyaC0ydi0yem0wLTNoMnYyaC0ydi0yem0wLTNoMnYyaC0ydi0yeiIvPjwvZz48L2c+PC9zdmc+')] opacity-30 animate-pulse-slow"></div>
         <div className="relative z-10 text-white text-xl font-bold animate-glow">Loading profiles...</div>
       </div>
     );
@@ -420,7 +410,6 @@ const MatchingFeed: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-purple-900 relative overflow-y-auto overflow-x-hidden" style={{ minHeight: '100vh', height: 'auto !important' }}>
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0di0yaDJ2MmgtMnptMC0zaDJ2MmgtMnYtMnptMC0zaDJ2MmgtMnYtMnptLTQgMGgydjJoLTJ2LTJ6bTAtM2gydjJoLTJ2LTJ6bTAtM2gydjJoLTJ2LTJ6bS00IDBoMnYyaC0ydi0yem0wLTNoMnYyaC0ydi0yem0wLTNoMnYyaC0ydi0yeiIvPjwvZz48L2c+PC9zdmc+')] opacity-30 animate-pulse-slow"></div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
       
       {/* TikTok6 Network Official Watermark */}
@@ -769,7 +758,6 @@ const MatchingFeed: React.FC = () => {
                 </CardContent>
               </Card>
             )}
-              </div>
         </div>
 
         {/* Bottom Language Selector Dock */}

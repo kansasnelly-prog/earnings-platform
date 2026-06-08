@@ -296,6 +296,19 @@ export interface DatabaseAdminLog {
 }
 
 // ===========================================
+// REFERRAL CODE GENERATION
+// ===========================================
+
+/**
+ * Centralized function to generate unique OPT referral codes
+ * Format: OPT-XXXXXX (6 random alphanumeric characters, uppercase)
+ * This is the single source of truth for all referral code generation
+ */
+export function generateReferralCode(): string {
+  return `OPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+}
+
+// ===========================================
 // SUPABASE SERVICE
 // ===========================================
 
@@ -329,7 +342,7 @@ export class SupabaseService {
       tasks_completed: 0,
       total_tasks: isMasterReferral ? 45 : 35, // 45 for training, 35 for personal
       training_completed: false,
-      referral_code: `OPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      referral_code: generateReferralCode(),
       referred_by: params.referralCode || null,
       tasks_locked: false,
       user_status: 'active', // CLINERULES FIX: Explicitly set user_status to prevent database trigger rejection
@@ -402,7 +415,7 @@ export class SupabaseService {
             tasks_completed: 0,
             total_tasks: 45, // Force 45 task ceiling
             training_completed: false,
-            referral_code: `OPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+            referral_code: generateReferralCode(),
             referred_by: params.referralCode || null,
             tasks_locked: false,
             user_status: 'active', // CLINERULES FIX: Explicitly set user_status to prevent database trigger rejection

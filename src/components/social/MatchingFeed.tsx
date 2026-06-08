@@ -80,8 +80,8 @@ const MatchingFeed: React.FC = () => {
       const refCode = urlParams.get('ref');
       
       if (refCode) {
-        localStorage.setItem('referral_code', refCode);
-        console.log('Referral code saved:', refCode);
+        localStorage.setItem('dating_ref_code', refCode);
+        console.log('Dating referral code saved:', refCode);
       }
     } catch (error) {
       console.error('LocalStorage error in parseReferralCode:', error);
@@ -92,9 +92,9 @@ const MatchingFeed: React.FC = () => {
   const processReferralAttribution = async (userId: string) => {
     let refCode: string | null = null;
     try {
-      refCode = localStorage.getItem('referral_code');
+      refCode = localStorage.getItem('dating_ref_code');
     } catch (error) {
-      console.error('LocalStorage error reading referral code:', error);
+      console.error('LocalStorage error reading dating referral code:', error);
       return; // Exit gracefully if LocalStorage is locked
     }
     
@@ -141,19 +141,19 @@ const MatchingFeed: React.FC = () => {
 
       // Clear referral code from localStorage with safety catch
       try {
-        localStorage.removeItem('referral_code');
+        localStorage.removeItem('dating_ref_code');
       } catch (error) {
-        console.error('LocalStorage error removing referral code:', error);
+        console.error('LocalStorage error removing dating referral code:', error);
       }
       
-      console.log('Referral processed successfully');
+      console.log('Dating referral processed successfully');
     } catch (error) {
-      console.error('Error processing referral:', error);
+      console.error('Error processing dating referral:', error);
       // Fallback: Clear referral code to prevent retry loops with safety catch
       try {
-        localStorage.removeItem('referral_code');
+        localStorage.removeItem('dating_ref_code');
       } catch (error) {
-        console.error('LocalStorage error removing referral code in fallback:', error);
+        console.error('LocalStorage error removing dating referral code in fallback:', error);
       }
     }
   };

@@ -522,7 +522,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => {
-      subscription.unsubscribe();
       window.removeEventListener('refresh_user_checkpoint', handleCheckpointRefresh);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (typeof window !== 'undefined') {

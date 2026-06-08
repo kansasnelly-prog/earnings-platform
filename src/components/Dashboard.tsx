@@ -411,73 +411,75 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Progress Section */}
-      <div className="p-6 bg-white/[0.02] border border-white/[0.06] rounded-2xl">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-white">
-            {isTraining ? 'Training Progress' : `VIP${user?.vip_level || 1} Progress`}
-          </h3>
-          <button
-            onClick={() => safeSetActiveTab('tasks')}
-            className="flex items-center gap-1 text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
-          >
-            View All Tasks <ArrowRight size={14} />
-          </button>
-        </div>
-
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-slate-300 font-semibold">{displayCompletedCount} of {isTraining ? trainingTotalTasks : displayTotalTasks} tasks completed</span>
-            <span className="text-sm font-bold text-indigo-400">{(progress ?? 0).toFixed(0)}%</span>
-          </div>
-          <div className="h-3 bg-white/5 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full transition-all duration-700 relative"
-              style={{ width: `${progress}%` }}
+      {/* Progress Section - Hide for personal accounts without completed training */}
+      {!(isPersonal && !trainingComplete) && (
+        <div className="p-6 bg-white/[0.02] border border-white/[0.06] rounded-2xl">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-white">
+              {isTraining ? 'Training Progress' : `VIP${user?.vip_level || 1} Progress`}
+            </h3>
+            <button
+              onClick={() => safeSetActiveTab('tasks')}
+              className="flex items-center gap-1 text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+              View All Tasks <ArrowRight size={14} />
+            </button>
+          </div>
+
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-slate-300 font-semibold">{displayCompletedCount} of {isTraining ? trainingTotalTasks : displayTotalTasks} tasks completed</span>
+              <span className="text-sm font-bold text-indigo-400">{(progress ?? 0).toFixed(0)}%</span>
+            </div>
+            <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full transition-all duration-700 relative"
+                style={{ width: `${progress}%` }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Mini Task Preview */}
-        <div className="flex flex-wrap gap-1.5 mt-4">
-          {(isTraining 
-            ? Array.from({ length: trainingTotalTasks }, (_, i) => {
-                const taskNum = i + 1;
-                const currentTaskNum = user?.task_number || 1;
-                let status = 'locked';
-                if (taskNum < currentTaskNum) status = 'completed';
-                else if (taskNum === currentTaskNum) status = 'pending';
-                return { task_number: taskNum, status };
-              })
-            : (isFirstSetComplete 
-              ? Array.from({ length: 35 }, (_, i) => ({ task_number: i + 1, status: 'completed' }))
-              : (isSecondSet
-                ? Array.from({ length: 35 }, (_, i) => {
-                    const taskNum = i + 1;
-                    const completedInSet = currentSetCompleted;
-                    let status = 'locked';
-                    if (taskNum <= completedInSet) status = 'completed';
-                    else if (taskNum === completedInSet + 1) status = 'pending';
-                    return { task_number: taskNum, status };
-                  })
-                : (safeTasks.length > 0 ? safeTasks : Array.from({ length: 35 }, (_, i) => ({ task_number: i + 1, status: i === 0 ? 'pending' : 'locked' })))
-              ))
-          ).map((task: any) => (
-            <div
-              key={task.task_number}
-              className={`w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-bold ${
-                task.status === 'completed' ? 'bg-emerald-500/30 text-emerald-400' :
-                task.status === 'pending' ? 'bg-indigo-500/30 text-indigo-400 animate-pulse' :
-                'bg-white/5 text-gray-600'
-              }`}
-            >
-              {task.task_number}
-            </div>
-          ))}
+          {/* Mini Task Preview */}
+          <div className="flex flex-wrap gap-1.5 mt-4">
+            {(isTraining 
+              ? Array.from({ length: trainingTotalTasks }, (_, i) => {
+                  const taskNum = i + 1;
+                  const currentTaskNum = user?.task_number || 1;
+                  let status = 'locked';
+                  if (taskNum < currentTaskNum) status = 'completed';
+                  else if (taskNum === currentTaskNum) status = 'pending';
+                  return { task_number: taskNum, status };
+                })
+              : (isFirstSetComplete 
+                ? Array.from({ length: 35 }, (_, i) => ({ task_number: i + 1, status: 'completed' }))
+                : (isSecondSet
+                  ? Array.from({ length: 35 }, (_, i) => {
+                      const taskNum = i + 1;
+                      const completedInSet = currentSetCompleted;
+                      let status = 'locked';
+                      if (taskNum <= completedInSet) status = 'completed';
+                      else if (taskNum === completedInSet + 1) status = 'pending';
+                      return { task_number: taskNum, status };
+                    })
+                  : (safeTasks.length > 0 ? safeTasks : Array.from({ length: 35 }, (_, i) => ({ task_number: i + 1, status: i === 0 ? 'pending' : 'locked' })))
+                ))
+            ).map((task: any) => (
+              <div
+                key={task.task_number}
+                className={`w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-bold ${
+                  task.status === 'completed' ? 'bg-emerald-500/30 text-emerald-400' :
+                  task.status === 'pending' ? 'bg-indigo-500/30 text-indigo-400 animate-pulse' :
+                  'bg-white/5 text-gray-600'
+                }`}
+              >
+                {task.task_number}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

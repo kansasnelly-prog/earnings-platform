@@ -3,6 +3,7 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { ShortVideoFeed } from './ShortVideoFeed';
 import './MatchingFeed.css';
 
 interface Profile {
@@ -27,12 +28,32 @@ const MatchingFeed: React.FC = () => {
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [language, setLanguage] = useState('en-US');
+  const [user, setUser] = useState<any>(null);
+  const [session, setSession] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     loadProfiles();
     loadUserBalance();
     parseReferralCode();
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session) {
+        setLoading(false);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session) {
+        setLoading(false);
+      }
+    });
 
     // Safety fallback: Force loading state to false after 3 seconds
     const fallbackTimer = setTimeout(() => {
@@ -47,6 +68,7 @@ const MatchingFeed: React.FC = () => {
     }, 1000);
 
     return () => {
+      subscription.unsubscribe();
       clearTimeout(fallbackTimer);
       clearInterval(timeInterval);
     };
@@ -364,6 +386,11 @@ const MatchingFeed: React.FC = () => {
   };
 
   const currentProfile = profiles[currentIndex];
+
+  // Conditional render: Show ShortVideoFeed if user is authenticated
+  if (user || session) {
+    return <ShortVideoFeed />;
+  }
 
   if (loading) {
     return (

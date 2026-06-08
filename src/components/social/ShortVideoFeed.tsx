@@ -267,7 +267,6 @@ const ShortVideoFeed: React.FC = () => {
                     muted={muted}
                     autoPlay={true}
                     preload="auto"
-                    crossOrigin="anonymous"
                     onError={() => {
                       setVideoError(prev => new Set([...prev, currentVideo.id]));
                       console.error("Video loading error for:", currentVideo.id);

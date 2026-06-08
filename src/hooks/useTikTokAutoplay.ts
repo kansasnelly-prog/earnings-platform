@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-export function useTikTokAutoplay(videoRefs: React.RefObject<React.RefObject<HTMLVideoElement>[]>) {
+export function useTikTokAutoplay(videoRefs: React.RefObject<React.RefObject<HTMLVideoElement>[]> | React.MutableRefObject<React.RefObject<HTMLVideoElement>[]>) {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {

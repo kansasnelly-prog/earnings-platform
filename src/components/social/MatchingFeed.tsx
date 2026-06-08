@@ -53,17 +53,28 @@ const MatchingFeed: React.FC = () => {
   }, []);
 
   const parseReferralCode = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const refCode = urlParams.get('ref');
-    
-    if (refCode) {
-      localStorage.setItem('referral_code', refCode);
-      console.log('Referral code saved:', refCode);
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const refCode = urlParams.get('ref');
+      
+      if (refCode) {
+        localStorage.setItem('referral_code', refCode);
+        console.log('Referral code saved:', refCode);
+      }
+    } catch (error) {
+      console.error('LocalStorage error in parseReferralCode:', error);
+      // Gracefully handle DOMException database lock warnings
     }
   };
 
   const processReferralAttribution = async (userId: string) => {
-    const refCode = localStorage.getItem('referral_code');
+    let refCode: string | null = null;
+    try {
+      refCode = localStorage.getItem('referral_code');
+    } catch (error) {
+      console.error('LocalStorage error reading referral code:', error);
+      return; // Exit gracefully if LocalStorage is locked
+    }
     
     if (!refCode) return;
 
@@ -106,14 +117,22 @@ const MatchingFeed: React.FC = () => {
         })
         .eq('referred_user_id', userId);
 
-      // Clear referral code from localStorage
-      localStorage.removeItem('referral_code');
+      // Clear referral code from localStorage with safety catch
+      try {
+        localStorage.removeItem('referral_code');
+      } catch (error) {
+        console.error('LocalStorage error removing referral code:', error);
+      }
       
       console.log('Referral processed successfully');
     } catch (error) {
       console.error('Error processing referral:', error);
-      // Fallback: Clear referral code to prevent retry loops
-      localStorage.removeItem('referral_code');
+      // Fallback: Clear referral code to prevent retry loops with safety catch
+      try {
+        localStorage.removeItem('referral_code');
+      } catch (error) {
+        console.error('LocalStorage error removing referral code in fallback:', error);
+      }
     }
   };
 
@@ -266,15 +285,38 @@ const MatchingFeed: React.FC = () => {
 
         if (error) throw error;
 
-        toast({
-          title: "Registration Successful",
-          description: "Please check your email to verify your account.",
-          variant: "default",
+        // Auto-login bypass: Immediately sign in after successful signup
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
         });
 
-        // Process referral if exists
-        if (data.user) {
-          await processReferralAttribution(data.user.id);
+        if (signInError) {
+          console.error('Auto-login bypass failed:', signInError);
+          toast({
+            title: "Registration Successful",
+            description: "Please check your email to verify your account.",
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "Account Created & Logged In",
+            description: "Welcome to Nelly Social Hub!",
+            variant: "default",
+          });
+
+          // Process referral if exists
+          if (signInData.user) {
+            await processReferralAttribution(signInData.user.id);
+          }
+
+          // Reload profiles and balance after successful auto-login
+          loadProfiles();
+          loadUserBalance();
+
+          // Force loading state termination after successful authentication
+          setLoading(false);
+          console.log('Protocol 15: Auto-login bypass successful - loading state terminated');
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({

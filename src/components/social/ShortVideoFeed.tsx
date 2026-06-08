@@ -34,6 +34,9 @@ const ShortVideoFeed: React.FC = () => {
   
   // Stable ref wrapper to prevent React error #321
   const videoRefsContainer = useRef<React.RefObject<HTMLVideoElement>[]>([]);
+  // Pre-allocate refs at top level to avoid hook violations
+  const maxVideos = 50;
+  const preAllocatedRefs = Array.from({ length: maxVideos }, () => useRef<HTMLVideoElement>(null));
   
   useEffect(() => {
     loadVideos();
@@ -43,12 +46,7 @@ const ShortVideoFeed: React.FC = () => {
   // Initialize refs for each video - stable implementation
   useEffect(() => {
     // Only update the array contents, not the container reference
-    while (videoRefsContainer.current.length < videos.length) {
-      videoRefsContainer.current.push(useRef<HTMLVideoElement>(null));
-    }
-    while (videoRefsContainer.current.length > videos.length) {
-      videoRefsContainer.current.pop();
-    }
+    videoRefsContainer.current = preAllocatedRefs.slice(0, videos.length);
   }, [videos]);
 
   // Use TikTok autoplay hook with stable ref container

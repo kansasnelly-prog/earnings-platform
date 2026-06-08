@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { supabase } from '@/lib/supabase';
-import { Heart, MessageCircle, Gift, Volume2, VolumeX, Lock, ChevronRight } from 'lucide-react';
+import { Heart, MessageCircle, Gift, Volume2, VolumeX, Lock } from 'lucide-react';
+import { useTikTokAutoplay } from '@/hooks/useTikTokAutoplay';
 
 interface CreatorVideo {
   id: string;
@@ -28,28 +29,21 @@ const ShortVideoFeed: React.FC = () => {
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
   const [likedVideos, setLikedVideos] = useState<Set<string>>(new Set());
-  const [videoError, setVideoError] = useState<Set<string>>(new Set());
-  const [thumbnailError, setThumbnailError] = useState<Set<string>>(new Set());
-  const [retryCount, setRetryCount] = useState<Record<string, number>>({});
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
-  const retryTimers = useRef<Record<string, NodeJS.Timeout>>({});
+  const videoRefs = useRef<React.RefObject<HTMLVideoElement>[]>([]);
 
   useEffect(() => {
     loadVideos();
     loadUserBalance();
   }, []);
 
+  // Initialize refs for each video
   useEffect(() => {
-    // Auto-play current video with bulletproof promise handling
-    if (videoRefs.current[currentIndex]) {
-      const playPromise = videoRefs.current[currentIndex]?.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.log("Autoplay playback intercepted safely:", error);
-        });
-      }
-    }
-  }, [currentIndex]);
+    videoRefs.current = videos.map(() => useRef<HTMLVideoElement>(null));
+  }, [videos]);
+
+  // Use TikTok autoplay hook
+  useTikTokAutoplay(videoRefs.current);
+
 
   const loadVideos = async () => {
     setLoading(true);
@@ -190,79 +184,6 @@ const ShortVideoFeed: React.FC = () => {
     }
   };
 
-  const handleScroll = (direction: 'up' | 'down') => {
-    if (direction === 'down' && currentIndex < videos.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else if (direction === 'up' && currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
-
-  // Simplified retry handler with limited retries and no cache-busting
-  const handleVideoError = (videoId: string, videoElement: HTMLVideoElement | null) => {
-    console.error(`[Video Retry] Error detected for: ${videoId}`);
-    
-    // Clear existing retry timer for this video
-    if (retryTimers.current[videoId]) {
-      clearTimeout(retryTimers.current[videoId]);
-      delete retryTimers.current[videoId];
-    }
-
-    // Increment retry count
-    const currentRetries = retryCount[videoId] || 0;
-    if (currentRetries >= 2) {
-      console.error(`[Video Retry] Max retries (2) reached for: ${videoId}`);
-      setVideoError(prev => new Set([...prev, videoId]));
-      return;
-    }
-
-    // Set retry count and schedule retry
-    setRetryCount(prev => ({ ...prev, [videoId]: currentRetries + 1 }));
-    
-    // Exponential backoff: 1s, 2s
-    const backoffDelay = (currentRetries + 1) * 1000;
-    
-    console.log(`[Video Retry] Scheduling retry ${currentRetries + 1} for ${videoId} in ${backoffDelay}ms`);
-    
-    retryTimers.current[videoId] = setTimeout(() => {
-      console.log(`[Video Retry] Executing retry ${currentRetries + 1} for: ${videoId}`);
-      
-      // Simple retry without cache-busting or src manipulation
-      if (videoElement) {
-        const playPromise = videoElement.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              console.log(`[Video Retry] Successfully recovered video: ${videoId}`);
-              setVideoError(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(videoId);
-                return newSet;
-              });
-              setRetryCount(prev => {
-                const newCount = { ...prev };
-                delete newCount[videoId];
-                return newCount;
-              });
-            })
-            .catch(err => {
-              console.error(`[Video Retry] Retry playback failed for ${videoId}:`, err);
-              // Don't recursively call handleVideoError - let it fail after max retries
-            });
-        }
-      }
-      
-      delete retryTimers.current[videoId];
-    }, backoffDelay);
-  };
-
-  // Cleanup retry timers on unmount
-  useEffect(() => {
-    return () => {
-      Object.values(retryTimers.current).forEach(timer => clearTimeout(timer));
-    };
-  }, []);
-
   const currentVideo = videos[currentIndex];
 
   if (loading) {
@@ -285,156 +206,110 @@ const ShortVideoFeed: React.FC = () => {
       </div>
 
       {/* Video Feed */}
-      <div className="flex-1 relative overflow-hidden">
-        {currentVideo ? (
-          <div className="relative w-full h-full">
-            {/* Video Player */}
-            <div className="relative w-full h-full bg-black">
-              {currentVideo.is_premium && !unlockedVideos.has(currentVideo.id) ? (
-                /* Premium Paywall */
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-black/80 to-purple-900/80 backdrop-blur-xl">
-                  <Lock className="w-16 h-16 text-yellow-400 mb-4" />
-                  <h2 className="text-white text-2xl font-bold mb-2">🔒 Premium Content</h2>
-                  <p className="text-gray-300 text-lg mb-6">Unlock Exclusive Premium Reel</p>
-                  <Button
-                    onClick={() => handleUnlockVideo(currentVideo.id, currentVideo.unlock_cost)}
-                    className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white font-bold py-4 px-8 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg shadow-yellow-500/50"
-                  >
-                    🔓 Unlock for {currentVideo.unlock_cost} NellyCoins
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  {videoError.has(currentVideo.id) ? (
-                    /* Video Error Fallback */
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-purple-900/90 to-pink-900/90 backdrop-blur-xl">
-                      {currentVideo.thumbnail_url && !thumbnailError.has(currentVideo.id) ? (
-                        <img
-                          src={currentVideo.thumbnail_url}
-                          alt="Video thumbnail"
-                          className="w-full h-full object-cover opacity-50"
-                          onError={() => setThumbnailError(prev => new Set([...prev, currentVideo.id]))}
-                        />
-                      ) : (
-                        <div className="text-6xl mb-4 animate-pulse">🎬</div>
-                      )}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <p className="text-white text-xl font-bold mb-2">Video Loading Error</p>
-                          <p className="text-gray-300 text-sm">Please try refreshing or check your connection</p>
-                        </div>
-                      </div>
+      <div className="flex-1 relative overflow-y-auto scroll-snap-type-y-mandatory" style={{ scrollSnapType: 'y mandatory', overflowY: 'auto', height: '100vh' }}>
+        {videos.length > 0 ? (
+          <div className="relative w-full">
+            {videos.map((video, index) => (
+              <div key={video.id} className="relative w-full h-screen scroll-snap-start" style={{ scrollSnapAlign: 'start', height: '100vh', width: '100%' }}>
+                {/* Video Player */}
+                <div className="relative w-full h-full bg-black">
+                  {video.is_premium && !unlockedVideos.has(video.id) ? (
+                    /* Premium Paywall */
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-black/80 to-purple-900/80 backdrop-blur-xl">
+                      <Lock className="w-16 h-16 text-yellow-400 mb-4" />
+                      <h2 className="text-white text-2xl font-bold mb-2">🔒 Premium Content</h2>
+                      <p className="text-gray-300 text-lg mb-6">Unlock Exclusive Premium Reel</p>
+                      <Button
+                        onClick={() => handleUnlockVideo(video.id, video.unlock_cost)}
+                        className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white font-bold py-4 px-8 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg shadow-yellow-500/50"
+                      >
+                        🔓 Unlock for {video.unlock_cost} NellyCoins
+                      </Button>
                     </div>
                   ) : (
-                  <video
-                    ref={el => videoRefs.current[currentIndex] = el}
-                    src={currentVideo.video_url}
-                    className="w-full h-full object-cover"
-                    loop
-                    playsInline={true}
-                    webkit-playsinline="true"
-                    muted={muted}
-                    autoPlay={true}
-                    preload="metadata"
-                    crossOrigin="anonymous"
-                    onError={() => {
-                      handleVideoError(currentVideo.id, videoRefs.current[currentIndex]);
-                    }}
-                    onClick={() => {
-                      const video = videoRefs.current[currentIndex];
-                      if (video) {
-                        if (video.paused) {
-                          const playPromise = video.play();
-                          if (playPromise !== undefined) {
-                            playPromise.catch(error => {
-                              console.log("Manual play error:", error);
-                            });
+                    <>
+                      <video
+                        ref={videoRefs.current[index]}
+                        src={video.video_url}
+                        className="w-full h-full object-cover"
+                        muted
+                        playsInline
+                        loop
+                        preload="metadata"
+                        crossOrigin="anonymous"
+                        onClick={() => {
+                          const videoEl = videoRefs.current[index].current;
+                          if (videoEl) {
+                            if (videoEl.paused) {
+                              videoEl.play().catch(() => {});
+                            } else {
+                              videoEl.pause();
+                            }
                           }
-                        } else {
-                          video.pause();
-                        }
-                      }
-                    }}
-                  />
-                  )}
-                  
-                  {/* Mute Toggle */}
-                  <Button
-                    onClick={() => setMuted(!muted)}
-                    className="absolute top-4 right-4 bg-black/30 backdrop-blur-sm text-white p-2 rounded-full hover:bg-black/50 transition-all"
-                  >
-                    {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-                  </Button>
+                        }}
+                      />
+                      
+                      {/* Mute Toggle */}
+                      <Button
+                        onClick={() => setMuted(!muted)}
+                        className="absolute top-4 right-4 bg-black/30 backdrop-blur-sm text-white p-2 rounded-full hover:bg-black/50 transition-all"
+                      >
+                        {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                      </Button>
 
-                  {/* Creator Info */}
-                  <div className="absolute bottom-20 left-4 right-20">
-                    <div className="flex items-center gap-3 mb-3">
-                      {currentVideo.creator_avatar && (
-                        <img
-                          src={currentVideo.creator_avatar}
-                          alt={currentVideo.creator_name}
-                          className="w-10 h-10 rounded-full border-2 border-white"
-                        />
-                      )}
-                      <div>
-                        <p className="text-white font-semibold">{currentVideo.creator_name || 'Creator'}</p>
-                        <p className="text-gray-300 text-sm">@{currentVideo.creator_id}</p>
+                      {/* Creator Info */}
+                      <div className="absolute bottom-20 left-4 right-20">
+                        <div className="flex items-center gap-3 mb-3">
+                          {video.creator_avatar && (
+                            <img
+                              src={video.creator_avatar}
+                              alt={video.creator_name}
+                              className="w-10 h-10 rounded-full border-2 border-white"
+                            />
+                          )}
+                          <div>
+                            <p className="text-white font-semibold">{video.creator_name || 'Creator'}</p>
+                            <p className="text-gray-300 text-sm">@{video.creator_id}</p>
+                          </div>
+                        </div>
+                        {video.caption && (
+                          <p className="text-white text-sm mb-2">{video.caption}</p>
+                        )}
                       </div>
-                    </div>
-                    {currentVideo.caption && (
-                      <p className="text-white text-sm mb-2">{currentVideo.caption}</p>
-                    )}
-                  </div>
 
-                  {/* Action Buttons */}
-                  <div className="absolute right-4 bottom-20 flex flex-col gap-4">
-                    <Button
-                      onClick={() => handleLike(currentVideo.id)}
-                      className={`bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all ${
-                        likedVideos.has(currentVideo.id) ? 'text-red-500' : 'text-white'
-                      }`}
-                    >
-                      <Heart size={24} fill={likedVideos.has(currentVideo.id) ? 'currentColor' : 'none'} />
-                    </Button>
-                    <p className="text-white text-xs text-center">{currentVideo.likes_count}</p>
-                    
-                    <Button className="bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all text-white">
-                      <MessageCircle size={24} />
-                    </Button>
-                    <p className="text-white text-xs text-center">{currentVideo.comments_count}</p>
-                    
-                    <Button
-                      onClick={() => {
-                        setSelectedCreatorId(currentVideo.creator_id);
-                        setShowGiftPopup(true);
-                      }}
-                      className="bg-gradient-to-r from-yellow-500 to-amber-600 p-3 rounded-full hover:scale-105 transition-all text-white shadow-lg"
-                    >
-                      <Gift size={24} />
-                    </Button>
-                    <p className="text-white text-xs text-center">Gift</p>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Navigation Hints */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-              <Button
-                onClick={() => handleScroll('up')}
-                disabled={currentIndex === 0}
-                className="bg-black/30 backdrop-blur-sm text-white p-2 rounded-full hover:bg-black/50 transition-all disabled:opacity-30"
-              >
-                <ChevronRight size={20} className="rotate-[-90deg]" />
-              </Button>
-              <Button
-                onClick={() => handleScroll('down')}
-                disabled={currentIndex === videos.length - 1}
-                className="bg-black/30 backdrop-blur-sm text-white p-2 rounded-full hover:bg-black/50 transition-all disabled:opacity-30"
-              >
-                <ChevronRight size={20} className="rotate-[90deg]" />
-              </Button>
-            </div>
+                      {/* Action Buttons */}
+                      <div className="absolute right-4 bottom-20 flex flex-col gap-4">
+                        <Button
+                          onClick={() => handleLike(video.id)}
+                          className={`bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all ${
+                            likedVideos.has(video.id) ? 'text-red-500' : 'text-white'
+                          }`}
+                        >
+                          <Heart size={24} fill={likedVideos.has(video.id) ? 'currentColor' : 'none'} />
+                        </Button>
+                        <p className="text-white text-xs text-center">{video.likes_count}</p>
+                        
+                        <Button className="bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all text-white">
+                          <MessageCircle size={24} />
+                        </Button>
+                        <p className="text-white text-xs text-center">{video.comments_count}</p>
+                        
+                        <Button
+                          onClick={() => {
+                            setSelectedCreatorId(video.creator_id);
+                            setShowGiftPopup(true);
+                          }}
+                          className="bg-gradient-to-r from-yellow-500 to-amber-600 p-3 rounded-full hover:scale-105 transition-all text-white shadow-lg"
+                        >
+                          <Gift size={24} />
+                        </Button>
+                        <p className="text-white text-xs text-center">Gift</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="flex items-center justify-center h-full">

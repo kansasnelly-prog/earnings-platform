@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-export function useTikTokAutoplay(videoRefs: React.RefObject<HTMLVideoElement>[]) {
+export function useTikTokAutoplay(videoRefs: React.RefObject<React.RefObject<HTMLVideoElement>[]>) {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -16,7 +16,7 @@ export function useTikTokAutoplay(videoRefs: React.RefObject<HTMLVideoElement>[]
       { threshold: 0.7 }
     );
 
-    videoRefs.forEach((ref) => {
+    videoRefs.current?.forEach((ref) => {
       if (ref.current) observer.observe(ref.current);
     });
 

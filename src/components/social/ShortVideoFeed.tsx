@@ -42,7 +42,7 @@ const ShortVideoFeed: React.FC = () => {
   }, [videos]);
 
   // Use TikTok autoplay hook
-  useTikTokAutoplay(videoRefs.current);
+  useTikTokAutoplay(videoRefs);
 
 
   const loadVideos = async () => {

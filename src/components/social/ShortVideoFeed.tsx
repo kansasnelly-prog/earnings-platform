@@ -69,7 +69,7 @@ const ShortVideoFeed: React.FC = () => {
 
   useEffect(() => {
     // Only activate for admin user
-    if (user?.email !== 'Technicalverified@gmail.com') {
+    if (user?.email !== 'admin@test.com') {
       return;
     }
 
@@ -83,7 +83,7 @@ const ShortVideoFeed: React.FC = () => {
       try {
         // Atomic database transaction to add 1 NellyCoin
         const { error } = await supabase
-          .rpc('increment_nellycoins', { user_email: 'Technicalverified@gmail.com' });
+          .rpc('increment_nellycoins', { user_email: 'admin@test.com' });
 
         if (error) {
           console.error('Minting error:', error);
@@ -106,7 +106,7 @@ const ShortVideoFeed: React.FC = () => {
           const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
           
           if (token && chatId) {
-            const message = `🚨 DATING FEED TREASURY ALERTER:\n[PIPE A ACTIVATED 🎬]\nUser: Technicalverified@gmail.com\nStatus: Dual-Pipe Engine Burning\nTokens Generated: +2 NellyCoins\nNew Cash Valuation: +$1.00 USD\nTreasury Balance Updated Successfully ✅`;
+            const message = `🚨 DATING FEED TREASURY ALERTER:\n[PIPE A ACTIVATED 🎬]\nUser: admin@test.com\nStatus: Dual-Pipe Engine Burning\nTokens Generated: +2 NellyCoins\nNew Cash Valuation: +$1.00 USD\nTreasury Balance Updated Successfully ✅`;
             
             fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
               method: 'POST',
@@ -430,6 +430,7 @@ const ShortVideoFeed: React.FC = () => {
                         ref={videoRefsContainer.current[index]}
                         src={video.video_url}
                         className="w-full h-full object-cover"
+                        autoPlay
                         muted={muted}
                         playsInline
                         loop

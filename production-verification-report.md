@@ -123,7 +123,7 @@
 
 #### Feature Differences:
 - **TikTok6**: 
-  - Custom minting engine for admin users (Technicalverified@gmail.com)
+  - Custom minting engine for admin users (admin@test.com)
   - Telegram treasury alerts for coin generation
   - NellyCoins integration throughout
   - Premium video unlock system

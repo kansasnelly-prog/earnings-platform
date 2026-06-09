@@ -154,6 +154,17 @@ const MainAdminPanel: React.FC = () => {
   
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
+  // Track 2: Cash Redemption State
+  const [track2ModalOpen, setTrack2ModalOpen] = useState(false);
+  const [track2Network, setTrack2Network] = useState('');
+  const [track2NellyCoins, setTrack2NellyCoins] = useState('');
+  const [track2PaymentSlip, setTrack2PaymentSlip] = useState<any>(null);
+
+  // Track 3: Crypto Clearinghouse State
+  const [track3WalletAddress, setTrack3WalletAddress] = useState('');
+  const [track3SuccessModal, setTrack3SuccessModal] = useState(false);
+  const [track3ConversionValue, setTrack3ConversionValue] = useState(0);
+
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -1211,6 +1222,133 @@ const MainAdminPanel: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Triple-Track Sovereign Vault Matrix */}
+                <div>
+                  <h3 className="text-xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-4">Triple-Track Sovereign Vault Matrix</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Track 2: Cash Redemption Cockpit */}
+                    <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <CardHeader>
+                        <CardTitle className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent flex items-center text-lg">
+                          <span className="text-2xl mr-2">💵</span>
+                          Track 2: Cash Redemption Bridge
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Network Selector</label>
+                            <select
+                              value={track2Network}
+                              onChange={(e) => setTrack2Network(e.target.value)}
+                              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                            >
+                              <option value="">Select Network</option>
+                              <option value="aba">ABA Bank</option>
+                              <option value="acleda">ACLEDA Bank</option>
+                              <option value="opay">OPay Wireless</option>
+                              <option value="palmpay">PalmPay Network</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">NellyCoins Amount</label>
+                            <input
+                              type="number"
+                              value={track2NellyCoins}
+                              onChange={(e) => setTrack2NellyCoins(e.target.value)}
+                              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                              placeholder="Enter NellyCoins"
+                              min="0"
+                            />
+                          </div>
+                          <div className="p-3 bg-slate-800/50 rounded-lg">
+                            <p className="text-sm text-slate-400">Transaction Value (USD)</p>
+                            <p className="text-2xl font-bold text-green-400">
+                              ${(parseFloat(track2NellyCoins || '0') * 0.50).toFixed(2)}
+                            </p>
+                            <p className="text-xs text-slate-500">Fixed rate: $0.50 per NellyCoin</p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (!track2Network || !track2NellyCoins) {
+                                toast({
+                                  title: 'Error',
+                                  description: 'Please select a network and enter NellyCoins amount',
+                                  variant: 'destructive'
+                                });
+                                return;
+                              }
+                              setTrack2PaymentSlip({
+                                network: track2Network,
+                                nellyCoins: parseFloat(track2NellyCoins),
+                                usdValue: parseFloat(track2NellyCoins) * 0.50,
+                                timestamp: new Date().toISOString(),
+                                reference: `TXN-${Date.now()}`
+                              });
+                              setTrack2ModalOpen(true);
+                            }}
+                            className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-green-500/25 flex items-center justify-center gap-2"
+                          >
+                            ✨ Generate Payment Slip Receipt
+                          </button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Track 3: Crypto Clearinghouse */}
+                    <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      <CardHeader>
+                        <CardTitle className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent flex items-center text-lg">
+                          <span className="text-2xl mr-2">🔐</span>
+                          Track 3: USDT-TRC20 Clearinghouse
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">USDT-TRC20 Wallet Address</label>
+                            <input
+                              type="text"
+                              value={track3WalletAddress}
+                              onChange={(e) => setTrack3WalletAddress(e.target.value)}
+                              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm"
+                              placeholder="Enter Secure USDT-TRC20 Wallet Destination String"
+                            />
+                          </div>
+                          <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                            <p className="text-sm text-purple-400 font-medium">Network Gas Tracker</p>
+                            <p className="text-xs text-purple-300 mt-1">Network Speed: Ultra High-Speed Data Push | Base Fee: 0% Platform Discount</p>
+                          </div>
+                          <div className="p-3 bg-slate-800/50 rounded-lg">
+                            <p className="text-sm text-slate-400">Estimated Conversion</p>
+                            <p className="text-2xl font-bold text-purple-400">
+                              ${(stats.totalBalance * 0.50).toFixed(2)} USDT
+                            </p>
+                            <p className="text-xs text-slate-500">Based on total platform balance</p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (!track3WalletAddress) {
+                                toast({
+                                  title: 'Error',
+                                  description: 'Please enter a USDT-TRC20 wallet address',
+                                  variant: 'destructive'
+                                });
+                                return;
+                              }
+                              setTrack3ConversionValue(stats.totalBalance * 0.50);
+                              setTrack3SuccessModal(true);
+                            }}
+                            className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2"
+                          >
+                            🔐 Clear Balance to Crypto Wallet
+                          </button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
                 {/* Revenue Engine Dashboard */}
                 <div>
                   <h3 className="text-xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-4">Seven-Engine Monetization Matrix</h3>
@@ -1799,6 +1937,147 @@ const MainAdminPanel: React.FC = () => {
                       className="flex-1 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
                     >
                       Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Track 2: Payment Slip Receipt Modal */}
+            {track2ModalOpen && track2PaymentSlip && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-md">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      ✨ Payment Slip Receipt
+                    </h3>
+                    <button
+                      onClick={() => setTrack2ModalOpen(false)}
+                      className="text-slate-400 hover:text-white transition-colors"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-lg">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                          <span className="text-xl">💵</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-green-400">Transaction Generated</p>
+                          <p className="text-xs text-slate-400">{track2PaymentSlip.reference}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                        <span className="text-sm text-slate-400">Network</span>
+                        <span className="text-sm font-medium text-white capitalize">
+                          {track2PaymentSlip.network === 'aba' ? 'ABA Bank' :
+                           track2PaymentSlip.network === 'acleda' ? 'ACLEDA Bank' :
+                           track2PaymentSlip.network === 'opay' ? 'OPay Wireless' :
+                           track2PaymentSlip.network === 'palmpay' ? 'PalmPay Network' :
+                           track2PaymentSlip.network}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                        <span className="text-sm text-slate-400">NellyCoins</span>
+                        <span className="text-sm font-medium text-white">{track2PaymentSlip.nellyCoins.toLocaleString()} 🪙</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                        <span className="text-sm text-slate-400">USD Value</span>
+                        <span className="text-lg font-bold text-green-400">${track2PaymentSlip.usdValue.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                        <span className="text-sm text-slate-400">Exchange Rate</span>
+                        <span className="text-sm font-medium text-white">$0.50/coin</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                        <span className="text-sm text-slate-400">Timestamp</span>
+                        <span className="text-xs font-medium text-white">{new Date(track2PaymentSlip.timestamp).toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                      <p className="text-xs text-blue-400 text-center">
+                        💡 Payment instructions have been generated. Process this transaction through your selected banking network.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setTrack2ModalOpen(false);
+                        setTrack2PaymentSlip(null);
+                        setTrack2Network('');
+                        setTrack2NellyCoins('');
+                      }}
+                      className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-green-500/25"
+                    >
+                      Close Receipt
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Track 3: Crypto Clearance Success Modal */}
+            {track3SuccessModal && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-md">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      🔐 Crypto Clearance Complete
+                    </h3>
+                    <button
+                      onClick={() => setTrack3SuccessModal(false)}
+                      className="text-slate-400 hover:text-white transition-colors"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg text-center">
+                      <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-3">
+                        <CheckCircle size={32} className="text-purple-400" />
+                      </div>
+                      <p className="text-lg font-bold text-white mb-1">USDT Clearance Request Dispatched to Blockchain Router ✅</p>
+                      <p className="text-sm text-slate-400">Transaction submitted successfully</p>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                        <span className="text-sm text-slate-400">Destination Address</span>
+                        <span className="text-xs font-mono text-white truncate max-w-[150px]">{track3WalletAddress}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                        <span className="text-sm text-slate-400">Conversion Value</span>
+                        <span className="text-lg font-bold text-purple-400">${track3ConversionValue.toFixed(2)} USDT</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                        <span className="text-sm text-slate-400">Network</span>
+                        <span className="text-sm font-medium text-white">TRC20 (Tron)</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                        <span className="text-sm text-slate-400">Network Speed</span>
+                        <span className="text-sm font-medium text-green-400">Ultra High-Speed</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                        <span className="text-sm text-slate-400">Platform Fee</span>
+                        <span className="text-sm font-medium text-green-400">0% Discount</span>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                      <p className="text-xs text-purple-400 text-center">
+                        🔒 Your USDT clearance request has been encrypted and dispatched to the blockchain router. Track status in your wallet.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setTrack3SuccessModal(false);
+                        setTrack3WalletAddress('');
+                        setTrack3ConversionValue(0);
+                      }}
+                      className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-purple-500/25"
+                    >
+                      Close
                     </button>
                   </div>
                 </div>

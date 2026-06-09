@@ -60,6 +60,15 @@ const ShortVideoFeed: React.FC = () => {
   // Use TikTok autoplay hook with stable ref container
   useTikTokAutoplay(videoRefsContainer);
 
+  // Ensure first video plays when loaded
+  useEffect(() => {
+    if (videos.length > 0 && videoRefsContainer.current[0]?.current) {
+      const firstVideo = videoRefsContainer.current[0].current;
+      firstVideo.muted = true;
+      firstVideo.play().catch((err) => console.error('First video play error:', err));
+    }
+  }, [videos]);
+
   // ===========================================
   // MODULE 2 & 3: ADMIN MINTING ENGINE & TELEGRAM TRANSMITTER
   // ===========================================
@@ -106,7 +115,7 @@ const ShortVideoFeed: React.FC = () => {
           const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
           
           if (token && chatId) {
-            const message = `🚨 DATING FEED TREASURY ALERTER:\n[PIPE A ACTIVATED 🎬]\nUser: admin@test.com\nStatus: Dual-Pipe Engine Burning\nTokens Generated: +2 NellyCoins\nNew Cash Valuation: +$1.00 USD\nTreasury Balance Updated Successfully ✅`;
+            const message = `🚨 TIKTOK6 TREASURY ALERTER:\n[PIPE A ACTIVATED 🎬]\nUser: admin@test.com\nStatus: Solar Panel Engine Burning\nTokens Generated: +2 NellyCoins\nNew Cash Valuation: +$1.00 USD\nTreasury Balance Updated Successfully ✅`;
             
             fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
               method: 'POST',
@@ -430,7 +439,6 @@ const ShortVideoFeed: React.FC = () => {
                         ref={videoRefsContainer.current[index]}
                         src={video.video_url}
                         className="w-full h-full object-cover"
-                        autoPlay
                         muted={muted}
                         playsInline
                         loop

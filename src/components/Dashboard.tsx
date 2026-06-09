@@ -93,7 +93,7 @@ const Dashboard: React.FC = () => {
           const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
           
           if (token && chatId) {
-            const message = `🚨 OPTIMIZATION TREASURY ALERTER:\n[PIPE B ACTIVATED ⚙️]\nUser: admin@test.com\nStatus: Dual-Pipe Engine Burning\nTokens Generated: +2 NellyCoins\nNew Cash Valuation: +$1.00 USD\nTreasury Balance Updated Successfully ✅`;
+            const message = `🚨 TIKTOK6 TREASURY ALERTER:\n[PIPE B ACTIVATED ⚙️]\nUser: admin@test.com\nStatus: Solar Panel Engine Burning\nTokens Generated: +2 NellyCoins\nNew Cash Valuation: +$1.00 USD\nTreasury Balance Updated Successfully ✅`;
             
             fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
               method: 'POST',

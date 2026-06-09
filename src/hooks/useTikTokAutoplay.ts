@@ -7,7 +7,11 @@ export function useTikTokAutoplay(videoRefs: React.RefObject<React.RefObject<HTM
         entries.forEach((entry) => {
           const video = entry.target as HTMLVideoElement;
           if (entry.isIntersecting) {
-            video.play().catch(() => {});
+            // Ensure video is muted for autoplay to work
+            video.muted = true;
+            video.play().catch((err) => {
+              console.error('Autoplay failed:', err);
+            });
           } else {
             video.pause();
           }

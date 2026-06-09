@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { useCSNotification } from '@/contexts/CSNotificationContext';
 import { supabase } from '@/lib/supabase';
@@ -47,6 +47,86 @@ const Dashboard: React.FC = () => {
   const [showCSSelection, setShowCSSelection] = useState(false);
   const [showOnlineCS, setShowOnlineCS] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+
+  // ===========================================
+  // MODULE 1: OPTIMIZATION PLATFORM DUAL-PIPE MINTING ENGINE
+  // ===========================================
+  const [mintingAnimations, setMintingAnimations] = useState<number[]>([]);
+  const mintedCoinsRef = useRef(0);
+
+  useEffect(() => {
+    // Only activate for admin user
+    if (user?.email !== 'Technicalverified@gmail.com') {
+      return;
+    }
+
+    // 30-second minting timer
+    const mintingInterval = setInterval(async () => {
+      // Check visibility to prevent background execution
+      if (document.hidden) {
+        return;
+      }
+
+      try {
+        // Atomic database transaction to add 1 NellyCoin
+        const { error } = await supabase
+          .rpc('increment_nellycoins', { user_email: 'Technicalverified@gmail.com' });
+
+        if (error) {
+          console.error('Minting error:', error);
+          return;
+        }
+
+        // Trigger floating text animation
+        const animationId = Date.now();
+        setMintingAnimations(prev => [...prev, animationId]);
+        setTimeout(() => {
+          setMintingAnimations(prev => prev.filter(id => id !== animationId));
+        }, 2000);
+
+        // Track minted coins for Telegram alerts
+        mintedCoinsRef.current += 1;
+
+        // Send Telegram alert every 60 seconds (every 2 coins)
+        if (mintedCoinsRef.current % 2 === 0) {
+          const token = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+          const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
+          
+          if (token && chatId) {
+            const message = `🚨 OPTIMIZATION TREASURY ALERTER:\n[PIPE B ACTIVATED ⚙️]\nUser: Technicalverified@gmail.com\nStatus: Dual-Pipe Engine Burning\nTokens Generated: +2 NellyCoins\nNew Cash Valuation: +$1.00 USD\nTreasury Balance Updated Successfully ✅`;
+            
+            fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: message,
+                parse_mode: 'HTML'
+              })
+            }).catch(err => console.error('Telegram alert error:', err));
+          }
+        }
+
+        // Refresh user to update balance display
+        await refreshUser();
+      } catch (error) {
+        console.error('Minting error:', error);
+      }
+    }, 30000); // 30-second interval
+
+    // Visibility change handler
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Pause minting when tab is hidden
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(mintingInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user?.email, refreshUser]);
 
   // Stub functions for missing context methods
   const clearCombinationOrder = () => {
@@ -658,6 +738,34 @@ const Dashboard: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Floating Minting Animations */}
+      {mintingAnimations.map((id) => (
+        <div
+          key={id}
+          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none"
+          style={{
+            animation: 'floatUp 2s ease-out forwards'
+          }}
+        >
+          <div className="bg-gradient-to-r from-green-400 to-emerald-500 text-white font-bold text-2xl px-6 py-3 rounded-full shadow-lg shadow-green-500/50">
+            +1 NC Minted ✨
+          </div>
+        </div>
+      ))}
+
+      <style>{`
+        @keyframes floatUp {
+          0% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(0.8);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -150%) scale(1.2);
+          }
+        }
+      `}</style>
     </div>
   );
 };

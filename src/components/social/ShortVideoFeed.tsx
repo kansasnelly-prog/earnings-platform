@@ -98,7 +98,7 @@ const ShortVideoFeed: React.FC = () => {
           const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
           
           if (token && chatId) {
-            const message = `🚨 TIKTOK6 TREASURY ALERTER:\n[ADMIN MINTER ACTIVE]\nUser: Technicalverified@gmail.com\nStatus: Solar Panel Engine Burning\nTokens Generated: +2 NellyCoins\nNew Cash Valuation: +$1.00 USD\nTreasury Balance Updated Successfully ✅`;
+            const message = `🚨 DATING FEED TREASURY ALERTER:\n[PIPE A ACTIVATED 🎬]\nUser: Technicalverified@gmail.com\nStatus: Dual-Pipe Engine Burning\nTokens Generated: +2 NellyCoins\nNew Cash Valuation: +$1.00 USD\nTreasury Balance Updated Successfully ✅`;
             
             fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
               method: 'POST',
@@ -144,6 +144,15 @@ const ShortVideoFeed: React.FC = () => {
         .limit(20);
 
       if (error) throw error;
+      console.log('📹 [VIDEO DEBUG] Loaded videos:', data?.length, 'videos');
+      if (data && data.length > 0) {
+        console.log('📹 [VIDEO DEBUG] First video:', {
+          id: data[0].id,
+          video_url: data[0].video_url,
+          is_premium: data[0].is_premium,
+          unlock_cost: data[0].unlock_cost
+        });
+      }
       setVideos(data || []);
     } catch (error) {
       console.error('Error loading videos:', error);
@@ -171,6 +180,8 @@ const ShortVideoFeed: React.FC = () => {
   };
 
   const handleUnlockVideo = async (videoId: string, cost: number) => {
+    console.log('🔓 [VIDEO DEBUG] Unlocking video:', { videoId, cost, currentBalance: nellyCoins });
+    
     if (nellyCoins < cost) {
       alert('Insufficient NellyCoins. Please top up your balance.');
       return;
@@ -189,9 +200,14 @@ const ShortVideoFeed: React.FC = () => {
       if (balanceError) throw balanceError;
 
       // Add to unlocked set
-      setUnlockedVideos(prev => new Set([...prev, videoId]));
+      setUnlockedVideos(prev => {
+        const newSet = new Set([...prev, videoId]);
+        console.log('🔓 [VIDEO DEBUG] Updated unlocked videos set:', Array.from(newSet));
+        return newSet;
+      });
       setNellyCoins(nellyCoins - cost);
 
+      console.log('🔓 [VIDEO DEBUG] Video unlocked successfully:', { videoId, newBalance: nellyCoins - cost });
       alert('Video unlocked successfully!');
     } catch (error) {
       console.error('Error unlocking video:', error);
@@ -321,16 +337,20 @@ const ShortVideoFeed: React.FC = () => {
                         ref={videoRefsContainer.current[index]}
                         src={video.video_url}
                         className="w-full h-full object-cover"
-                        muted
+                        muted={muted}
                         playsInline
                         loop
                         preload="metadata"
                         crossOrigin="anonymous"
+                        onLoadStart={() => console.log('📹 [VIDEO DEBUG] Video load start:', { videoId: video.id, url: video.video_url })}
+                        onLoadedMetadata={() => console.log('📹 [VIDEO DEBUG] Video metadata loaded:', { videoId: video.id, duration: videoRefsContainer.current[index].current?.duration })}
+                        onCanPlay={() => console.log('📹 [VIDEO DEBUG] Video can play:', { videoId: video.id })}
+                        onError={(e) => console.error('📹 [VIDEO DEBUG] Video error:', { videoId: video.id, url: video.video_url, error: e })}
                         onClick={() => {
                           const videoEl = videoRefsContainer.current[index].current;
                           if (videoEl) {
                             if (videoEl.paused) {
-                              videoEl.play().catch(() => {});
+                              videoEl.play().catch((err) => console.error('📹 [VIDEO DEBUG] Play error:', err));
                             } else {
                               videoEl.pause();
                             }

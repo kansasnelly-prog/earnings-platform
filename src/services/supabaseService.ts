@@ -201,7 +201,7 @@ export interface DatabaseTask {
 export interface DatabaseTransaction {
   id: string;
   user_id: string;
-  type: 'deposit' | 'earning' | 'withdrawal' | 'task_reward' | 'combination_33' | 'profit_claim' | 'combination_order' | 'phase2_checkpoint_bonus' | 'phase2_checkpoint_approved' | 'training_completion_transfer_out' | 'training_completion_transfer_in';
+  type: 'deposit' | 'earning' | 'withdrawal' | 'task_reward' | 'combination_33' | 'profit_claim' | 'combination_order' | 'phase2_checkpoint_bonus' | 'phase2_checkpoint_approved' | 'training_completion_transfer_out' | 'training_completion_transfer_in' | 'withdrawal_request' | 'admin_adjustment' | 'personal_day2_checkpoint_approved' | 'personal_day2_checkpoint_bonus' | 'commission_transfer';
   amount: number;
   description: string;
   status: 'pending' | 'completed' | 'failed';
@@ -4043,15 +4043,15 @@ export class SupabaseService {
       const { error: userUpdateError } = await supabase
         .from('users')
         .update({
-          personal_day2_checkpoint: jsonb_build_object(
-            'status', 'approved',
-            'triggered_at', (checkpoint.created_at),
-            'cleared_at', null,
-            'multiplier_applied', false,
-            'task_number', checkpoint.task_number,
-            'id', checkpoint.id,
-            'approved_at', NOW()
-          )
+          personal_day2_checkpoint: {
+            status: 'approved',
+            triggered_at: checkpoint.created_at,
+            cleared_at: null,
+            multiplier_applied: false,
+            task_number: checkpoint.task_number,
+            id: checkpoint.id,
+            approved_at: new Date().toISOString()
+          }
         })
         .eq('id', checkpoint.auth_user_id);
       
@@ -4170,14 +4170,14 @@ export class SupabaseService {
       .update({
         balance: newBalance,
         tasks_completed: nextTaskNumber,
-        personal_day2_checkpoint: jsonb_build_object(
-          'status', 'completed',
-          'triggered_at', checkpoint.created_at,
-          'cleared_at', NOW(),
-          'multiplier_applied', true,
-          'task_number', checkpoint.task_number,
-          'id', checkpoint.id
-        ),
+        personal_day2_checkpoint: {
+          status: 'completed',
+          triggered_at: checkpoint.created_at,
+          cleared_at: new Date().toISOString(),
+          multiplier_applied: true,
+          task_number: checkpoint.task_number,
+          id: checkpoint.id
+        },
         is_negative_balance: false
       })
       .eq('id', authUserId);
@@ -4646,12 +4646,12 @@ export class SupabaseService {
       const { error } = await supabase
         .from('users')
         .update({
-          training_phase_2_checkpoint: jsonb_build_object(
-            'status', 'cleared',
-            'triggered_at', user.training_phase_2_checkpoint?.triggered_at,
-            'cleared_at', NOW(),
-            'multiplier_applied', false
-          ),
+          training_phase_2_checkpoint: {
+            status: 'cleared',
+            triggered_at: user.training_phase_2_checkpoint?.triggered_at,
+            cleared_at: new Date().toISOString(),
+            multiplier_applied: false
+          },
           updated_at: new Date().toISOString()
         })
         .eq('id', userId);

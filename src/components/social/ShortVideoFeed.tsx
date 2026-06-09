@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { supabase } from '@/lib/supabase';
-import { Heart, MessageCircle, Gift, Volume2, VolumeX, Lock, Home, UserPlus, Plus, MessageSquare, User, Bookmark, Share2, MapPin } from 'lucide-react';
+import { Heart, MessageCircle, Gift, Volume2, VolumeX, Lock, Home, UserPlus, Plus, MessageSquare, User, Bookmark, Share2, MapPin, Compass } from 'lucide-react';
 import { useTikTokAutoplay } from '@/hooks/useTikTokAutoplay';
 import { useAppContext } from '@/contexts/AppContext';
+import { toast } from '@/components/ui/use-toast';
+import CommentModal from './CommentModal';
 
 interface CreatorVideo {
   id: string;
@@ -21,6 +24,7 @@ interface CreatorVideo {
 }
 
 const ShortVideoFeed: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAppContext();
   const [videos, setVideos] = useState<CreatorVideo[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -31,6 +35,9 @@ const ShortVideoFeed: React.FC = () => {
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
   const [likedVideos, setLikedVideos] = useState<Set<string>>(new Set());
+  const [bookmarkedVideos, setBookmarkedVideos] = useState<Set<string>>(new Set());
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   
   // Stable ref wrapper to prevent React error #321
   const videoRefsContainer = useRef<React.RefObject<HTMLVideoElement>[]>([]);
@@ -41,6 +48,7 @@ const ShortVideoFeed: React.FC = () => {
   useEffect(() => {
     loadVideos();
     loadUserBalance();
+    loadBookmarks();
   }, []);
 
   // Initialize refs for each video - stable implementation
@@ -140,19 +148,11 @@ const ShortVideoFeed: React.FC = () => {
       const { data, error } = await supabase
         .from('creator_videos')
         .select('*')
+        .order('is_premium', { ascending: true })
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (error) throw error;
-      console.log('📹 [VIDEO DEBUG] Loaded videos:', data?.length, 'videos');
-      if (data && data.length > 0) {
-        console.log('📹 [VIDEO DEBUG] First video:', {
-          id: data[0].id,
-          video_url: data[0].video_url,
-          is_premium: data[0].is_premium,
-          unlock_cost: data[0].unlock_cost
-        });
-      }
       setVideos(data || []);
     } catch (error) {
       console.error('Error loading videos:', error);
@@ -179,9 +179,24 @@ const ShortVideoFeed: React.FC = () => {
     }
   };
 
+  const loadBookmarks = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('video_bookmarks')
+        .select('video_id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setBookmarkedVideos(new Set(data?.map(b => b.video_id) || []));
+    } catch (error) {
+      console.error('Error loading bookmarks:', error);
+    }
+  };
+
   const handleUnlockVideo = async (videoId: string, cost: number) => {
-    console.log('🔓 [VIDEO DEBUG] Unlocking video:', { videoId, cost, currentBalance: nellyCoins });
-    
     if (nellyCoins < cost) {
       alert('Insufficient NellyCoins. Please top up your balance.');
       return;
@@ -202,12 +217,10 @@ const ShortVideoFeed: React.FC = () => {
       // Add to unlocked set
       setUnlockedVideos(prev => {
         const newSet = new Set([...prev, videoId]);
-        console.log('🔓 [VIDEO DEBUG] Updated unlocked videos set:', Array.from(newSet));
         return newSet;
       });
       setNellyCoins(nellyCoins - cost);
 
-      console.log('🔓 [VIDEO DEBUG] Video unlocked successfully:', { videoId, newBalance: nellyCoins - cost });
       alert('Video unlocked successfully!');
     } catch (error) {
       console.error('Error unlocking video:', error);
@@ -255,8 +268,10 @@ const ShortVideoFeed: React.FC = () => {
 
   const handleLike = async (videoId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        toast({ title: 'Login required', description: 'Please login to like videos', variant: 'destructive' });
+        return;
+      }
 
       const isLiked = likedVideos.has(videoId);
       
@@ -287,6 +302,84 @@ const ShortVideoFeed: React.FC = () => {
     } catch (error) {
       console.error('Error liking video:', error);
     }
+  };
+
+  const handleBookmark = async (videoId: string) => {
+    try {
+      if (!user) {
+        toast({ title: 'Login required', description: 'Please login to bookmark videos', variant: 'destructive' });
+        return;
+      }
+
+      const isBookmarked = bookmarkedVideos.has(videoId);
+      
+      if (isBookmarked) {
+        const { error } = await supabase
+          .from('video_bookmarks')
+          .delete()
+          .eq('video_id', videoId)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        setBookmarkedVideos(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(videoId);
+          return newSet;
+        });
+        toast({ title: 'Removed', description: 'Video removed from bookmarks' });
+      } else {
+        const { error } = await supabase
+          .from('video_bookmarks')
+          .insert({
+            video_id: videoId,
+            user_id: user.id
+          });
+
+        if (error) throw error;
+
+        setBookmarkedVideos(prev => new Set([...prev, videoId]));
+        toast({ title: 'Bookmarked', description: 'Video added to bookmarks' });
+      }
+    } catch (error) {
+      console.error('Error bookmarking video:', error);
+      toast({ title: 'Error', description: 'Failed to bookmark video', variant: 'destructive' });
+    }
+  };
+
+  const handleShare = async (videoId: string) => {
+    const shareUrl = `${window.location.origin}/feed?videoId=${videoId}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Check out this video',
+          url: shareUrl
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      toast({ title: 'Copied!', description: 'Video link copied to clipboard' });
+    }
+  };
+
+  const handleComment = (videoId: string) => {
+    if (!user) {
+      toast({ title: 'Login required', description: 'Please login to comment', variant: 'destructive' });
+      return;
+    }
+    setSelectedVideoId(videoId);
+    setShowCommentModal(true);
+  };
+
+  const handleCreatorClick = (creatorId: string) => {
+    navigate(`/profile/${creatorId}`);
+  };
+
+  const handleInboxClick = () => {
+    navigate('/inbox');
   };
 
   const currentVideo = videos[currentIndex];
@@ -342,15 +435,11 @@ const ShortVideoFeed: React.FC = () => {
                         loop
                         preload="metadata"
                         crossOrigin="anonymous"
-                        onLoadStart={() => console.log('📹 [VIDEO DEBUG] Video load start:', { videoId: video.id, url: video.video_url })}
-                        onLoadedMetadata={() => console.log('📹 [VIDEO DEBUG] Video metadata loaded:', { videoId: video.id, duration: videoRefsContainer.current[index].current?.duration })}
-                        onCanPlay={() => console.log('📹 [VIDEO DEBUG] Video can play:', { videoId: video.id })}
-                        onError={(e) => console.error('📹 [VIDEO DEBUG] Video error:', { videoId: video.id, url: video.video_url, error: e })}
                         onClick={() => {
                           const videoEl = videoRefsContainer.current[index].current;
                           if (videoEl) {
                             if (videoEl.paused) {
-                              videoEl.play().catch((err) => console.error('📹 [VIDEO DEBUG] Play error:', err));
+                              videoEl.play().catch((err) => console.error('Play error:', err));
                             } else {
                               videoEl.pause();
                             }
@@ -358,18 +447,7 @@ const ShortVideoFeed: React.FC = () => {
                         }}
                       />
                       
-                      {/* Top Notification Banner */}
-                      <div className="absolute top-4 left-4 right-4 bg-black/60 backdrop-blur-sm rounded-xl p-3 flex items-center gap-3 z-10">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
-                          OD
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-white text-sm font-semibold">Obong Declan, DROP_BOI sent you new messages.</p>
-                        </div>
-                        <Button className="bg-white text-black px-4 py-1 rounded-full text-sm font-semibold hover:bg-gray-200 transition-all">
-                          Reply
-                        </Button>
-                      </div>
+                      {/* Top Notification Banner - REMOVED (was hardcoded fake data) */}
 
                       {/* Mute Toggle */}
                       <Button
@@ -381,39 +459,40 @@ const ShortVideoFeed: React.FC = () => {
 
                       {/* Lower-Left Metadata Metrics */}
                       <div className="absolute bottom-24 left-4 right-20 z-10">
-                        {/* Status Badge */}
-                        <div className="mb-2">
-                          <span className="bg-white/20 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full font-semibold">
-                            Your friend
-                          </span>
-                        </div>
+                        {/* Status Badge - REMOVED (was hardcoded fake data) */}
                         
                         {/* Creator Info */}
-                        <div className="flex items-center gap-3 mb-2">
+                        <div
+                          className="flex items-center gap-3 mb-2 cursor-pointer"
+                          onClick={() => handleCreatorClick(video.creator_id)}
+                        >
                           <p className="text-white font-bold text-lg">{video.creator_name || 'Creator'}</p>
                         </div>
                         
-                        {/* Location Tag */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <MapPin size={14} className="text-white" />
-                          <p className="text-white text-sm">ខ្មែរក្រហម - Angkol beach - n.a. (1564)</p>
-                        </div>
-                        <p className="text-gray-300 text-xs mb-3">7.0M likes on posts of this place</p>
-                        
-                        {/* Typography Text Lines */}
-                        <p className="text-white font-semibold mb-1">Jani Fyy ❤️👩‍❤️‍👨📃 Photo</p>
-                        <p className="text-white text-sm mb-2">#Me @24h 🌞 #fan</p>
-                        <p className="text-gray-400 text-xs mb-1">Paid partnership</p>
-                        <p className="text-gray-400 text-xs">Creator labeled as AI-generated</p>
+                        {/* Caption */}
+                        {video.caption && (
+                          <p className="text-white font-semibold mb-2">{video.caption}</p>
+                        )}
                       </div>
 
                       {/* Right-Hand Floating Engagement Column */}
                       <div className="absolute right-4 bottom-24 flex flex-col gap-5 items-center z-10">
                         {/* Creator Avatar with Follow */}
-                        <div className="relative">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold border-2 border-white">
-                            {video.creator_name?.charAt(0) || 'C'}
-                          </div>
+                        <div
+                          className="relative cursor-pointer"
+                          onClick={() => handleCreatorClick(video.creator_id)}
+                        >
+                          {video.creator_avatar ? (
+                            <img
+                              src={video.creator_avatar}
+                              alt={video.creator_name || 'Creator'}
+                              className="w-12 h-12 rounded-full object-cover border-2 border-white"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold border-2 border-white">
+                              {video.creator_name?.charAt(0) || 'C'}
+                            </div>
+                          )}
                           <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-red-500 rounded-full p-1">
                             <UserPlus size={12} className="text-white" />
                           </div>
@@ -429,31 +508,42 @@ const ShortVideoFeed: React.FC = () => {
                           >
                             <Heart size={28} fill={likedVideos.has(video.id) ? 'currentColor' : 'none'} />
                           </Button>
-                          <p className="text-white text-xs font-semibold mt-1">24</p>
+                          <p className="text-white text-xs font-semibold mt-1">{video.likes_count || 0}</p>
                         </div>
                         
                         {/* Comment */}
                         <div className="flex flex-col items-center">
-                          <Button className="bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all text-white">
+                          <Button
+                            onClick={() => handleComment(video.id)}
+                            className="bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all text-white"
+                          >
                             <MessageCircle size={28} />
                           </Button>
-                          <p className="text-white text-xs font-semibold mt-1">6</p>
+                          <p className="text-white text-xs font-semibold mt-1">{video.comments_count || 0}</p>
                         </div>
                         
                         {/* Bookmark */}
                         <div className="flex flex-col items-center">
-                          <Button className="bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all text-white">
-                            <Bookmark size={28} />
+                          <Button
+                            onClick={() => handleBookmark(video.id)}
+                            className={`bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all ${
+                              bookmarkedVideos.has(video.id) ? 'text-yellow-400' : 'text-white'
+                            }`}
+                          >
+                            <Bookmark size={28} fill={bookmarkedVideos.has(video.id) ? 'currentColor' : 'none'} />
                           </Button>
-                          <p className="text-white text-xs font-semibold mt-1">2</p>
+                          <p className="text-white text-xs font-semibold mt-1">{bookmarkedVideos.has(video.id) ? 'Saved' : 'Save'}</p>
                         </div>
                         
                         {/* Share */}
                         <div className="flex flex-col items-center">
-                          <Button className="bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all text-white">
+                          <Button
+                            onClick={() => handleShare(video.id)}
+                            className="bg-black/30 backdrop-blur-sm p-3 rounded-full hover:bg-black/50 transition-all text-white"
+                          >
                             <Share2 size={28} />
                           </Button>
-                          <p className="text-white text-xs font-semibold mt-1">4</p>
+                          <p className="text-white text-xs font-semibold mt-1">Share</p>
                         </div>
                       </div>
                     </>
@@ -481,13 +571,15 @@ const ShortVideoFeed: React.FC = () => {
             <span className="text-white text-xs font-semibold">Home</span>
           </div>
           
-          {/* Friends - Badge 59 */}
-          <div className="flex flex-col items-center gap-1">
+          {/* Explore */}
+          <div
+            className="flex flex-col items-center gap-1 cursor-pointer"
+            onClick={() => navigate('/explore')}
+          >
             <div className="relative">
-              <UserPlus size={24} className="text-white" />
-              <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">59</span>
+              <Compass size={24} className="text-white" />
             </div>
-            <span className="text-white text-xs">Friends</span>
+            <span className="text-white text-xs">Explore</span>
           </div>
           
           {/* Center Publish Button */}
@@ -497,22 +589,39 @@ const ShortVideoFeed: React.FC = () => {
             </div>
           </div>
           
-          {/* Inbox - Badge 83 */}
-          <div className="flex flex-col items-center gap-1">
+          {/* Inbox */}
+          <div
+            className="flex flex-col items-center gap-1 cursor-pointer"
+            onClick={handleInboxClick}
+          >
             <div className="relative">
               <MessageSquare size={24} className="text-white" />
-              <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">83</span>
             </div>
             <span className="text-white text-xs">Inbox</span>
           </div>
           
           {/* Profile */}
-          <div className="flex flex-col items-center gap-1">
+          <div
+            className="flex flex-col items-center gap-1 cursor-pointer"
+            onClick={() => user && navigate(`/profile/${user.id}`)}
+          >
             <User size={24} className="text-white" />
             <span className="text-white text-xs">Profile</span>
           </div>
         </div>
       </div>
+
+      {/* Comment Modal */}
+      {showCommentModal && selectedVideoId && (
+        <CommentModal
+          isOpen={showCommentModal}
+          onClose={() => {
+            setShowCommentModal(false);
+            setSelectedVideoId(null);
+          }}
+          videoId={selectedVideoId}
+        />
+      )}
 
       {/* Gift Popup */}
       {showGiftPopup && (

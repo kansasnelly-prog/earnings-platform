@@ -18,6 +18,12 @@ import MatchDashboard from './components/matchmaking/MatchDashboard';
 import MatchingFeed from './components/social/MatchingFeed';
 import AudioMatchRoom from './components/social/AudioMatchRoom';
 import PremiumChatView from './components/social/PremiumChatView';
+import Inbox from './components/social/Inbox';
+import MessageConversation from './components/social/MessageConversation';
+import StoryViewer from './components/social/StoryViewer';
+import ExplorePage from './components/social/ExplorePage';
+import CreatorProfile from './components/social/CreatorProfile';
+import FriendsPage from './components/social/FriendsPage';
 import NotFound from './pages/NotFound';
 import { supabase } from './lib/supabase';
 import { useAuth } from './contexts/SafeAuthProvider';
@@ -231,6 +237,12 @@ const AppContent: React.FC = () => {
       <Route path="/match-feed" element={<MatchingFeed />} />
       <Route path="/voice-match" element={<AudioMatchRoom />} />
       <Route path="/premium-chat" element={<PremiumChatView />} />
+      <Route path="/inbox" element={<Inbox />} />
+      <Route path="/friends" element={<FriendsPage />} />
+      <Route path="/messages/:conversationId" element={<MessageConversation />} />
+      <Route path="/story/:storyId" element={<StoryViewer />} />
+      <Route path="/explore" element={<ExplorePage />} />
+      <Route path="/profile/:userId" element={<CreatorProfile />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

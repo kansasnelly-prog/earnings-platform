@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { supabase } from '@/lib/supabase';
 import { Globe } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 interface Message {
   id: string;
@@ -120,32 +121,14 @@ const PremiumChatView: React.FC = () => {
     }
   };
 
-  const handleTranslateMessage = (messageId: string, content: string) => {
-    // Mock translation - in production, this would call a translation API
-    const mockTranslations: Record<string, string> = {
-      'Hello': 'សួស្តី',
-      'Hi': 'សួស្តី',
-      'How are you?': 'តើអ្នកសុខសប្បាយជាមណា?',
-      'Good morning': 'អរុណសួស្តី',
-      'Good night': 'រកសុខសប្បាយ',
-      'Thank you': 'សូមអរគុណ',
-      'Yes': 'បាទ/ចាស',
-      'No': 'ទេ',
-      'I love you': 'ខ្ញុំស្រល់អ្នក',
-      'See you later': 'ជួបគ្នាពេលក្រោយ',
-    };
-
-    // Simple mock translation - check if content matches any known phrase
-    let translated = mockTranslations[content];
-    if (!translated) {
-      // If no exact match, add a prefix to indicate it's translated
-      translated = `[KH] ${content}`;
-    }
-
-    setTranslatedMessages(prev => ({
-      ...prev,
-      [messageId]: translated
-    }));
+  const handleTranslateMessage = async (messageId: string, content: string) => {
+    // Translation feature - requires integration with translation API
+    // For now, indicate translation is not available
+    toast({
+      title: 'Translation',
+      description: 'Translation feature requires API integration',
+      variant: 'default'
+    });
   };
 
   return (

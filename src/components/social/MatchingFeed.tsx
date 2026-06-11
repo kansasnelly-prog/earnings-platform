@@ -75,6 +75,7 @@ const MatchingFeed: React.FC = () => {
     }, 1000);
 
     return () => {
+      console.log('TIKTOK FEED UNMOUNTED (MatchingFeed)');
       subscription.unsubscribe();
       clearTimeout(fallbackTimer);
       clearInterval(timeInterval);

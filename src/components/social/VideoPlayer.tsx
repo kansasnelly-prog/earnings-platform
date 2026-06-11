@@ -16,6 +16,7 @@ const GIFTS: GiftType[] = [
 ];
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
+  console.log('[VideoPlayer] COMPONENT RENDERED for:', video.id);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { user } = useAppContext();
   const { isLiked, likesCount, toggleLike, isFollowing, toggleFollow } = useEngagement(video.id, user?.id || '', video.creator_id);
@@ -23,6 +24,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
   const [showGifts, setShowGifts] = useState(false);
 
   useEffect(() => {
+    console.log('[VideoPlayer] PLAY EFFECT EXECUTED for:', video.id, 'isActive:', isActive);
     console.log(`[VideoPlayer] isActive changed for ${video.id}:`, isActive);
     if (isActive) {
       console.log(`[VideoPlayer] Attempting play for ${video.id}`);

@@ -4,6 +4,7 @@ import VideoPlayer from './VideoPlayer';
 import VideoUpload from './VideoUpload';
 
 const TikTokFeed: React.FC = () => {
+  console.log('[TikTokFeed] COMPONENT RENDERED');
   const { videos, loading, fetchVideos } = useTikTokFeed();
   const [activeIndex, setActiveIndex] = useState(0);
   const [showUpload, setShowUpload] = useState(false);

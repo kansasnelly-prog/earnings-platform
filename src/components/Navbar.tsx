@@ -86,6 +86,10 @@ const navItems: NavItem[] = [{
     label: 'Feed',
     icon: Film
   }, {
+    id: 'notifications',
+    label: 'Notifications',
+    icon: Badge
+  }, {
     id: 'about',
     label: 'About',
     icon: Shield

@@ -11,6 +11,7 @@ import WalletSection from './WalletSection';
 import WithdrawalSection from './WithdrawalSection';
 import ProfileSection from './ProfileSection';
 import TikTokFeed from './social/TikTokFeed';
+import NotificationCenter from './social/NotificationCenter';
 import AdminPanel from './AdminPanel';
 import About from '@/pages/About';
 import Legal from '@/pages/Legal';
@@ -40,6 +41,8 @@ const AppLayout: React.FC = () => {
         return <ProfileSection />;
       case 'tiktok6':
         return <TikTokFeed />;
+      case 'notifications':
+        return <NotificationCenter />;
       case 'about':
         return <About />;
       case 'legal':

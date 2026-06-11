@@ -23,13 +23,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
   const [showGifts, setShowGifts] = useState(false);
 
   useEffect(() => {
+    console.log(`[VideoPlayer] isActive changed for ${video.id}:`, isActive);
     if (isActive) {
-      videoRef.current?.play().catch(console.error);
+      console.log(`[VideoPlayer] Attempting play for ${video.id}`);
+      videoRef.current?.play().then(() => {
+        console.log(`[VideoPlayer] Play successful for ${video.id}`);
+      }).catch(err => {
+        console.error(`[VideoPlayer] Play rejected for ${video.id}:`, err);
+      });
     } else {
+      console.log(`[VideoPlayer] Pausing ${video.id}`);
       videoRef.current?.pause();
       if (videoRef.current) videoRef.current.currentTime = 0;
     }
-  }, [isActive]);
+  }, [isActive, video.id]);
 
   const handleSendGift = async (gift: GiftType) => {
     try {
@@ -50,6 +57,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
         loop
         muted
         playsInline
+        autoPlay
       />
       {/* Right Engagement Controls */}
       <div className="absolute right-4 bottom-20 flex flex-col gap-6 items-center">

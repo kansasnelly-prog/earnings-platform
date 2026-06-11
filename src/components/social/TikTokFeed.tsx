@@ -19,7 +19,10 @@ const TikTokFeed: React.FC = () => {
 
     // Autoplay logic
     const index = Math.round(container.scrollTop / container.clientHeight);
-    setActiveIndex(index);
+    if (index !== activeIndex) {
+      console.log(`[TikTokFeed] activeIndex changed: ${activeIndex} -> ${index}`);
+      setActiveIndex(index);
+    }
 
     // Infinite scroll logic
     if (container.scrollTop + container.clientHeight >= container.scrollHeight - 100) {

@@ -89,7 +89,7 @@ const ExplorePage: React.FC = () => {
   };
 
   const handleVideoClick = (video: CreatorVideo) => {
-    navigate('/feed', { state: { videoId: video.id } });
+    navigate('/match-feed', { state: { videoId: video.id } });
   };
 
   const handleCreatorClick = (creatorId: string) => {

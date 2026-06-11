@@ -11,6 +11,7 @@ export interface Video {
   comments_count: number;
   creator_name: string;
   creator_avatar: string;
+  created_at: string;
 }
 
 export function useTikTokFeed() {
@@ -18,18 +19,25 @@ export function useTikTokFeed() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchVideos = useCallback(async () => {
+  const fetchVideos = useCallback(async (cursor?: string) => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: supabaseError } = await supabase
+      let query = supabase
         .from('creator_videos')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
+      
+      if (cursor) {
+        query = query.lt('created_at', cursor);
+      }
+
+      const { data, error: supabaseError } = await query;
 
       if (supabaseError) throw supabaseError;
-      setVideos(data || []);
+      
+      setVideos(prev => cursor ? [...prev, ...(data || [])] : (data || []));
     } catch (err: any) {
       setError(err.message);
     } finally {

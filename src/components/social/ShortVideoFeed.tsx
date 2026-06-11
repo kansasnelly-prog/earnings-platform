@@ -24,6 +24,7 @@ interface CreatorVideo {
 }
 
 const ShortVideoFeed: React.FC = () => {
+  console.log('VIDEO PLAYER MOUNTED (ShortVideoFeed)');
   const navigate = useNavigate();
   const { user } = useAppContext();
   const [videos, setVideos] = useState<CreatorVideo[]>([]);
@@ -153,6 +154,7 @@ const ShortVideoFeed: React.FC = () => {
 
   const loadVideos = async () => {
     setLoading(true);
+    console.log('ShortVideoFeed: Fetching videos...');
     try {
       const { data, error } = await supabase
         .from('creator_videos')
@@ -163,6 +165,7 @@ const ShortVideoFeed: React.FC = () => {
 
       if (error) throw error;
       setVideos(data || []);
+      console.log('ShortVideoFeed: Fetched', data?.length || 0, 'videos');
     } catch (error) {
       console.error('Error loading videos:', error);
     } finally {

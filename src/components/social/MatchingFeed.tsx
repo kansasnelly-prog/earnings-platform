@@ -17,6 +17,8 @@ interface Profile {
 }
 
 const MatchingFeed: React.FC = () => {
+  console.log('TIKTOK FEED MOUNTED (MatchingFeed)');
+  
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -32,6 +34,10 @@ const MatchingFeed: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [session, setSession] = useState<any>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    console.log('Auth state:', { loading, authLoading, hasUser: !!user, hasSession: !!session });
+  }, [loading, authLoading, user, session]);
 
   useEffect(() => {
     loadProfiles();

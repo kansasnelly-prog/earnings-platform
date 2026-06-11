@@ -2,7 +2,7 @@
 -- This function is used by the admin minting engine
 
 CREATE OR REPLACE FUNCTION increment_nellycoins(user_email text)
-RETURNS void
+RETURNS integer
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
@@ -10,6 +10,7 @@ BEGIN
   UPDATE public.profiles
   SET nellycoins = nellycoins + 1
   WHERE email = user_email;
+  RETURN (SELECT nellycoins FROM public.profiles WHERE email = user_email);
 END;
 $$;
 

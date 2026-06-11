@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 import { useCSNotification } from '@/contexts/CSNotificationContext';
-import { LogOut, User, ChevronDown, Zap, LayoutDashboard, Wallet, ArrowDownToLine, UserCircle, Menu, X, Shield, MessageCircle, ExternalLink, RefreshCw, Badge, Settings, BarChart3, LucideIcon } from 'lucide-react';
+import { LogOut, User, ChevronDown, Zap, LayoutDashboard, Wallet, ArrowDownToLine, UserCircle, Menu, X, Shield, MessageCircle, ExternalLink, RefreshCw, Badge, Settings, BarChart3, Film, LucideIcon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -81,6 +81,10 @@ const navItems: NavItem[] = [{
     id: 'profile',
     label: 'Profile',
     icon: UserCircle
+  }, {
+    id: 'tiktok6',
+    label: 'Feed',
+    icon: Film
   }, {
     id: 'about',
     label: 'About',

@@ -10,6 +10,7 @@ import TaskGrid from './TaskGrid';
 import WalletSection from './WalletSection';
 import WithdrawalSection from './WithdrawalSection';
 import ProfileSection from './ProfileSection';
+import TikTokFeed from './social/TikTokFeed';
 import AdminPanel from './AdminPanel';
 import About from '@/pages/About';
 import Legal from '@/pages/Legal';
@@ -37,6 +38,8 @@ const AppLayout: React.FC = () => {
         return <WithdrawalSection />;
       case 'profile':
         return <ProfileSection />;
+      case 'tiktok6':
+        return <TikTokFeed />;
       case 'about':
         return <About />;
       case 'legal':

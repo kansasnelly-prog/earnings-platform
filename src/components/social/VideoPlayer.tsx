@@ -24,21 +24,22 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
   const [showGifts, setShowGifts] = useState(false);
 
   useEffect(() => {
-    console.log('[VideoPlayer] PLAY EFFECT EXECUTED for:', video.id, 'isActive:', isActive);
-    console.log(`[VideoPlayer] isActive changed for ${video.id}:`, isActive);
+    console.log(`[VideoPlayer] EFFECT - isActive: ${isActive}, video.id: ${video.id}, video.url: ${video.video_url}`);
     if (isActive) {
-      console.log(`[VideoPlayer] Attempting play for ${video.id}`);
-      videoRef.current?.play().then(() => {
-        console.log(`[VideoPlayer] Play successful for ${video.id}`);
-      }).catch(err => {
-        console.error(`[VideoPlayer] Play rejected for ${video.id}:`, err);
-      });
+      console.log(`[VideoPlayer] Attempting play() for ${video.id}`);
+      videoRef.current?.play()
+        .then(() => console.log('[VideoPlayer] PLAY SUCCESS for', video.id))
+        .catch(err => console.error('[VideoPlayer] PLAY FAILED for', video.id, err));
     } else {
       console.log(`[VideoPlayer] Pausing ${video.id}`);
       videoRef.current?.pause();
       if (videoRef.current) videoRef.current.currentTime = 0;
     }
-  }, [isActive, video.id]);
+  }, [isActive, video.id, video.video_url]);
+
+  const handleCanPlay = () => {
+    console.log(`[VideoPlayer] canPlay event for ${video.id}`);
+  };
 
   const handleSendGift = async (gift: GiftType) => {
     try {
@@ -60,6 +61,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
         muted
         playsInline
         autoPlay
+        onCanPlay={handleCanPlay}
       />
       {/* Right Engagement Controls */}
       <div className="absolute right-4 bottom-20 flex flex-col gap-6 items-center">

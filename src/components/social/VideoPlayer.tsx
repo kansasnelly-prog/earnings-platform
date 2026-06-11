@@ -16,7 +16,7 @@ const GIFTS: GiftType[] = [
 ];
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
-  console.log('[VideoPlayer] COMPONENT RENDERED for:', video.id);
+  console.log('[VideoPlayer] COMPONENT RENDERED');
   const videoRef = useRef<HTMLVideoElement>(null);
   const { user } = useAppContext();
   const { isLiked, likesCount, toggleLike, isFollowing, toggleFollow } = useEngagement(video.id, user?.id || '', video.creator_id);

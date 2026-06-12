@@ -18,6 +18,8 @@ interface CreatorVideo {
   creator_avatar?: string;
 }
 
+const FALLBACK_VIDEO_URL = "https://www.w3schools.com/html/mov_bbb.mp4";
+
 const ShortVideoFeed = () => {
   const navigate = useNavigate();
   const { user } = useAppContext();
@@ -114,6 +116,14 @@ const ShortVideoFeed = () => {
     setLoading(false);
   };
 
+  const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>, url: string) => {
+    console.error(`[Video Load Error] Failed to load video at: ${url}`, e);
+    const video = e.currentTarget;
+    video.src = FALLBACK_VIDEO_URL;
+    video.load();
+    video.play().catch(() => {});
+  };
+
   if (loading) return <div className="h-screen w-full flex items-center justify-center text-white bg-black">Loading...</div>;
 
   return (
@@ -130,6 +140,9 @@ const ShortVideoFeed = () => {
               className="w-full h-full object-cover"
               playsInline
               loop
+              preload="auto"
+              crossOrigin="anonymous"
+              onError={(e) => handleVideoError(e, video.video_url)}
             />
             <button
               onClick={() => setMuted(!muted)}

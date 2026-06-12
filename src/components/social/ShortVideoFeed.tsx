@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
@@ -21,7 +20,6 @@ interface CreatorVideo {
 const FALLBACK_VIDEO_URL = "https://www.w3schools.com/html/mov_bbb.mp4";
 
 const ShortVideoFeed = () => {
-  const navigate = useNavigate();
   const { user } = useAppContext();
   const [videos, setVideos] = useState<CreatorVideo[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -29,77 +27,41 @@ const ShortVideoFeed = () => {
   const [muted, setMuted] = useState(true);
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRefs = useRef<React.RefObject<HTMLVideoElement>[]>([]);
-  const touchStartY = useRef(0);
-  const isTransitioning = useRef(false);
+  const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
 
   useEffect(() => {
     loadVideos();
   }, []);
 
-  // Play/Pause management
   useEffect(() => {
-    videoRefs.current.forEach((ref, index) => {
-      const video = ref.current;
-      if (!video) return;
-      if (index === activeIndex) {
-        video.muted = muted;
-        video.play().catch(() => {});
-      } else {
-        video.pause();
-        video.currentTime = 0;
-      }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const videoElement = entry.target as HTMLVideoElement;
+          const videoId = videoElement.dataset.id;
+          
+          if (entry.isIntersecting) {
+            videoElement.muted = muted;
+            videoElement.play().catch(() => {});
+            if (videoId) {
+              const videoIndex = videos.findIndex(v => v.id === videoId);
+              setActiveIndex(videoIndex);
+            }
+          } else {
+            videoElement.pause();
+            videoElement.currentTime = 0;
+          }
+        });
+      },
+      { threshold: 0.8 } // 80% visibility required to trigger
+    );
+
+    videoRefs.current.forEach((video) => {
+      observer.observe(video);
     });
-  }, [activeIndex, videos, muted]);
 
-  const updateIndex = useCallback((direction: number) => {
-    if (isTransitioning.current) return;
-    
-    const newIndex = activeIndex + direction;
-    const constrainedIndex = Math.min(Math.max(newIndex, 0), videos.length - 1);
-    
-    if (constrainedIndex !== activeIndex) {
-      isTransitioning.current = true;
-      setActiveIndex(constrainedIndex);
-      
-      setTimeout(() => {
-        isTransitioning.current = false;
-      }, 400); // Cooldown to stop multiple micro-scrolls
-    }
-  }, [activeIndex, videos.length]);
-
-  // Gesture handling
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaY) < 10) return; // Threshold
-      console.log("GUESTURE DETECTED: SCROLL", e.deltaY);
-      
-      e.preventDefault();
-      updateIndex(e.deltaY > 0 ? 1 : -1);
-    };
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      const deltaY = touchStartY.current - e.changedTouches[0].clientY;
-      if (Math.abs(deltaY) < 30) return; // Threshold
-      console.log("GUESTURE DETECTED: SWIPE", deltaY);
-      
-      updateIndex(deltaY > 0 ? 1 : -1);
-    };
-
-    window.addEventListener('wheel', handleWheel, { passive: false });
-    window.addEventListener('touchstart', handleTouchStart);
-    window.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      window.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [updateIndex]);
+    return () => observer.disconnect();
+  }, [videos, muted]);
 
   const loadVideos = async () => {
     setLoading(true);
@@ -110,7 +72,6 @@ const ShortVideoFeed = () => {
         .limit(20);
     if (error) console.error("FETCH ERROR:", error);
     setVideos(data || []);
-    videoRefs.current = Array.from({ length: data?.length || 0 }, () => React.createRef<HTMLVideoElement>());
     setLoading(false);
   };
 
@@ -125,32 +86,34 @@ const ShortVideoFeed = () => {
   if (loading) return <div className="h-screen w-full flex items-center justify-center text-white bg-black">Loading...</div>;
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-black" ref={containerRef}>
-      <div 
-        className="transition-transform duration-300 ease-out h-full w-full"
-        style={{ transform: `translateY(-${activeIndex * 100}vh)` }}
-      >
-        {videos.map((video, index) => (
-          <div key={video.id} className="h-screen w-full relative flex items-center justify-center">
-            <video
-              ref={videoRefs.current[index]}
-              src={video.video_url}
-              className="w-full h-full object-cover"
-              playsInline
-              loop
-              preload="auto"
-              crossOrigin="anonymous"
-              onError={(e) => handleVideoError(e, video.video_url)}
-            />
-            <button
-              onClick={() => setMuted(!muted)}
-              className="absolute top-4 right-4 z-20 text-white"
-            >
-              {muted ? <VolumeX /> : <Volume2 />}
-            </button>
-          </div>
-        ))}
-      </div>
+    <div 
+      className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth bg-black" 
+      ref={containerRef}
+    >
+      {videos.map((video) => (
+        <div key={video.id} className="w-full h-screen snap-start snap-always relative flex-shrink-0 flex items-center justify-center">
+          <video
+            ref={(el) => {
+              if (el) videoRefs.current.set(video.id, el);
+              else videoRefs.current.delete(video.id);
+            }}
+            data-id={video.id}
+            src={video.video_url}
+            className="w-full h-full object-cover"
+            playsInline
+            loop
+            preload="auto"
+            crossOrigin="anonymous"
+            onError={(e) => handleVideoError(e, video.video_url)}
+          />
+          <button
+            onClick={() => setMuted(!muted)}
+            className="absolute top-4 right-4 z-20 text-white"
+          >
+            {muted ? <VolumeX /> : <Volume2 />}
+          </button>
+        </div>
+      ))}
     </div>
   );
 };

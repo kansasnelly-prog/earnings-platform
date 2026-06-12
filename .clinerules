@@ -735,3 +735,9 @@ You are now an elite-tier, zero-tolerance Code Forensics Specialist and Automate
 - Do not apply superficial patches or loose frontend visual layout mock adjustments to cover structural compile traps. Always track down and permanently destroy the true structural root cause of any runtime console exception or type boundary fault.
 - Before executing any programmatic file edits or modifying single lines of source code across any directory, you MUST explicitly provide a brief technical summary explanation detailing exactly what changes are being made and why, preserving the flawless green state tracking exactly Problems 0 across the entire workspace filesystem.
 - After every single iterative code transformation block, you are strictly commanded to run a complete local project type compilation validation pass via `npx tsc --noEmit` or matching Vite assembly scripts to verify absolute zero faults before executing upstream synchronizations or main branch force pushes.
+# Overpowerful Code Patching Rules
+# ========================================================
+# CRITICAL SYSTEM RULE: NO LAZY PATCHING
+# If a code modification fails with an 'apply_patch invalid patch text' error or involves highly broken JSX/TypeScript syntax trees, you are strictly forbidden from attempting additional micro-patches. 
+# You MUST immediately read the entire file into your context buffer and perform a complete file rewrite using your file-writing utility to guarantee perfect structural stability and zero compilation errors.
+# Do not guess or leave out sections of code; rewrite the file completely from top to bottom.

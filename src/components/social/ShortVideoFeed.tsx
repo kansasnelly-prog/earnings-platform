@@ -34,6 +34,18 @@ const ShortVideoFeed = () => {
   }, []);
 
   useEffect(() => {
+    const handleRefresh = () => {
+      if (containerRef.current) {
+        containerRef.current.scrollTop = 0;
+      }
+      setActiveIndex(0);
+      loadVideos();
+    };
+    window.addEventListener('refresh-home-feed', handleRefresh);
+    return () => window.removeEventListener('refresh-home-feed', handleRefresh);
+  }, []);
+
+  useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {

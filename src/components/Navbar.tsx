@@ -21,6 +21,7 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const context = useAppContext();
   const { unreadCount } = useCSNotification();
+  const [refreshing, setRefreshing] = useState(false);
   const {
     isAuthenticated,
     user,
@@ -125,10 +126,17 @@ const navItems: NavItem[] = [{
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
-          if (isAuthenticated) safeSetActiveTab('dashboard');
-        }}>
+            if (!isAuthenticated) return;
+            if (activeTab === 'dashboard') {
+              setRefreshing(true);
+              window.dispatchEvent(new Event('refresh-home-feed'));
+              setTimeout(() => setRefreshing(false), 1000);
+            } else {
+              safeSetActiveTab('dashboard');
+            }
+          }}>
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <Zap size={20} className="text-white" />
+              <Zap size={20} className={`text-white ${refreshing ? 'animate-spin' : ''}`} />
             </div>
             <span className="font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-green-500 text-base">EARNINGSLLC
           </span>

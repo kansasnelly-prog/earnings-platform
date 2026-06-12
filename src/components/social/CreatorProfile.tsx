@@ -12,7 +12,12 @@ interface Profile {
   likes_count: number;
 }
 
-const CreatorProfile: React.FC<{ creatorId: string }> = ({ creatorId }) => {
+import { useParams } from 'react-router-dom';
+
+const CreatorProfile: React.FC = () => {
+  const { userId } = useParams<{ userId: string }>();
+  const creatorId = userId;
+
   const [profile, setProfile] = useState<Profile | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [tab, setTab] = useState<'videos' | 'likes'>('videos');

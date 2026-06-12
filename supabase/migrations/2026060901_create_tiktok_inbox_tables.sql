@@ -39,10 +39,11 @@ CREATE POLICY "Users can create own stories"
   WITH CHECK (user_id = auth.uid());
 
 DROP POLICY IF EXISTS "Users can delete own stories" ON stories;
-CREATE POLICY "Users can delete own stories"
-  ON stories
-  FOR DELETE
-  USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "Users can update own messages" ON direct_messages;
+CREATE POLICY "Users can update own messages"
+  ON direct_messages
+  FOR UPDATE
+  USING (sender_id = auth.uid())
 
 -- ============================================
 -- TABLE B: story_views
@@ -190,17 +191,7 @@ ALTER TABLE direct_messages ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can create messages in their conversations" ON direct_messages;
 /* Duplicate policy removed */
 
-CREATE POLICY "Users can create messages in their conversations"
-  ON direct_messages
-  FOR INSERT
-  WITH CHECK (
-    sender_id = auth.uid() AND
-    EXISTS (
-      SELECT 1 FROM direct_conversations c
-      WHERE c.id = direct_messages.conversation_id
-      AND (c.user1_id = auth.uid() OR c.user2_id = auth.uid())
-    )
-  );
+/* Duplicate policy removed - second occurrence */
 
 CREATE POLICY "Users can update own messages"
   ON direct_messages

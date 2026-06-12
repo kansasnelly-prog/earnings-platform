@@ -1,3 +1,30 @@
+// --- COOKIE ERROR SUPPRESSION INTERCEPTOR ---
+const suppressedStrings = ["_cf_bm", "cookie", "rejected", "invalid domain"];
+
+const suppressLog = (args: any[]) => {
+  if (args.some(arg => typeof arg === 'string' && suppressedStrings.some(s => arg.toLowerCase().includes(s)))) {
+    return true;
+  }
+  return false;
+};
+
+const originalError = console.error;
+console.error = (...args) => {
+  if (!suppressLog(args)) originalError(...args);
+};
+
+const originalWarn = console.warn;
+console.warn = (...args) => {
+  if (!suppressLog(args)) originalWarn(...args);
+};
+
+window.addEventListener('error', (e) => {
+  if (suppressedStrings.some(s => (e.message || "").toLowerCase().includes(s))) {
+    e.preventDefault();
+  }
+}, true);
+// ----------------------------------------------
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';

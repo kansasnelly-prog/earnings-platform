@@ -41,7 +41,7 @@ const ShortVideoFeed = () => {
       if (!video) return;
       if (index === activeIndex) {
         video.muted = muted;
-        video.play().catch(console.error);
+        video.play().catch(() => {});
       } else {
         video.pause();
         video.currentTime = 0;
@@ -94,16 +94,16 @@ const ShortVideoFeed = () => {
     setLoading(false);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="h-screen w-full flex items-center justify-center text-white bg-black">Loading...</div>;
 
   return (
     <div className="h-screen w-full overflow-hidden bg-black" ref={containerRef}>
       <div 
-        className="transition-transform duration-300 ease-in-out h-full"
+        className="transition-transform duration-300 ease-out h-full w-full"
         style={{ transform: `translateY(-${activeIndex * 100}vh)` }}
       >
         {videos.map((video, index) => (
-          <div key={video.id} className="h-screen w-full relative">
+          <div key={video.id} className="h-screen w-full relative flex items-center justify-center">
             <video
               ref={videoRefs.current[index]}
               src={video.video_url}

@@ -1480,7 +1480,7 @@ export class SupabaseService {
 
         // Check if VIP1 personal account completed a cycle (35 tasks)
         if (isVIP1Personal && newTasksCompleted >= 35 && !personalCycleCompleted) {
-          logCore('[completeTask] VIP1 personal account completed cycle', personalCycle, '(35/35 tasks)');
+          logCore(`[completeTask] VIP1 personal account completed cycle ${personalCycle} (35/35 tasks)`);
           
           // Mark current cycle as completed
           await supabase
@@ -2570,11 +2570,15 @@ export class SupabaseService {
       
       // Log admin action
       await this.logAdminAction(
-        adminId || 'system',
         'approve_withdrawal',
-        `Approved withdrawal of $${withdrawal.amount.toFixed(2)} for user ${withdrawal.user_email}`,
         withdrawal.user_id,
-        { withdrawal_id: withdrawalId, amount: withdrawal.amount }
+        { 
+          email: withdrawal.user_email,
+          withdrawal_id: withdrawalId, 
+          amount: withdrawal.amount,
+          admin_id: adminId,
+          description: `Approved withdrawal of $${withdrawal.amount.toFixed(2)} for user ${withdrawal.user_email}`
+        }
       );
       
       // Send notification
@@ -2657,11 +2661,16 @@ export class SupabaseService {
       
       // Log admin action
       await this.logAdminAction(
-        adminId || 'system',
         'reject_withdrawal',
-        `Rejected withdrawal of $${withdrawal.amount.toFixed(2)} for user ${withdrawal.user_email}: ${reason || 'No reason provided'}`,
         withdrawal.user_id,
-        { withdrawal_id: withdrawalId, amount: withdrawal.amount, reason }
+        {
+          email: withdrawal.user_email,
+          amount: withdrawal.amount,
+          reason: reason || 'No reason provided',
+          withdrawal_id: withdrawalId,
+          admin_id: adminId,
+          description: `Rejected withdrawal of $${withdrawal.amount.toFixed(2)} for user ${withdrawal.user_email}: ${reason || 'No reason provided'}`
+        }
       );
       
       console.log('[AdminWithdrawal] Successfully rejected withdrawal:', withdrawalId);
@@ -2842,73 +2851,31 @@ export class SupabaseService {
       console.log(`[SupabaseService] [ADMIN] APPROVE CHECKPOINT for: ${email}`);
       console.log(`[SupabaseService] [ADMIN] ==========================================`);
       
-      // Step 1: Find the training user by email
-      console.log(`[SupabaseService] [ADMIN] Step 1: Searching for training user with email: ${email}`);
-      const { data: trainingUser, error: findError } = await supabase
+      // Step 1: Find the user by email (dynamic account type)
+      const { data: user, error: findError } = await supabase
         .from('users')
         .select('id, email, display_name, account_type')
         .eq('email', email)
-        .eq('account_type', 'training')
-        .single();
-      
-      if (findError || !trainingUser) {
-        console.error(`[SupabaseService] [ADMIN] Training account not found: ${email}`, findError);
-        return { success: false, error: 'Training account not found in Supabase' };
-      }
-      
-      console.log(`[SupabaseService] [ADMIN] Step 1: FOUND training user:`, {
-        id: trainingUser.id,
-        email: trainingUser.email,
-        display_name: trainingUser.display_name
-      });
-      
-      // Step 2: Find checkpoint by user ID (auth_user_id or user_id)
-      console.log(`[SupabaseService] [ADMIN] Step 2: Searching checkpoint for user_id: ${trainingUser.id}`);
-      console.log(`[SupabaseService] [ADMIN] Checkpoint filters:`, {
-        auth_user_id: trainingUser.id,
-        status: 'pending_review',
-        task_number: [31, 32]
-      });
-      
-      // Try finding by auth_user_id first
-      let { data: checkpoint, error: checkpointError } = await supabase
-        .from('phase2_checkpoints')
-        .select('*')
-        .eq('auth_user_id', trainingUser.id)
-        .eq('status', 'pending_review')
-        .in('task_number', [31, 32])
-        .order('created_at', { ascending: false })
         .maybeSingle();
       
-      // If not found, try by user_id
-      if (!checkpoint && !checkpointError) {
-        console.log(`[SupabaseService] [ADMIN] Checkpoint not found by auth_user_id, trying user_id...`);
-        const result = await supabase
-          .from('phase2_checkpoints')
-          .select('*')
-          .eq('user_id', trainingUser.id)
-          .eq('status', 'pending_review')
-          .in('task_number', [31, 32])
-          .order('created_at', { ascending: false })
-          .maybeSingle();
-        checkpoint = result.data;
-        checkpointError = result.error;
+      if (findError || !user) {
+        console.error(`[SupabaseService] [ADMIN] User not found: ${email}`, findError);
+        return { success: false, error: 'User not found' };
       }
       
-      // If still not found, try by email
-      if (!checkpoint && !checkpointError) {
-        console.log(`[SupabaseService] [ADMIN] Checkpoint not found by user_id, trying email...`);
-        const result = await supabase
-          .from('phase2_checkpoints')
-          .select('*')
-          .eq('email', email)
-          .eq('status', 'pending_review')
-          .in('task_number', [31, 32])
-          .order('created_at', { ascending: false })
-          .maybeSingle();
-        checkpoint = result.data;
-        checkpointError = result.error;
-      }
+      const isTraining = user.account_type === 'training';
+      const checkpointTable = isTraining ? 'phase2_checkpoints' : 'personal_day2_checkpoints';
+      
+      console.log(`[SupabaseService] [ADMIN] Found user: ${user.id}, account_type: ${user.account_type}`);
+      
+      // Step 2: Find checkpoint
+      let { data: checkpoint, error: checkpointError } = await supabase
+        .from(checkpointTable)
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'pending_review')
+        .order('created_at', { ascending: false })
+        .maybeSingle();
       
       if (checkpointError) {
         console.error(`[SupabaseService] [ADMIN] Error fetching checkpoint:`, checkpointError);
@@ -2917,37 +2884,12 @@ export class SupabaseService {
       
       if (!checkpoint) {
         console.error(`[SupabaseService] [ADMIN] No pending checkpoint found for: ${email}`);
-        console.log(`[SupabaseService] [ADMIN] Searching for ANY checkpoint for this user...`);
-        
-        // Debug: Show all checkpoints for this user
-        const { data: allCheckpoints } = await supabase
-          .from('phase2_checkpoints')
-          .select('id, task_number, status, created_at')
-          .eq('auth_user_id', trainingUser.id);
-        
-        console.log(`[SupabaseService] [ADMIN] All checkpoints for user:`, allCheckpoints);
-        
-        return { success: false, error: 'No pending checkpoint found for this user. Checkpoint must be in pending_review status.' };
+        return { success: false, error: 'No pending checkpoint found for this user.' };
       }
       
-      console.log(`[SupabaseService] [ADMIN] Step 2: FOUND checkpoint:`, {
-        id: checkpoint.id,
-        task_number: checkpoint.task_number,
-        status: checkpoint.status,
-        bonus_amount: checkpoint.bonus_amount,
-        product1_name: checkpoint.product1_name,
-        product2_name: checkpoint.product2_name
-      });
-      
       // Step 3: Update checkpoint to 'approved'
-      console.log(`[SupabaseService] [ADMIN] Step 3: Updating checkpoint...`);
-      console.log(`[SupabaseService] [ADMIN] Checkpoint ID: ${checkpoint.id}`);
-      console.log(`[SupabaseService] [ADMIN] Old status: ${checkpoint.status}`);
-      console.log(`[SupabaseService] [ADMIN] New status: approved`);
-      console.log(`[SupabaseService] [ADMIN] reviewed_by field: SKIPPED (not updating UUID field)`);
-      
       const { error: updateError } = await supabase
-        .from('phase2_checkpoints')
+        .from(checkpointTable)
         .update({
           status: 'approved',
           reviewed_at: new Date().toISOString(),
@@ -2961,67 +2903,24 @@ export class SupabaseService {
         return { success: false, error: 'Failed to approve checkpoint: ' + updateError.message };
       }
       
-      console.log(`[SupabaseService] [ADMIN] Step 3: SUCCESS - Checkpoint ${checkpoint.id} approved`);
-      console.log(`[SupabaseService] [ADMIN] Status changed: ${checkpoint.status} -> approved`);
-      
-      // Step 4: Also update the training_accounts to clear has_pending_order flag
-      console.log(`[SupabaseService] [ADMIN] Step 4: Clearing has_pending_order flag in training_accounts`);
-      
-      const { data: trainingAccount } = await supabase
-        .from('training_accounts')
-        .select('id')
-        .eq('auth_user_id', trainingUser.id)
-        .single();
-      
-      if (trainingAccount) {
-        const updatePayload = {
-          updated_at: new Date().toISOString()
-        };
-        console.log('[SupabaseService] [ADMIN] Step 4: Full training_accounts update payload:', JSON.stringify(updatePayload, null, 2));
-        console.log('[SupabaseService] [ADMIN] Step 4: Filter: id =', trainingAccount.id);
-        const { error: trainingUpdateError } = await supabase
-          .from('training_accounts')
-          .update(updatePayload)
-          .eq('id', trainingAccount.id);
-        
-        if (trainingUpdateError) {
-          console.error('[SupabaseService] [ADMIN] Step 4: ERROR updating training_accounts:', trainingUpdateError);
-          console.error('[SupabaseService] [ADMIN] Step 4: Error details:', JSON.stringify(trainingUpdateError, null, 2));
-        } else {
-          console.log('[SupabaseService] [ADMIN] Step 4: SUCCESS - training_accounts updated');
-        }
-        
-        console.log(`[SupabaseService] [ADMIN] Step 4: Training account updated`);
-      }
-      
-      // Step 5: Log admin action
-      await this.logAdminAction('approve_checkpoint', trainingUser.id, {
+      // Step 4: Log admin action and handle additional updates (training vs personal)
+      await this.logAdminAction('approve_checkpoint', user.id, {
         email,
         checkpoint_id: checkpoint.id,
-        task_number: checkpoint.task_number,
         bonus_amount: checkpoint.bonus_amount,
-        previous_status: 'pending_review',
-        new_status: 'approved',
         admin_id: adminId,
-        note: 'Admin approved checkpoint - user must now submit premium product to receive bonus'
+        table: checkpointTable
       });
 
-      // Step 6: Create transaction record for checkpoint approval (bonus will be added when user submits)
+      // Create transaction record
       await this.createTransaction({
-        user_id: trainingUser.id,
-        type: 'phase2_checkpoint_approved',
+        user_id: user.id,
+        type: isTraining ? 'phase2_checkpoint_approved' : 'personal_day2_checkpoint_approved',
         amount: 0,
-        description: `Phase 2 checkpoint approved at task ${checkpoint.task_number}. User must submit product to receive bonus.`,
+        description: `Checkpoint approved at task ${checkpoint.task_number}.`,
         status: 'completed',
         metadata: { checkpoint_id: checkpoint.id, admin_id: adminId, pending_bonus: checkpoint.bonus_amount }
       });
-      
-      console.log(`[SupabaseService] [ADMIN] ==========================================`);
-      console.log(`[SupabaseService] [ADMIN] CHECKPOINT APPROVAL COMPLETE`);
-      console.log(`[SupabaseService] [ADMIN] User: ${email}`);
-      console.log(`[SupabaseService] [ADMIN] Checkpoint: ${checkpoint.id}`);
-      console.log(`[SupabaseService] [ADMIN] Bonus Amount (pending user submission): $${checkpoint.bonus_amount}`);
-      console.log(`[SupabaseService] [ADMIN] ==========================================`);
       
       return { 
         success: true, 

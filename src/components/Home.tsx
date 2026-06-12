@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppContext } from '@/contexts/AppContext';
-import { Home as HomeIcon, Play, FileText, Headphones, Award, HelpCircle, Info, ChevronRight, Bell, Menu } from 'lucide-react';
+import { Home as HomeIcon, Play, FileText, Headphones, Award, HelpCircle, Info, ChevronRight, Bell, Menu, RefreshCcw } from 'lucide-react';
 
 const Home: React.FC = () => {
   const context = useAppContext();
@@ -21,6 +21,31 @@ const Home: React.FC = () => {
     { icon: HelpCircle, label: 'FAQ', color: 'bg-green-500', action: () => alert('FAQ coming soon!') },
     { icon: Info, label: 'About Us', color: 'bg-orange-500', action: () => alert('About Us coming soon!') },
   ];
+
+  const [isRefreshingHome, setIsRefreshingHome] = React.useState(false);
+
+  const animateRefreshArrow = () => {
+    setIsRefreshingHome(true);
+    // Fade in/out handled via CSS animation
+    setTimeout(() => setIsRefreshingHome(false), 400);
+  };
+
+  const handleHomeClick = () => {
+    // Prevent stacking animations
+    if (isRefreshingHome) return;
+
+    if (context.activeTab === 'dashboard') {
+      // Scroll to top instantly
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Trigger app refresh (feed reload)
+      if (typeof context.refreshApp === 'function') {
+        void context.refreshApp();
+      }
+      animateRefreshArrow();
+    } else {
+      safeSetActiveTab('dashboard');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0d1117] pb-24">
@@ -118,53 +143,28 @@ const Home: React.FC = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gray-800/50 rounded-xl p-4">
-            <p className="text-gray-400 text-sm mb-1">Total Balance</p>
-            <p className="text-green-400 text-xl font-bold">${(user?.balance ?? 0).toFixed(2)}</p>
-          </div>
-          <div className="bg-gray-800/50 rounded-xl p-4">
-            <p className="text-gray-400 text-sm mb-1">Tasks Done</p>
-            <p className="text-blue-400 text-xl font-bold">{user?.tasks_completed || 0}/{user?.account_type === 'training' ? 45 : (user?.total_tasks || 35)}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className="absolute bottom-0 left-0 right-0 w-full max-w-[450px] mx-auto z-50 bg-black/90 backdrop-blur-md border-t border-white/10 px-6 py-3">
-        <div className="flex justify-around items-center max-w-md mx-auto">
-          <button 
-            onClick={() => safeSetActiveTab('dashboard')}
-            className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors"
-          >
-            <HomeIcon className="w-6 h-6" />
-            <span className="text-xs">Home</span>
-          </button>
-          
-          <button 
-            onClick={() => {
-              safeSetActiveTab('tasks');
-            }}
-            className="flex flex-col items-center gap-1 relative -top-4"
-          >
-            <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg bg-gradient-to-r from-purple-500 to-pink-500 shadow-purple-500/30">
-              <Play className="w-8 h-8 ml-1 text-white" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gray-800/50 rounded-xl p-4">
+              <p className="text-gray-400 text-sm mb-1">Total Balance</p>
+              <p className="text-green-400 text-xl font-bold">${(user?.balance ?? 0).toFixed(2)}</p>
             </div>
-            <span className="text-xs font-medium text-white">Start</span>
-          </button>
-          
-          <button 
-            onClick={() => safeSetActiveTab('profile')}
-            className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors"
-          >
-            <FileText className="w-6 h-6" />
-            <span className="text-xs">Record</span>
-          </button>
-        </div>
-      </div>
+            <div className="bg-gray-800/50 rounded-xl p-4">
+              <p className="text-gray-400 text-sm mb-1">Tasks Done</p>
+              <p className="text-blue-400 text-xl font-bold">{user?.tasks_completed || 0}/{user?.account_type === 'training' ? 45 : (user?.total_tasks || 35)}</p>
+            </div>
+          </div>
 
-      {/* Add marquee animation style */}
+      {/* Add animation styles */}
       <style>{`
+        @keyframes home-spin {
+          0% { transform: rotate(0deg); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: rotate(360deg); opacity: 0; }
+        }
+        .animate-home-spin {
+          animation: home-spin 0.4s ease-out forwards;
+        }
         @keyframes marquee {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }

@@ -103,24 +103,24 @@ const ShortVideoFeed = () => {
       ref={containerRef}
     >
       {videos.map((video) => (
-        <div key={video.id} className="w-full h-screen snap-start snap-always relative flex-shrink-0 flex items-center justify-center">
-          <video
-            ref={(el) => {
-              if (el) videoRefs.current.set(video.id, el);
-              else videoRefs.current.delete(video.id);
-            }}
-            data-id={video.id}
-            src={video.video_url}
-            className="w-full h-full object-cover"
-            playsInline
-            loop
-            preload="auto"
-            crossOrigin="anonymous"
-            onError={(e) => handleVideoError(e, video.video_url)}
-          />
+          <div key={video.id} className="w-full h-screen relative bg-black flex flex-col justify-between overflow-hidden select-none">
+            <video
+              ref={(el) => {
+                if (el) videoRefs.current.set(video.id, el);
+                else videoRefs.current.delete(video.id);
+              }}
+              data-id={video.id}
+              src={video.video_url}
+              className="w-full h-auto max-h-full object-contain"
+              playsInline
+              loop
+              preload="auto"
+              crossOrigin="anonymous"
+              onError={(e) => handleVideoError(e, video.video_url)}
+            />
           
           {/* Always Rendered UI Overlays */}
-          <div className="absolute top-4 right-4 z-20 flex flex-col gap-4">
+            <div className="absolute right-3 bottom-[180px] flex flex-col items-center gap-5 z-50">
             <button onClick={() => setMuted(!muted)} className="text-white">
               {muted ? <VolumeX size={28} /> : <Volume2 size={28} />}
             </button>
@@ -134,7 +134,7 @@ const ShortVideoFeed = () => {
             </button>
           </div>
 
-          <div className="absolute bottom-6 left-4 z-20 text-white w-[80%]">
+            <div className="absolute left-4 bottom-[100px] right-[80px] z-50 text-white flex flex-col gap-2 text-left">
             <h3 className="font-bold text-lg">@{video.creator_name || 'Creator'}</h3>
             <p className="text-sm truncate">{video.caption || 'No caption'}</p>
           </div>

@@ -141,6 +141,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    // Disable source maps to prevent console warnings in development
+    sourcemap: false,
     assetsInlineLimit: 4096,
     rollupOptions: {
       output: {

@@ -356,18 +356,15 @@ const MatchingFeed: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-purple-900 relative overflow-y-auto overflow-x-hidden" style={{ minHeight: '100vh', height: 'auto !important' }}>
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-purple-900 relative overflow-y-auto overflow-x-hidden">
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
       
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none mix-blend-overlay" style={{ opacity: 0.05 }}>
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none mix-blend-overlay opacity-5">
         <div className="text-center transform -rotate-12">
-          <h1 className="text-8xl md:text-9xl font-black text-white tracking-wider" style={{ 
-            textShadow: '0 0 40px rgba(255, 255, 255, 0.3)',
-            letterSpacing: '0.2em'
-          }}>
+          <h1 className="text-8xl md:text-9xl font-black text-white tracking-wider drop-shadow-[0_0_40px_rgba(255,255,255,0.3)]">
             TIKTOK6
           </h1>
-          <p className="text-3xl md:text-4xl font-bold text-white tracking-widest mt-4" style={{ letterSpacing: '0.3em' }}>
+          <p className="text-3xl md:text-4xl font-bold text-white tracking-widest mt-4">
             NETWORK OFFICIAL
           </p>
         </div>
@@ -394,7 +391,7 @@ const MatchingFeed: React.FC = () => {
           </div>
         </div>
 
-        <div className="w-full space-y-6" style={{ minHeight: '100vh', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="w-full space-y-6 min-h-screen w-full flex flex-col items-center justify-center">
             <Card className="backdrop-blur-xl border-2 border-amber-500/30 shadow-2xl bg-gradient-to-br from-slate-900/95 to-black/95">
               <CardContent className="p-8">
                 <h2 className="text-2xl font-bold text-white mb-2 text-center animate-glow" style={{
@@ -526,7 +523,7 @@ const MatchingFeed: React.FC = () => {
             <div className="flex items-center gap-4">
               <div className="text-amber-400 font-bold text-lg cursor-pointer hover:text-amber-300 transition-colors">KHMER</div>
               <div className="h-6 w-px bg-amber-500/30"></div>
-              <select value={language} onChange={(e) => setLanguage(e.target.value)} className="bg-slate-900/80 border border-amber-500/50 rounded-lg px-4 py-2 text-amber-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 transition-all duration-300">
+              <select value={language} onChange={(e) => setLanguage(e.target.value)} className="bg-slate-900/80 border border-amber-500/50 rounded-lg px-4 py-3 text-amber-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 transition-all duration-300">
                 <option value="en-US">English (US)</option>
                 <option value="km-KH">ខ្មែរ (KH)</option>
                 <option value="zh-CN">中文 (CN)</option>

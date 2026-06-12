@@ -131,7 +131,7 @@ const Home: React.FC = () => {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#161b22] border-t border-gray-800 px-6 py-3">
+      <div className="absolute bottom-0 left-0 right-0 w-full max-w-[450px] mx-auto z-50 bg-black/90 backdrop-blur-md border-t border-white/10 px-6 py-3">
         <div className="flex justify-around items-center max-w-md mx-auto">
           <button 
             onClick={() => safeSetActiveTab('dashboard')}

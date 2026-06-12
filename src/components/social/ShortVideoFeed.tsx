@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Volume2, VolumeX, Heart, MessageCircle } from 'lucide-react';
+import { Volume2, VolumeX, Heart, MessageCircle, Home, Users, Plus, User, MessageSquare } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 interface CreatorVideo {
@@ -120,7 +120,7 @@ const ShortVideoFeed = () => {
               onError={(e) => handleVideoError(e, video.video_url)}
             />
             {/* Always Rendered UI Overlays */}
-            <div className="absolute right-4 bottom-24 flex flex-col items-center gap-5 z-50">
+            <div className="absolute right-4 bottom-[130px] flex flex-col items-center gap-5 z-50">
             <button onClick={() => setMuted(!muted)} className="text-white">
               {muted ? <VolumeX size={28} /> : <Volume2 size={28} />}
             </button>
@@ -134,11 +134,22 @@ const ShortVideoFeed = () => {
             </button>
             </div>
 
-            <div className="absolute left-4 bottom-6 right-16 flex flex-col gap-2 text-left z-50 text-white">
+            <div className="absolute left-4 bottom-[70px] right-16 flex flex-col gap-2 text-left z-50 text-white">
             <h3 className="font-bold text-lg">@{video.creator_name || 'Creator'}</h3>
             <p className="text-sm truncate">{video.caption || 'No caption'}</p>
           </div>
-            </div>
+          </div>
+          
+          {/* Bottom Navigation */}
+          <div className="max-w-[450px] mx-auto absolute bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-t border-white/10 p-4 flex justify-between items-center text-white">
+            <button className="flex flex-col items-center gap-1"><Home size={24} /></button>
+            <button className="flex flex-col items-center gap-1"><Users size={24} /></button>
+            <button className="flex items-center justify-center w-12 h-9 bg-white rounded-lg border-2 border-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.5)]">
+              <Plus size={24} className="text-black" />
+            </button>
+            <button className="flex flex-col items-center gap-1"><MessageSquare size={24} /></button>
+            <button className="flex flex-col items-center gap-1"><User size={24} /></button>
+          </div>
         </div>
       ))}
     </div>

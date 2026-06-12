@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Volume2, VolumeX } from 'lucide-react';
@@ -52,9 +52,10 @@ const ShortVideoFeed = () => {
     });
   }, [activeIndex, videos, muted]);
 
-  const updateIndex = (newIndex: number) => {
+  const updateIndex = useCallback((direction: number) => {
     if (isTransitioning.current) return;
     
+    const newIndex = activeIndex + direction;
     const constrainedIndex = Math.min(Math.max(newIndex, 0), videos.length - 1);
     
     if (constrainedIndex !== activeIndex) {
@@ -63,21 +64,18 @@ const ShortVideoFeed = () => {
       
       setTimeout(() => {
         isTransitioning.current = false;
-      }, 400); // Slightly longer than transition duration
+      }, 400); // Cooldown to stop multiple micro-scrolls
     }
-  };
+  }, [activeIndex, videos.length]);
 
   // Gesture handling
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
     const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      if (Math.abs(e.deltaY) < 10) return; // Ignore small accidental scrolls
+      if (Math.abs(e.deltaY) < 10) return; // Threshold
+      console.log("GUESTURE DETECTED: SCROLL", e.deltaY);
       
-      if (e.deltaY > 0) updateIndex(activeIndex + 1);
-      else updateIndex(activeIndex - 1);
+      e.preventDefault();
+      updateIndex(e.deltaY > 0 ? 1 : -1);
     };
 
     const handleTouchStart = (e: TouchEvent) => {
@@ -86,22 +84,22 @@ const ShortVideoFeed = () => {
 
     const handleTouchEnd = (e: TouchEvent) => {
       const deltaY = touchStartY.current - e.changedTouches[0].clientY;
-      if (Math.abs(deltaY) < 30) return; // Ignore small swipes
+      if (Math.abs(deltaY) < 30) return; // Threshold
+      console.log("GUESTURE DETECTED: SWIPE", deltaY);
       
-      if (deltaY > 0) updateIndex(activeIndex + 1);
-      else updateIndex(activeIndex - 1);
+      updateIndex(deltaY > 0 ? 1 : -1);
     };
 
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    container.addEventListener('touchstart', handleTouchStart);
-    container.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('touchstart', handleTouchStart);
+    window.addEventListener('touchend', handleTouchEnd);
 
     return () => {
-      container.removeEventListener('wheel', handleWheel);
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [activeIndex, videos.length]);
+  }, [updateIndex]);
 
   const loadVideos = async () => {
     setLoading(true);

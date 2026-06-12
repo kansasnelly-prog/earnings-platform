@@ -1,8 +1,10 @@
-import React, { createContext, useContext, useReducer, useEffect, useState, ReactNode } from 'react';
+// @ts-ignore: Suppress default import warning without esModuleInterop
+1 | import React, { createContext, useContext, useReducer, useEffect, useState, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { SecurityManager } from '../utils/security';
-import { SupabaseService, DatabaseUser, DatabaseTask } from '../services/supabaseService-minimal';
+5 | // Use the full SupabaseService which provides all required methods
+5 | import { SupabaseService, DatabaseUser, DatabaseTask } from '../services/supabaseService';
 
 interface AuthState {
   user: DatabaseUser | null;
@@ -375,30 +377,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Setup real-time subscriptions
   useEffect(() => {
+    let userSub: any = null;
+    let taskSub: any = null;
+
     if (state.isAuthenticated && state.user) {
       // Subscribe to user changes
-      const userSub = SupabaseService.subscribeToUserChanges(state.user.id, (updatedUser) => {
+      userSub = SupabaseService.subscribeToUserChanges(state.user.id, (updatedUser) => {
         dispatch({ type: 'USER_UPDATED', payload: updatedUser });
         localStorage.setItem('opt_user', JSON.stringify(updatedUser));
       });
       setUserSubscription(userSub);
 
       // Subscribe to task changes
-      const taskSub = SupabaseService.subscribeToTaskChanges(state.user.id, (updatedTask) => {
+      taskSub = SupabaseService.subscribeToTaskChanges(state.user.id, (updatedTask) => {
         dispatch({ type: 'TASK_UPDATED', payload: updatedTask });
       });
       setTaskSubscription(taskSub);
     }
 
     return () => {
-      if (userSubscription) {
-        SupabaseService.unsubscribe(userSubscription);
+      if (userSub) {
+        SupabaseService.unsubscribe(userSub);
       }
-      if (taskSubscription) {
-        SupabaseService.unsubscribe(taskSubscription);
+      if (taskSub) {
+        SupabaseService.unsubscribe(taskSub);
       }
     };
-  }, [state.isAuthenticated, state.user]);
+  }, [state.isAuthenticated, state.user?.id]);
 
   // Validate session on mount
   useEffect(() => {

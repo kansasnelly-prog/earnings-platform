@@ -131,6 +131,8 @@ export interface DatabaseUser {
   balance: number;
   vip_level: number;
   total_earned: number;
+  // Optional password field used by legacy AuthContext for simple credential checks
+  password?: string;
   referral_code?: string;
   account_type: 'personal' | 'training' | 'admin';
   user_status: 'active' | 'suspended' | 'deleted';

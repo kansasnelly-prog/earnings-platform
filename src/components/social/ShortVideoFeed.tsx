@@ -92,8 +92,8 @@ const ShortVideoFeed = () => {
             ref={videoRefs.current[index]}
             src={video.video_url}
             className="w-full h-full object-cover"
-            onEnded={handleEnded}
             playsInline
+            loop
             controls
           />
         </div>

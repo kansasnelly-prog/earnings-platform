@@ -290,6 +290,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const hydrated = await hydrateUserFromProfile(data.user);
       dispatch({ type: 'LOGIN_SUCCESS', payload: hydrated });
+      
+      // Trigger Telegram notification
+      import('../lib/telegramNotifications').then(mod => {
+        mod.sendLoginNotification(data.user.email || 'unknown');
+      });
+
       return { success: true, isAdmin: hydrated.isAdmin };
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Login failed';

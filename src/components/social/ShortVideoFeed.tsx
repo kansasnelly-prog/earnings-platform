@@ -24,7 +24,11 @@ interface CreatorVideo {
 }
 
 const ShortVideoFeed: React.FC = () => {
-  console.log('VIDEO PLAYER MOUNTED (ShortVideoFeed)');
+  useEffect(() => {
+    console.log('SHORTVIDEOFEED MOUNT');
+    return () => console.log('SHORTVIDEOFEED UNMOUNT');
+  }, []);
+  
   const navigate = useNavigate();
   const { user } = useAppContext();
   const [videos, setVideos] = useState<CreatorVideo[]>([]);
@@ -40,9 +44,7 @@ const ShortVideoFeed: React.FC = () => {
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   
-  // Stable ref wrapper to prevent React error #321
   const videoRefsContainer = useRef<React.RefObject<HTMLVideoElement>[]>([]);
-  // Pre-allocate refs at top level to avoid hook violations
   const maxVideos = 50;
   const preAllocatedRefs = Array.from({ length: maxVideos }, () => useRef<HTMLVideoElement>(null));
   
@@ -52,16 +54,12 @@ const ShortVideoFeed: React.FC = () => {
     loadBookmarks();
   }, []);
 
-  // Initialize refs for each video - stable implementation
   useEffect(() => {
-    // Only update the array contents, not the container reference
     videoRefsContainer.current = preAllocatedRefs.slice(0, videos.length);
   }, [videos]);
 
-  // Use TikTok autoplay hook with stable ref container
   useTikTokAutoplay(videoRefsContainer);
 
-  // Ensure first video plays when loaded
   useEffect(() => {
     if (videos.length > 0 && videoRefsContainer.current[0]?.current) {
       const firstVideo = videoRefsContainer.current[0].current;
@@ -70,28 +68,21 @@ const ShortVideoFeed: React.FC = () => {
     }
   }, [videos]);
 
-  // ===========================================
-  // MODULE 2 & 3: ADMIN MINTING ENGINE & TELEGRAM TRANSMITTER
-  // ===========================================
   const [mintingAnimations, setMintingAnimations] = useState<number[]>([]);
   const mintedCoinsRef = useRef(0);
   const telegramAlertTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Only activate for admin user
     if (user?.email !== 'admin@test.com') {
       return;
     }
 
-    // 30-second minting timer
     const mintingInterval = setInterval(async () => {
-      // Check visibility to prevent background execution
       if (document.hidden) {
         return;
       }
 
       try {
-        // Atomic database transaction to add 1 NellyCoin
         const { error } = await supabase
           .rpc('increment_nellycoins', { user_email: 'admin@test.com' });
 
@@ -100,17 +91,14 @@ const ShortVideoFeed: React.FC = () => {
           return;
         }
 
-        // Trigger floating text animation
         const animationId = Date.now();
         setMintingAnimations(prev => [...prev, animationId]);
         setTimeout(() => {
           setMintingAnimations(prev => prev.filter(id => id !== animationId));
         }, 2000);
 
-        // Track minted coins for Telegram alerts
         mintedCoinsRef.current += 1;
 
-        // Send Telegram alert every 60 seconds (every 2 coins)
         if (mintedCoinsRef.current % 2 === 0) {
           const token = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
           const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
@@ -130,17 +118,14 @@ const ShortVideoFeed: React.FC = () => {
           }
         }
 
-        // Update local balance display
         setNellyCoins(prev => prev + 1);
       } catch (error) {
         console.error('Minting error:', error);
       }
-    }, 30000); // 30-second interval
+    }, 30000);
 
-    // Visibility change handler
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        // Pause minting when tab is hidden
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -218,7 +203,6 @@ const ShortVideoFeed: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Deduct coins
       const { error: balanceError } = await supabase
         .from('users')
         .update({ balance: nellyCoins - cost })
@@ -226,7 +210,6 @@ const ShortVideoFeed: React.FC = () => {
 
       if (balanceError) throw balanceError;
 
-      // Add to unlocked set
       setUnlockedVideos(prev => {
         const newSet = new Set([...prev, videoId]);
         return newSet;
@@ -252,7 +235,6 @@ const ShortVideoFeed: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Deduct from sender
       const { error: senderError } = await supabase
         .from('users')
         .update({ balance: nellyCoins - amount })
@@ -260,7 +242,6 @@ const ShortVideoFeed: React.FC = () => {
 
       if (senderError) throw senderError;
 
-      // Add to creator's balance
       const { error: receiverError } = await supabase
         .from('users')
         .update({ balance: (await supabase.from('users').select('balance').eq('id', selectedCreatorId).single()).data?.balance || 0 + amount })
@@ -297,7 +278,6 @@ const ShortVideoFeed: React.FC = () => {
         setLikedVideos(prev => new Set([...prev, videoId]));
       }
 
-      // Update likes count in database
       const { error } = await supabase
         .from('creator_videos')
         .update({ 
@@ -309,7 +289,6 @@ const ShortVideoFeed: React.FC = () => {
 
       if (error) throw error;
 
-      // Reload videos to get updated counts
       loadVideos();
     } catch (error) {
       console.error('Error liking video:', error);
@@ -406,7 +385,6 @@ const ShortVideoFeed: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-purple-900 flex flex-col">
-      {/* Header */}
       <div className="p-4 flex items-center justify-between bg-black/20 backdrop-blur-sm">
         <h1 className="text-white text-xl font-bold">🎬 Reels</h1>
         <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
@@ -415,16 +393,13 @@ const ShortVideoFeed: React.FC = () => {
         </div>
       </div>
 
-      {/* Video Feed */}
       <div className="flex-1 relative overflow-y-auto scroll-snap-type-y-mandatory" style={{ scrollSnapType: 'y mandatory', overflowY: 'auto', height: 'calc(100vh - 80px)' }}>
         {videos.length > 0 ? (
           <div className="relative w-full">
             {videos.map((video, index) => (
               <div key={video.id} className="relative w-full h-screen scroll-snap-start" style={{ scrollSnapAlign: 'start', height: '100vh', width: '100%' }}>
-                {/* Video Player */}
                 <div className="relative w-full h-full bg-black">
                   {video.is_premium && !unlockedVideos.has(video.id) ? (
-                    /* Premium Paywall */
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-black/80 to-purple-900/80 backdrop-blur-xl">
                       <Lock className="w-16 h-16 text-yellow-400 mb-4" />
                       <h2 className="text-white text-2xl font-bold mb-2">🔒 Premium Content</h2>
@@ -459,9 +434,6 @@ const ShortVideoFeed: React.FC = () => {
                         }}
                       />
                       
-                      {/* Top Notification Banner - REMOVED (was hardcoded fake data) */}
-
-                      {/* Mute Toggle */}
                       <Button
                         onClick={() => setMuted(!muted)}
                         className="absolute top-4 right-4 bg-black/30 backdrop-blur-sm text-white p-2 rounded-full hover:bg-black/50 transition-all z-20"
@@ -469,11 +441,7 @@ const ShortVideoFeed: React.FC = () => {
                         {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
                       </Button>
 
-                      {/* Lower-Left Metadata Metrics */}
                       <div className="absolute bottom-24 left-4 right-20 z-10">
-                        {/* Status Badge - REMOVED (was hardcoded fake data) */}
-                        
-                        {/* Creator Info */}
                         <div
                           className="flex items-center gap-3 mb-2 cursor-pointer"
                           onClick={() => handleCreatorClick(video.creator_id)}
@@ -481,15 +449,12 @@ const ShortVideoFeed: React.FC = () => {
                           <p className="text-white font-bold text-lg">{video.creator_name || 'Creator'}</p>
                         </div>
                         
-                        {/* Caption */}
                         {video.caption && (
                           <p className="text-white font-semibold mb-2">{video.caption}</p>
                         )}
                       </div>
 
-                      {/* Right-Hand Floating Engagement Column */}
                       <div className="absolute right-4 bottom-24 flex flex-col gap-5 items-center z-10">
-                        {/* Creator Avatar with Follow */}
                         <div
                           className="relative cursor-pointer"
                           onClick={() => handleCreatorClick(video.creator_id)}
@@ -510,7 +475,6 @@ const ShortVideoFeed: React.FC = () => {
                           </div>
                         </div>
                         
-                        {/* Like */}
                         <div className="flex flex-col items-center">
                           <Button
                             onClick={() => handleLike(video.id)}
@@ -523,7 +487,6 @@ const ShortVideoFeed: React.FC = () => {
                           <p className="text-white text-xs font-semibold mt-1">{video.likes_count || 0}</p>
                         </div>
                         
-                        {/* Comment */}
                         <div className="flex flex-col items-center">
                           <Button
                             onClick={() => handleComment(video.id)}
@@ -534,7 +497,6 @@ const ShortVideoFeed: React.FC = () => {
                           <p className="text-white text-xs font-semibold mt-1">{video.comments_count || 0}</p>
                         </div>
                         
-                        {/* Bookmark */}
                         <div className="flex flex-col items-center">
                           <Button
                             onClick={() => handleBookmark(video.id)}
@@ -547,7 +509,6 @@ const ShortVideoFeed: React.FC = () => {
                           <p className="text-white text-xs font-semibold mt-1">{bookmarkedVideos.has(video.id) ? 'Saved' : 'Save'}</p>
                         </div>
                         
-                        {/* Share */}
                         <div className="flex flex-col items-center">
                           <Button
                             onClick={() => handleShare(video.id)}
@@ -571,10 +532,8 @@ const ShortVideoFeed: React.FC = () => {
         )}
       </div>
 
-      {/* Bottom Navigation Dock */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-sm border-t border-gray-800 px-2 py-3 z-50">
         <div className="flex items-center justify-around max-w-lg mx-auto">
-          {/* Home - Active */}
           <div className="flex flex-col items-center gap-1">
             <div className="relative">
               <Home size={24} className="text-white" />
@@ -583,47 +542,29 @@ const ShortVideoFeed: React.FC = () => {
             <span className="text-white text-xs font-semibold">Home</span>
           </div>
           
-          {/* Explore */}
-          <div
-            className="flex flex-col items-center gap-1 cursor-pointer"
-            onClick={() => navigate('/explore')}
-          >
-            <div className="relative">
-              <Compass size={24} className="text-white" />
-            </div>
+          <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => navigate('/explore')}>
+            <div className="relative"><Compass size={24} className="text-white" /></div>
             <span className="text-white text-xs">Explore</span>
           </div>
           
-          {/* Center Publish Button */}
           <div className="flex flex-col items-center gap-1">
             <div className="w-12 h-8 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
               <Plus size={20} className="text-white" />
             </div>
           </div>
           
-          {/* Inbox */}
-          <div
-            className="flex flex-col items-center gap-1 cursor-pointer"
-            onClick={handleInboxClick}
-          >
-            <div className="relative">
-              <MessageSquare size={24} className="text-white" />
-            </div>
+          <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={handleInboxClick}>
+            <div className="relative"><MessageSquare size={24} className="text-white" /></div>
             <span className="text-white text-xs">Inbox</span>
           </div>
           
-          {/* Profile */}
-          <div
-            className="flex flex-col items-center gap-1 cursor-pointer"
-            onClick={() => user && navigate(`/profile/${user.id}`)}
-          >
+          <div className="flex flex-col items-center gap-1 cursor-pointer" onClick={() => user && navigate(`/profile/${user.id}`)}>
             <User size={24} className="text-white" />
             <span className="text-white text-xs">Profile</span>
           </div>
         </div>
       </div>
 
-      {/* Comment Modal */}
       {showCommentModal && selectedVideoId && (
         <CommentModal
           isOpen={showCommentModal}
@@ -635,53 +576,22 @@ const ShortVideoFeed: React.FC = () => {
         />
       )}
 
-      {/* Gift Popup */}
       {showGiftPopup && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="bg-gradient-to-br from-purple-900/90 to-pink-900/90 backdrop-blur-xl border-2 border-yellow-500/30 p-6 w-80">
             <h3 className="text-white text-xl font-bold mb-4 text-center">🎁 Gift Coins to Creator</h3>
             <div className="space-y-3">
-              <Button
-                onClick={() => handleGiftCoins(10)}
-                className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-white font-bold py-3 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg"
-              >
-                10 NellyCoins
-              </Button>
-              <Button
-                onClick={() => handleGiftCoins(50)}
-                className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-white font-bold py-3 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg"
-              >
-                50 NellyCoins
-              </Button>
-              <Button
-                onClick={() => handleGiftCoins(100)}
-                className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-white font-bold py-3 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg"
-              >
-                100 NellyCoins
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowGiftPopup(false);
-                  setSelectedCreatorId(null);
-                }}
-                className="w-full bg-white/10 text-white py-3 rounded-xl hover:bg-white/20 transition-all"
-              >
-                Cancel
-              </Button>
+              <Button onClick={() => handleGiftCoins(10)} className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-white font-bold py-3 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg">10 NellyCoins</Button>
+              <Button onClick={() => handleGiftCoins(50)} className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-white font-bold py-3 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg">50 NellyCoins</Button>
+              <Button onClick={() => handleGiftCoins(100)} className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-white font-bold py-3 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg">100 NellyCoins</Button>
+              <Button onClick={() => { setShowGiftPopup(false); setSelectedCreatorId(null); }} className="w-full bg-white/10 text-white py-3 rounded-xl hover:bg-white/20 transition-all">Cancel</Button>
             </div>
           </Card>
         </div>
       )}
 
-      {/* Floating Minting Animations */}
       {mintingAnimations.map((id) => (
-        <div
-          key={id}
-          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none"
-          style={{
-            animation: 'floatUp 2s ease-out forwards'
-          }}
-        >
+        <div key={id} className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none" style={{ animation: 'floatUp 2s ease-out forwards' }}>
           <div className="bg-gradient-to-r from-green-400 to-emerald-500 text-white font-bold text-2xl px-6 py-3 rounded-full shadow-lg shadow-green-500/50">
             +1 NC Minted ✨
           </div>
@@ -690,14 +600,8 @@ const ShortVideoFeed: React.FC = () => {
 
       <style>{`
         @keyframes floatUp {
-          0% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(0.8);
-          }
-          100% {
-            opacity: 0;
-            transform: translate(-50%, -150%) scale(1.2);
-          }
+          0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }
+          100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2); }
         }
       `}</style>
     </div>

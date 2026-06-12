@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
 import { supabase } from '@/lib/supabase';
-import { Heart, MessageCircle, Gift, Volume2, VolumeX, Lock, Home, UserPlus, Plus, MessageSquare, User, Bookmark, Share2, Compass } from 'lucide-react';
+import { Heart, MessageCircle, Volume2, VolumeX } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
-import { toast } from '@/components/ui/use-toast';
-import CommentModal from './CommentModal';
 
 interface CreatorVideo {
   id: string;
@@ -28,7 +24,6 @@ const ShortVideoFeed = () => {
   const [videos, setVideos] = useState<CreatorVideo[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [nellyCoins, setNellyCoins] = useState(0);
   const [muted, setMuted] = useState(true);
   
   const containerRef = useRef<HTMLDivElement>(null);
@@ -39,15 +34,19 @@ const ShortVideoFeed = () => {
     loadVideos();
   }, []);
 
-  // Autoplay effect
+  // Play/Pause management
   useEffect(() => {
-    if (videos.length > 0 && videoRefs.current[activeIndex]?.current) {
-      const videoElement = videoRefs.current[activeIndex].current!;
-      setTimeout(() => {
-        videoElement.muted = muted;
-        videoElement.play().catch(console.error);
-      }, 200);
-    }
+    videoRefs.current.forEach((ref, index) => {
+      const video = ref.current;
+      if (!video) return;
+      if (index === activeIndex) {
+        video.muted = muted;
+        video.play().catch(console.error);
+      } else {
+        video.pause();
+        video.currentTime = 0;
+      }
+    });
   }, [activeIndex, videos, muted]);
 
   // Gesture handling
@@ -98,22 +97,26 @@ const ShortVideoFeed = () => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="h-screen w-full overflow-hidden bg-black" ref={containerRef}>
       <div 
-        ref={containerRef}
-        className="h-screen w-full overflow-y-hidden"
-        style={{ scrollSnapType: 'y mandatory' }}
+        className="transition-transform duration-300 ease-in-out h-full"
+        style={{ transform: `translateY(-${activeIndex * 100}vh)` }}
       >
         {videos.map((video, index) => (
-          <div key={video.id} className={`h-screen w-full relative ${activeIndex === index ? 'block' : 'hidden'}`}>
+          <div key={video.id} className="h-screen w-full relative">
             <video
               ref={videoRefs.current[index]}
               src={video.video_url}
               className="w-full h-full object-cover"
               playsInline
               loop
-              controls
             />
+            <button
+              onClick={() => setMuted(!muted)}
+              className="absolute top-4 right-4 z-20 text-white"
+            >
+              {muted ? <VolumeX /> : <Volume2 />}
+            </button>
           </div>
         ))}
       </div>

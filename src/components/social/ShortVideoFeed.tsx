@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { Heart, MessageCircle, Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 interface CreatorVideo {
@@ -29,6 +29,7 @@ const ShortVideoFeed = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<React.RefObject<HTMLVideoElement>[]>([]);
   const touchStartY = useRef(0);
+  const isTransitioning = useRef(false);
 
   useEffect(() => {
     loadVideos();
@@ -49,6 +50,21 @@ const ShortVideoFeed = () => {
     });
   }, [activeIndex, videos, muted]);
 
+  const updateIndex = (newIndex: number) => {
+    if (isTransitioning.current) return;
+    
+    const constrainedIndex = Math.min(Math.max(newIndex, 0), videos.length - 1);
+    
+    if (constrainedIndex !== activeIndex) {
+      isTransitioning.current = true;
+      setActiveIndex(constrainedIndex);
+      
+      setTimeout(() => {
+        isTransitioning.current = false;
+      }, 400); // Slightly longer than transition duration
+    }
+  };
+
   // Gesture handling
   useEffect(() => {
     const container = containerRef.current;
@@ -56,8 +72,10 @@ const ShortVideoFeed = () => {
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (e.deltaY > 20) setActiveIndex(prev => Math.min(prev + 1, videos.length - 1));
-      else if (e.deltaY < -20) setActiveIndex(prev => Math.max(prev - 1, 0));
+      if (Math.abs(e.deltaY) < 10) return; // Ignore small accidental scrolls
+      
+      if (e.deltaY > 0) updateIndex(activeIndex + 1);
+      else updateIndex(activeIndex - 1);
     };
 
     const handleTouchStart = (e: TouchEvent) => {
@@ -66,8 +84,10 @@ const ShortVideoFeed = () => {
 
     const handleTouchEnd = (e: TouchEvent) => {
       const deltaY = touchStartY.current - e.changedTouches[0].clientY;
-      if (deltaY > 50) setActiveIndex(prev => Math.min(prev + 1, videos.length - 1));
-      else if (deltaY < -50) setActiveIndex(prev => Math.max(prev - 1, 0));
+      if (Math.abs(deltaY) < 30) return; // Ignore small swipes
+      
+      if (deltaY > 0) updateIndex(activeIndex + 1);
+      else updateIndex(activeIndex - 1);
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
@@ -79,7 +99,7 @@ const ShortVideoFeed = () => {
       container.removeEventListener('touchstart', handleTouchStart);
       container.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [videos.length]);
+  }, [activeIndex, videos.length]);
 
   const loadVideos = async () => {
     setLoading(true);

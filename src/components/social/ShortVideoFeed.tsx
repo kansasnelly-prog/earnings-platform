@@ -104,7 +104,7 @@ const ShortVideoFeed = () => {
     >
       {videos.map((video) => (
           <div key={video.id} className="w-full h-screen relative bg-black flex flex-col justify-between overflow-hidden select-none">
-            <div className="w-full h-full flex flex-col items-center justify-center relative bg-black">
+            <div className="relative w-full h-full max-w-[450px] mx-auto flex items-center justify-center">
             <video
               ref={(el) => {
                 if (el) videoRefs.current.set(video.id, el);
@@ -119,10 +119,8 @@ const ShortVideoFeed = () => {
               crossOrigin="anonymous"
               onError={(e) => handleVideoError(e, video.video_url)}
             />
-            </div>
-          
-          {/* Always Rendered UI Overlays */}
-            <div className="absolute right-3 bottom-[180px] flex flex-col items-center gap-5 z-50">
+            {/* Always Rendered UI Overlays */}
+            <div className="absolute right-4 bottom-24 flex flex-col items-center gap-5 z-50">
             <button onClick={() => setMuted(!muted)} className="text-white">
               {muted ? <VolumeX size={28} /> : <Volume2 size={28} />}
             </button>
@@ -136,10 +134,11 @@ const ShortVideoFeed = () => {
             </button>
             </div>
 
-            <div className="absolute left-4 bottom-[100px] right-[80px] z-50 text-white flex flex-col gap-2 text-left">
+            <div className="absolute left-4 bottom-6 right-16 flex flex-col gap-2 text-left z-50 text-white">
             <h3 className="font-bold text-lg">@{video.creator_name || 'Creator'}</h3>
             <p className="text-sm truncate">{video.caption || 'No caption'}</p>
           </div>
+            </div>
         </div>
       ))}
     </div>

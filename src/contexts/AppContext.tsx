@@ -781,12 +781,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           total_earned: dbUser.total_earned,
         }));
 
-        // TRAINING COMPLETION GATE: Strict system check before task creation/loading
-        // Personal accounts are BLOCKED from task generation until training is completed
-        if (dbUser.account_type === 'personal' && !dbUser.training_completed) {
-          setTasks([]);
-          return; // Abort immediately - skip all task creation/loading logic
-        }
+    // TRAINING COMPLETION GATE: Strict system check before task creation/loading
+    // Personal accounts are BLOCKED from task generation until training is completed
+    // DEVELOPMENT OVERRIDE: Allowing task generation to bypass block
+    if (dbUser.account_type === 'personal' && !dbUser.training_completed) {
+      console.log('[loadUserData] SAFE GATE: Personal account blocked - training not completed (Overridden)');
+      // setTasks([]);
+      // return; // Abort immediately - skip all task creation/loading logic
+    }
 
         // Load tasks - create 35 tasks if none exist for personal account
         // For VIP1 accounts, check if tasks_completed equals 35 before creating fresh tasks

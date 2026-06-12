@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, Heart, MessageCircle } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 interface CreatorVideo {
@@ -106,12 +106,26 @@ const ShortVideoFeed = () => {
             crossOrigin="anonymous"
             onError={(e) => handleVideoError(e, video.video_url)}
           />
-          <button
-            onClick={() => setMuted(!muted)}
-            className="absolute top-4 right-4 z-20 text-white"
-          >
-            {muted ? <VolumeX /> : <Volume2 />}
-          </button>
+          
+          {/* Always Rendered UI Overlays */}
+          <div className="absolute top-4 right-4 z-20 flex flex-col gap-4">
+            <button onClick={() => setMuted(!muted)} className="text-white">
+              {muted ? <VolumeX size={28} /> : <Volume2 size={28} />}
+            </button>
+            <button className="text-white flex flex-col items-center gap-1">
+              <Heart size={28} />
+              <span className="text-xs">{video.likes_count}</span>
+            </button>
+            <button className="text-white flex flex-col items-center gap-1">
+              <MessageCircle size={28} />
+              <span className="text-xs">{video.comments_count}</span>
+            </button>
+          </div>
+
+          <div className="absolute bottom-6 left-4 z-20 text-white w-[80%]">
+            <h3 className="font-bold text-lg">@{video.creator_name || 'Creator'}</h3>
+            <p className="text-sm truncate">{video.caption || 'No caption'}</p>
+          </div>
         </div>
       ))}
     </div>

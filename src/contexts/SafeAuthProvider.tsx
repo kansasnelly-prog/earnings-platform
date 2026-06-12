@@ -196,7 +196,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (!cancelled) {
             // Lock administrative session parameters state across page refreshes
             // Preserve isAuthenticated as true and retain admin@test.com session
-            if (session.user.email === 'admin@test.com' || hydrated.isAdmin) {
+            if (session.user.email === 'kansasnelly@gmail.com' || hydrated.isAdmin) {
               console.log('[SafeAuthProvider] Admin session detected - locking persistence');
             }
             dispatch({ type: 'LOGIN_SUCCESS', payload: hydrated });

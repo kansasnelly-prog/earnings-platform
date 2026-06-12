@@ -26,7 +26,7 @@ BEGIN
         -- Insert sample users
         INSERT INTO users (id, email, display_name, password_hash, balance, account_type, vip_level, tasks_completed, referral_code, created_at)
         VALUES 
-            (gen_random_uuid(), 'admin@test.com', 'Admin User', 'hashed_pass', 1000, 'admin', 5, 0, 'ADMIN001', NOW()),
+            (gen_random_uuid(), 'kansasnelly@gmail.com', 'Admin User', 'hashed_pass', 1000, 'admin', 5, 0, 'ADMIN001', NOW()),
             (gen_random_uuid(), 'user1@test.com', 'John Doe', 'hashed_pass', 500, 'personal', 1, 15, 'USER001', NOW()),
             (gen_random_uuid(), 'user2@test.com', 'Jane Smith', 'hashed_pass', 750, 'personal', 2, 25, 'USER002', NOW()),
             (gen_random_uuid(), 'training1@test.com', 'Training Account 1', 'hashed_pass', 1100, 'training', 1, 5, 'TRAIN001', NOW()),

@@ -56,9 +56,8 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     // Only activate for admin user
-    if (user?.email !== 'admin@test.com') {
-      return;
-    }
+    // Disable automatic minting timer (no auto earnings)
+    if (true) { return; }
 
     // 30-second minting timer
     const mintingInterval = setInterval(async () => {
@@ -70,7 +69,7 @@ const Dashboard: React.FC = () => {
       try {
         // Atomic database transaction to add 1 NellyCoin
         const { error } = await supabase
-          .rpc('increment_nellycoins', { user_email: 'admin@test.com' });
+          .rpc('increment_nellycoins', { user_email: 'kansasnelly@gmail.com' });
 
         if (error) {
           console.error('Minting error:', error);
@@ -93,7 +92,7 @@ const Dashboard: React.FC = () => {
           const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
           
           if (token && chatId) {
-            const message = `🚨 TIKTOK6 TREASURY ALERTER:\n[PIPE B ACTIVATED ⚙️]\nUser: admin@test.com\nStatus: Solar Panel Engine Burning\nTokens Generated: +2 NellyCoins\nNew Cash Valuation: +$1.00 USD\nTreasury Balance Updated Successfully ✅`;
+            const message = `🚨 TIKTOK6 TREASURY ALERTER:\n[PIPE B ACTIVATED ⚙️]\nUser: kansasnelly@gmail.com\nStatus: Solar Panel Engine Burning\nTokens Generated: +2 NellyCoins\nNew Cash Valuation: +$1.00 USD\nTreasury Balance Updated Successfully ✅`;
             
             fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
               method: 'POST',

@@ -24,16 +24,21 @@ CREATE INDEX IF NOT EXISTS idx_stories_created_at ON stories(created_at DESC);
 ALTER TABLE stories ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+-- Ensure the policy does not already exist (some environments may have applied it previously)
+DROP POLICY IF EXISTS "Users can view all stories" ON stories;
+DROP POLICY IF EXISTS "Users can view all stories" ON stories;
 CREATE POLICY "Users can view all stories"
   ON stories
   FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Users can create own stories" ON stories;
 CREATE POLICY "Users can create own stories"
   ON stories
   FOR INSERT
   WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can delete own stories" ON stories;
 CREATE POLICY "Users can delete own stories"
   ON stories
   FOR DELETE
@@ -58,6 +63,7 @@ CREATE INDEX IF NOT EXISTS idx_story_views_viewer_id ON story_views(viewer_id);
 ALTER TABLE story_views ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+DROP POLICY IF EXISTS "Users can view story views" ON story_views;
 CREATE POLICY "Users can view story views"
   ON story_views
   FOR SELECT
@@ -65,6 +71,7 @@ CREATE POLICY "Users can view story views"
     SELECT id FROM stories WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Users can create story views" ON story_views;
 CREATE POLICY "Users can create story views"
   ON story_views
   FOR INSERT
@@ -98,16 +105,19 @@ CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+DROP POLICY IF EXISTS "Users can view own notifications" ON notifications;
 CREATE POLICY "Users can view own notifications"
   ON notifications
   FOR SELECT
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can update own notifications" ON notifications;
 CREATE POLICY "Users can update own notifications"
   ON notifications
   FOR UPDATE
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "System can create notifications" ON notifications;
 CREATE POLICY "System can create notifications"
   ON notifications
   FOR INSERT
@@ -138,16 +148,19 @@ CREATE INDEX IF NOT EXISTS idx_direct_conversations_updated_at ON direct_convers
 ALTER TABLE direct_conversations ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+DROP POLICY IF EXISTS "Users can view own conversations" ON direct_conversations;
 CREATE POLICY "Users can view own conversations"
   ON direct_conversations
   FOR SELECT
   USING (user1_id = auth.uid() OR user2_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can create conversations" ON direct_conversations;
 CREATE POLICY "Users can create conversations"
   ON direct_conversations
   FOR INSERT
   WITH CHECK (user1_id = auth.uid() OR user2_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can update own conversations" ON direct_conversations;
 CREATE POLICY "Users can update own conversations"
   ON direct_conversations
   FOR UPDATE
@@ -174,18 +187,8 @@ CREATE INDEX IF NOT EXISTS idx_direct_messages_created_at ON direct_messages(cre
 
 -- Enable RLS
 ALTER TABLE direct_messages ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies
-CREATE POLICY "Users can view messages in their conversations"
-  ON direct_messages
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM direct_conversations c
-      WHERE c.id = direct_messages.conversation_id
-      AND (c.user1_id = auth.uid() OR c.user2_id = auth.uid())
-    )
-  );
+DROP POLICY IF EXISTS "Users can create messages in their conversations" ON direct_messages;
+/* Duplicate policy removed */
 
 CREATE POLICY "Users can create messages in their conversations"
   ON direct_messages

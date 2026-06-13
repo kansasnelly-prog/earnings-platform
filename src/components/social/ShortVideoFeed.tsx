@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import MatchmakingOverlay from './MatchmakingOverlay';
 import { supabase } from '@/lib/supabase';
 import { Volume2, VolumeX, Heart, MessageCircle, Home, Users, Plus, User, MessageSquare } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
@@ -25,6 +26,7 @@ const ShortVideoFeed = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [muted, setMuted] = useState(true);
+  const [showOverlay, setShowOverlay] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
@@ -159,6 +161,15 @@ const ShortVideoFeed = () => {
           <button className="flex flex-col items-center gap-1"><User size={24} /></button>
         </div>
       </div>
+      {/* Floating HUD button */}
+      <button
+        onClick={() => setShowOverlay(true)}
+        className="fixed top-4 right-4 z-50 bg-black/70 backdrop-blur-md text-white px-3 py-2 rounded-lg shadow-lg"
+      >
+        Switch to Dating Cockpit 🎯
+      </button>
+      {/* Matchmaking overlay */}
+      {showOverlay && <MatchmakingOverlay onClose={() => setShowOverlay(false)} />}
     </div>
   );
 };

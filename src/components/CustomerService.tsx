@@ -276,16 +276,9 @@ const CustomerService: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
     }
   }, [isOpen, isAuthenticated, user, resetUnread]);
 
-  // Cleanup all subscriptions on unmount
-  useEffect(() => {
-    return () => {
-      console.log('[CustomerService] Cleaning up subscriptions');
-      subscriptionsRef.current.forEach(channel => {
-        supabase.removeChannel(channel);
-      });
-      subscriptionsRef.current = [];
-    };
-  }, []);
+  // NOTE: Cleanup of realtime subscriptions is handled by the useEffect
+  // that sets up the subscriptions (lines ~290). The redundant cleanup
+  // effect has been removed to avoid double-unsubscribe calls.
 
   // Real-time subscription for messages and conversation status
   useEffect(() => {

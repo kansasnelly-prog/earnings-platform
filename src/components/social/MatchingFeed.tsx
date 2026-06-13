@@ -460,12 +460,12 @@ const MatchingFeed: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Button onClick={handleSpeedMatch} className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-white font-bold py-4 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg shadow-yellow-500/50">
+            <Button onClick={handleSpeedMatch} className="w-full bg-black/60 backdrop-blur-md border border-white/10 text-white rounded-xl font-medium shadow-xl py-4 hover:scale-105 transition-all duration-300">
               ⚡ Speed Match (10 NC)
             </Button>
 
             {currentProfile ? (
-              <Card className="backdrop-blur-xl border-2 border-pink-500/30 shadow-2xl bg-gradient-to-br from-purple-900/40 to-pink-900/40">
+            <Card className="bg-[#121212]/90 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl p-6 text-white">
                 <CardContent className="p-6">
                   <div className="aspect-[3/4] bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-xl mb-4 flex items-center justify-center">
                     {currentProfile.avatar_url ? (
@@ -489,7 +489,7 @@ const MatchingFeed: React.FC = () => {
                 </CardContent>
               </Card>
             ) : (
-              <Card className="backdrop-blur-xl border-2 border-pink-500/30 shadow-2xl bg-gradient-to-br from-purple-900/40 to-pink-900/40">
+              <Card className="bg-[#121212]/90 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl p-6 text-white">
                 <CardContent className="p-8 text-center">
                   <div className="mb-6">
                     <div className="relative inline-block mb-4">

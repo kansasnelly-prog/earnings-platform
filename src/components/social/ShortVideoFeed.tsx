@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+// Corrected import path for MatchmakingOverlay component
+// Correct import path for MatchmakingOverlay component
 import MatchmakingOverlay from './MatchmakingOverlay';
 import { supabase } from '@/lib/supabase';
 import { Volume2, VolumeX, Heart, MessageCircle, Home, Users, Plus, User, MessageSquare } from 'lucide-react';

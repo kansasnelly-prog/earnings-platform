@@ -4,6 +4,7 @@ import { Heart, MessageCircle, Share2, UserPlus, Gift } from 'lucide-react';
 import { useEngagement } from '@/hooks/useEngagement';
 import { useCreatorEconomy, Gift as GiftType } from '@/hooks/useCreatorEconomy';
 import { useAppContext } from '@/contexts/AppContext';
+import { useNavigate } from 'react-router-dom';
 
 interface VideoPlayerProps {
   video: Video;
@@ -22,6 +23,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
   const { isLiked, likesCount, toggleLike, isFollowing, toggleFollow } = useEngagement(video.id, user?.id || '', video.creator_id);
   const { balance, sendGift } = useCreatorEconomy(user?.id || '');
   const [showGifts, setShowGifts] = useState(false);
+
+  // ---------- navigation helpers ----------
+  const navigate = useNavigate();
+  const handleOpenComments = () => navigate(`/video/${video.id}/comments`);
+  const handleOpenShare = () => navigate(`/video/${video.id}/share`);
+  const handleOpenProfile = () => navigate(`/profile/${video.creator_id}`);
 
   useEffect(() => {
     console.log(`[VideoPlayer] EFFECT - isActive: ${isActive}, video.id: ${video.id}, video.url: ${video.video_url}`);
@@ -53,33 +60,33 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
 
   return (
     <div className="relative w-full h-full bg-black flex items-center justify-center">
-      <video
-        ref={videoRef}
-        src={video.video_url}
-        className="w-full h-full object-cover"
-        loop
-        muted
-        playsInline
-        autoPlay
-        onCanPlay={handleCanPlay}
-      />
+        <video
+          ref={videoRef}
+          src={video.video_url}
+          className="w-full h-full object-cover pointer-events-none"
+          loop
+          muted
+          playsInline
+          autoPlay
+          onCanPlay={handleCanPlay}
+        />
       {/* Right Engagement Controls */}
-      <div className="absolute right-4 bottom-20 flex flex-col gap-6 items-center">
-        <button className="flex flex-col items-center" onClick={toggleLike}>
+      <div className="absolute right-4 bottom-20 flex flex-col gap-6 items-center z-10">
+        <button className="flex flex-col items-center" onClick={toggleLike} onTouchStart={(e)=>{e.preventDefault();e.stopPropagation();toggleLike();}}>
           <Heart size={30} className={isLiked ? 'text-red-500 fill-red-500' : 'text-white'} />
           <span className="text-xs text-white">{likesCount}</span>
         </button>
-        <button className="flex flex-col items-center">
+        <button className="flex flex-col items-center" onClick={handleOpenComments} onTouchStart={(e)=>{e.preventDefault();e.stopPropagation();handleOpenComments();}}>
           <MessageCircle size={30} className="text-white" />
           <span className="text-xs text-white">{video.comments_count}</span>
         </button>
-        <button className="flex flex-col items-center" onClick={() => setShowGifts(!showGifts)}>
+        <button className="flex flex-col items-center" onClick={() => setShowGifts(!showGifts)} onTouchStart={(e)=>{e.preventDefault();e.stopPropagation();setShowGifts(!showGifts);}}>
           <Gift size={30} className="text-white" />
         </button>
-        <button className="flex flex-col items-center">
+        <button className="flex flex-col items-center" onClick={handleOpenShare} onTouchStart={(e)=>{e.preventDefault();e.stopPropagation();handleOpenShare();}}>
           <Share2 size={30} className="text-white" />
         </button>
-        <button className="flex flex-col items-center" onClick={toggleFollow}>
+        <button className="flex flex-col items-center" onClick={toggleFollow} onTouchStart={(e)=>{e.preventDefault();e.stopPropagation();toggleFollow();}}>
           <UserPlus size={30} className={isFollowing ? 'text-green-500' : 'text-white'} />
         </button>
       </div>
@@ -99,7 +106,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
       
       {/* Bottom Info */}
       <div className="absolute bottom-4 left-4 text-white">
-        <p className="font-bold">@{video.creator_name}</p>
+        <p className="font-bold cursor-pointer" onClick={handleOpenProfile} onTouchStart={(e)=>{e.preventDefault();e.stopPropagation();handleOpenProfile();}}>@{video.creator_name}</p>
         <p className="text-sm">{video.caption}</p>
       </div>
     </div>

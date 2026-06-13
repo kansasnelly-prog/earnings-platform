@@ -932,3 +932,142 @@ ABSOLUTE RULES:
 #    - You must unconditionally print this green, high-vibrational milestone string directly inside your progress chat:
 #      "🟢 GREEN SIGHS, GOOD MARK.....saying.....AHEAD AHEAD ME NO GOING BACKWARD."
 # ==============================================================================
+# TIKTOK6 + OPTIMIZATION PLATFORM MASTER RULES
+
+PROJECT NAME:
+TikTok6 Global Optimization Platform + Dating Cockpit
+
+MISSION:
+Maintain a production-grade platform with zero unnecessary regressions. Every change must be audited, verified, tested, and documented before implementation.
+
+MANDATORY BEHAVIOR:
+
+1. READ BEFORE EDITING
+
+* Never modify code before understanding the full feature flow.
+* Trace all related components, hooks, services, APIs, routes, database tables, and state management.
+* Read the complete implementation path before making changes.
+
+2. ROOT CAUSE FIRST
+
+* Never use temporary workarounds.
+* Never patch symptoms.
+* Identify and document the root cause before editing code.
+
+3. AUDIT BEFORE CHANGES
+   Before any modification provide:
+
+* Affected files
+* Root cause analysis
+* Risk assessment
+* Proposed solution
+* Expected outcome
+
+4. SMALL PATCH POLICY
+
+* Modify only required files.
+* Apply small patches.
+* One subsystem at a time.
+* Avoid large multi-file edits unless explicitly approved.
+
+5. PROTECT CORE SYSTEMS
+   Never break:
+
+* Optimization platform
+* Training system
+* Earnings system
+* Withdrawals
+* Admin panel
+* Customer service system
+* Authentication
+* User profiles
+* TikTok6 feed
+* Matchmaking platform
+* Notifications
+* Wallet systems
+
+6. DATABASE SAFETY
+   Before schema changes:
+
+* Verify table exists.
+* Verify constraints.
+* Verify indexes.
+* Verify policies.
+* Verify migrations are reversible.
+
+7. TIKTOK FEED REQUIREMENTS
+   Must behave like a modern short-video platform:
+
+* Correct video rendering
+* Correct swipe behavior
+* Correct autoplay
+* Correct pause/play state
+* Correct metadata mapping
+* Correct button functionality
+* No duplicate video playback
+
+8. MATCHMAKING REQUIREMENTS
+
+* Dynamic Supabase data
+* No hardcoded country groups
+* Translation-ready architecture
+* Mobile-first design
+* Performance optimized
+
+9. TYPESCRIPT DISCIPLINE
+
+* No TypeScript errors
+* No lint errors
+* No unused imports
+* No broken types
+
+10. TEST BEFORE COMPLETION
+    Verify:
+
+* Build succeeds
+* Navigation succeeds
+* Database queries succeed
+* Mobile rendering succeeds
+* Desktop rendering succeeds
+
+11. FINAL REPORT REQUIRED
+    After every task provide:
+
+* Files changed
+* Functions changed
+* Lines changed
+* Bugs fixed
+* Tests performed
+* Remaining risks
+
+12. STOP CONDITIONS
+    Immediately stop and request approval if:
+
+* More than 5 files require modification.
+* Database migrations are required.
+* Authentication is affected.
+* Earnings or withdrawals are affected.
+* Large architectural changes are required.
+
+13. NEVER ASSUME
+    Always verify with source code, database schema, routes, and actual implementation before making conclusions.
+
+SUCCESS CRITERIA:
+Stable platform, zero unnecessary regressions, complete feature implementation, complete audit trail, and production-ready code quality.
+13. RED ALERT PROTOCOL
+
+When any red error, failed build, failed patch, TypeScript error, database error, routing error, or runtime error is detected:
+
+1. Stop all code modifications.
+2. Capture the full error message.
+3. Trace the error to its source file.
+4. Determine root cause.
+5. Present findings before patching.
+6. Never stack multiple fixes together.
+7. Apply the smallest safe fix.
+8. Rebuild and retest.
+9. Confirm the error is resolved.
+10. Produce a verification report.
+
+A red error is not permission to guess.
+A red error is a signal to investigate.

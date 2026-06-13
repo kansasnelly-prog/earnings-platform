@@ -98,60 +98,67 @@ const ShortVideoFeed = () => {
   if (loading) return <div className="h-screen w-full flex items-center justify-center text-white bg-black">Loading...</div>;
 
   return (
-    <div 
-      className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth bg-black" 
-      ref={containerRef}
-    >
-      {videos.map((video) => (
-          <div key={video.id} className="w-full h-screen relative bg-black flex flex-col justify-between overflow-hidden select-none">
-            <div className="relative w-full h-full max-w-[450px] mx-auto flex items-center justify-center">
-            <video
-              ref={(el) => {
-                if (el) videoRefs.current.set(video.id, el);
-                else videoRefs.current.delete(video.id);
-              }}
-              data-id={video.id}
-              src={video.video_url}
-              className="w-full h-auto max-h-full object-contain"
-              playsInline
-              loop
-              preload="auto"
-              crossOrigin="anonymous"
-              onError={(e) => handleVideoError(e, video.video_url)}
-            />
-            {/* Always Rendered UI Overlays */}
-            <div className="absolute right-4 bottom-[130px] flex flex-col items-center gap-5 z-50">
-            <button onClick={() => setMuted(!muted)} className="text-white">
-              {muted ? <VolumeX size={28} /> : <Volume2 size={28} />}
-            </button>
-            <button className="text-white flex flex-col items-center gap-1">
-              <Heart size={28} />
-              <span className="text-xs">{video.likes_count}</span>
-            </button>
-            <button className="text-white flex flex-col items-center gap-1">
-              <MessageCircle size={28} />
-              <span className="text-xs">{video.comments_count}</span>
-            </button>
+    // Fixed, unmovable root viewport
+    <div className="w-full h-screen fixed inset-0 bg-black overflow-hidden touch-none select-none" ref={containerRef}>
+      {/* Centered container limited to 450px width */}
+      <div className="relative w-full h-full max-w-[450px] mx-auto overflow-hidden">
+        {/* Translation wrapper handling vertical slide */}
+        <div
+          className="flex flex-col w-full h-full transition-transform duration-300 ease-out"
+          style={{ transform: `translateY(-${activeIndex * 100}%)` }}
+        >
+          {videos.map((video) => (
+            // Individual slide cell – rigid full‑screen frame
+            <div
+              key={video.id}
+              className="w-full h-full min-h-screen relative flex-shrink-0 flex items-center justify-center bg-black overflow-hidden"
+            >
+              <video
+                ref={(el) => {
+                  if (el) videoRefs.current.set(video.id, el);
+                  else videoRefs.current.delete(video.id);
+                }}
+                data-id={video.id}
+                src={video.video_url}
+                className="w-full h-full max-w-full max-h-full object-contain pointer-events-none"
+                playsInline
+                loop
+                preload="auto"
+                crossOrigin="anonymous"
+                onError={(e) => handleVideoError(e, video.video_url)}
+              />
+              {/* UI Overlays */}
+              <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-50">
+                <button onClick={() => setMuted(!muted)} className="text-white">
+                  {muted ? <VolumeX size={28} /> : <Volume2 size={28} />}
+                </button>
+                <button className="text-white flex flex-col items-center gap-1">
+                  <Heart size={28} />
+                  <span className="text-xs">{video.likes_count}</span>
+                </button>
+                <button className="text-white flex flex-col items-center gap-1">
+                  <MessageCircle size={28} />
+                  <span className="text-xs">{video.comments_count}</span>
+                </button>
+              </div>
+              <div className="absolute left-4 bottom-20 z-50 text-white">
+                <h3 className="font-bold text-lg">@{video.creator_name || 'Creator'}</h3>
+                <p className="text-sm truncate">{video.caption || 'No caption'}</p>
+              </div>
             </div>
-
-            <div className="absolute left-4 bottom-[70px] right-16 flex flex-col gap-2 text-left z-50 text-white">
-            <h3 className="font-bold text-lg">@{video.creator_name || 'Creator'}</h3>
-            <p className="text-sm truncate">{video.caption || 'No caption'}</p>
-          </div>
-          </div>
-          
-          {/* Bottom Navigation */}
-          <div className="max-w-[450px] mx-auto absolute bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-t border-white/10 p-4 flex justify-between items-center text-white">
-            <button className="flex flex-col items-center gap-1"><Home size={24} /></button>
-            <button className="flex flex-col items-center gap-1"><Users size={24} /></button>
-            <button className="flex items-center justify-center w-12 h-9 bg-white rounded-lg border-2 border-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.5)]">
-              <Plus size={24} className="text-black" />
-            </button>
-            <button className="flex flex-col items-center gap-1"><MessageSquare size={24} /></button>
-            <button className="flex flex-col items-center gap-1"><User size={24} /></button>
-          </div>
+          ))}
         </div>
-      ))}
+        {/* Bottom navigation – pinned inside the 450px slot */}
+        <div className="max-w-[450px] mx-auto absolute bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-t border-white/10 p-4 flex justify-between items-center text-white">
+          <button className="flex flex-col items-center gap-1"><Home size={24} /></button>
+          <button className="flex flex-col items-center gap-1"><Users size={24} /></button>
+          <button className="flex items-center justify-center w-12 h-9 bg-white rounded-lg border-2 border-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.5)]">
+            <Plus size={24} className="text-black" />
+          </button>
+          <button className="flex flex-col items-center gap-1"><MessageSquare size={24} /></button>
+          <button className="flex flex-col items-center gap-1"><User size={24} /></button>
+        </div>
+      </div>
     </div>
   );
 };

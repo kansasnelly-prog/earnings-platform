@@ -354,9 +354,8 @@ const MatchingFeed: React.FC = () => {
       </div>
     );
   }
-
   return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-purple-900 relative overflow-y-auto overflow-x-hidden">
+       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-purple-900 relative overflow-y-scroll snap-y snap-mandatory scroll-smooth overflow-x-hidden">
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
       
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none mix-blend-overlay opacity-5">
@@ -392,7 +391,8 @@ const MatchingFeed: React.FC = () => {
         </div>
 
         <div className="w-full space-y-6 min-h-screen w-full flex flex-col items-center justify-center">
-            <Card className="backdrop-blur-xl border-2 border-amber-500/30 shadow-2xl bg-gradient-to-br from-slate-900/95 to-black/95">
+                 {/* Dating profile card – dark theme, snap positioning */}
+                 <Card className="bg-black/80 backdrop-blur-md border border-white/10 text-white rounded-xl shadow-2xl p-6 snap-start snap-always">
               <CardContent className="p-8">
                 <h2 className="text-2xl font-bold text-white mb-2 text-center animate-glow" style={{
                   background: 'linear-gradient(135deg, #ffd700 0%, #ffec8b 25%, #c0c0c0 50%, #e8e8e8 75%, #ffd700 100%)',
@@ -501,7 +501,7 @@ const MatchingFeed: React.FC = () => {
                       <div className="absolute inset-0 w-32 h-32 mx-auto rounded-full border-4 border-amber-400/50 animate-pulse"></div>
                     </div>
                     <h2 className="text-3xl font-bold text-white mb-2 animate-glow">Create Your Dating Profile</h2>
-                    <p className="text-amber-300 text-lg mb-4 animate-glow">Log In to Nelly Social Hub</p>
+                    <p className="text-amber-300 text-lg mb-4 animate-glow">Log In to Social Hub</p>
                   </div>
                   
                   <Button onClick={loadProfiles} className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white relative overflow-hidden">

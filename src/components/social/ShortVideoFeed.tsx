@@ -29,6 +29,8 @@ const ShortVideoFeed = () => {
   const [loading, setLoading] = useState(true);
   const [muted, setMuted] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
+  // Track IDs of videos that have failed to load to prevent infinite retry loops
+  const [failedVideos, setFailedVideos] = useState<string[]>([]);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
@@ -91,12 +93,15 @@ const ShortVideoFeed = () => {
     setLoading(false);
   };
 
-  const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>, url: string) => {
+  const handleVideoError = (
+    e: React.SyntheticEvent<HTMLVideoElement, Event>,
+    videoId: string,
+    url: string
+  ) => {
     console.error(`[Video Load Error] Failed to load video at: ${url}`, e);
-    const video = e.currentTarget;
-    video.src = FALLBACK_VIDEO_URL;
-    video.load();
-    video.play().catch(() => {});
+    // Record the failed video ID to avoid further retries for this video
+    setFailedVideos((prev) => (prev.includes(videoId) ? prev : [...prev, videoId]));
+    // No further action; the video source will be switched to fallback via render logic
   };
 
   if (loading) return <div className="h-screen w-full flex items-center justify-center text-white bg-black">Loading...</div>;
@@ -123,13 +128,13 @@ const ShortVideoFeed = () => {
                   else videoRefs.current.delete(video.id);
                 }}
                 data-id={video.id}
-                src={encodeURI(video.video_url)}
+                src={failedVideos.includes(video.id) ? FALLBACK_VIDEO_URL : encodeURI(video.video_url)}
                 className="w-full h-full max-w-full max-h-full object-contain pointer-events-none"
                 playsInline
                 loop
                 preload="auto"
                 crossOrigin="anonymous"
-                onError={(e) => handleVideoError(e, video.video_url)}
+                onError={(e) => handleVideoError(e, video.id, video.video_url)}
               />
               {/* UI Overlays */}
               <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-50">

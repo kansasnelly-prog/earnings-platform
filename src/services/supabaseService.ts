@@ -1871,10 +1871,15 @@ export class SupabaseService {
   // ===========================================
   
   static async createTransaction(transaction: Omit<DatabaseTransaction, 'id' | 'created_at'>): Promise<boolean> {
+    // Inline safe object verification: remove metadata if undefined/null to avoid 400 errors on schemas without the column
+    const safePayload: any = { ...transaction };
+    if (safePayload.metadata === undefined || safePayload.metadata === null) {
+      delete safePayload.metadata;
+    }
     try {
       const { error } = await supabase
         .from('transactions')
-        .insert(transaction);
+        .insert(safePayload);
       
       if (error) {
         console.error('Error creating transaction:', error);

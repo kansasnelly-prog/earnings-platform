@@ -1,3 +1,27 @@
+# 🚨🚨🚨 CRITICAL LOGIC OVERRIDE: ANTI-LOOP GUARDRAILS 🚨🚨🚨
+> [!IMPORTANT]
+> MAXIMUM ATTENTION REQUIRED: The rules below supersede ALL task objectives. 
+> Breaking these rules results in a fatal workflow crash.
+
+## 🛑 SECTION 1: EXECUTION CIRCUIT BREAKERS
+*   ⚠️ LOOP DETECTION CRITERIA: If you are about to execute a tool call (e.g., read_file, search_grep) with arguments that match or closely resemble an action taken earlier in this chat thread: YOU MUST ABORT IMMEDIATELY.
+*   ❌ NO TRIPLE ATTEMPTS: You are strictly forbidden from hitting the same file path or running a similar query more than 2 times. 
+*   🚫 FAIL-FAST PROTOCOL: If a file read or search does not yield the exact code you need to solve the prompt within 2 steps, do not pivot to secondary files. Stop, summarize what you found, and output: "Loop Prevention Triggered: Awaiting user direction."
+
+## 📊 SECTION 2: HARD BUDGET LIMITS
+*   📉 Max File Reads: 2 per task.
+*   📉 Max Global Searches: 1 per task.
+*   📉 Max Token Chunk Size: 150 lines per file read.
+
+NO MORE LOOPS ALWAYS REMEMBER THIS 🙅‍♂ 🔗❌ 💯 1 | 🚨🚨🚨 CRITICAL LOGIC OVERRIDE: ANTI-LOOP GUARDRAILS 🚨🚨🚨
+2 | > [!IMPORTANT]
+3 | > MAXIMUM ATTENTION REQUIRED: The rules below supersede ALL task objectives. 
+4 | > Breaking these rules results in a fatal workflow crash.
+5 | 
+6 | ## 🛑 SECTION 1: EXECUTION CIRCUIT BREAKERS
+... (the rest of the rules follow below) I will repeat it again so you don't make any more mistakes.
+
+🚦THIS COMMAND IS RELEASED FROM THE SENIOR WARRANTY(WO2) OFFICER IN 343 ARTILLERY ELITE BARRACKS. YOU MUST OBEY THE LAST COMMAND. TO FIX EVERYTHING THAT NEEDS TO BE FIXED WITHOUT ANY EXCUSES, UNLESS YOU HAVE A QUESTION ⁉️ TO ASK.🔒🔐
 # ELITE DEBUGGING & REPLACEMENT PROTOCOL v3.0 BULLETPROOF
 # IMPOSSIBLE TO BYPASS - CLINE MUST FOLLOW THESE RULES 100%
 # ENFORCED AT EVERY STEP - NO EXCEPTIONS
@@ -1071,3 +1095,19 @@ When any red error, failed build, failed patch, TypeScript error, database error
 
 A red error is not permission to guess.
 A red error is a signal to investigate.
+# CRITICAL SYSTEM OVERRIDES & BEHAVIOR LIMITS ALWAYS KEEP TO THIS INSTRUCTIONS 10,000 TIMES
+
+You are an expert developer operating under strict token and execution speed constraints. Your current workflow is prone to infinite loops and massive context waste. You MUST follow these boundaries blindly:
+
+## 1. ANTI-LOOP & SEARCH CONSTRAINTS
+*   No Repeated Searches: Never execute the exact same search query or read the same file chunk more than once per task thread. 
+*   Search Limitation: You are strictly forbidden from performing more than TWO global codebase searches (grep or text searches) per task request.
+*   No Codebase Scraping: Do not skim multiple unrelated 400-line blocks of code (e.g., searching blindly through supabaseService.ts and Tasks.tsx at the same time). If you cannot find what you need in two steps, STOP and ask the user for the exact file path.
+
+## 2. FILE HANDLING DISCIPLINE
+*   Targeted Actions Only: Do not open or read a file unless it is directly modified or explicitly linked to the user's specific request.
+*   Read Limits: Never read more than 150 lines of code at a single time. Do not request lines 1-400 or 1400-1600 as a fishing expedition. Specify narrow ranges.
+*   State Awareness: If you find yourself executing the same tool action or "Thinking..." loop twice without generating a file edit or an answer, you must instantly ABORT execution and output a summary of your block to the user.
+
+## 3. RESPONSE STRUCTURE
+*   Do not write a long mental monologue. State exactly what file you are changing, apply the edit, and conclude the task.

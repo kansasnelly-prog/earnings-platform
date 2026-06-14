@@ -46,6 +46,7 @@ const TikTokFeed: React.FC = () => {
       >
           {videos.map((video, index) => (
             <div key={video.id} className="h-full w-full snap-start">
+              {/* 
               {!failedVideos[video.video_url] ? (
                 <VideoPlayer
                   video={{ ...video, video_url: encodeURI(video.video_url) }}
@@ -57,6 +58,11 @@ const TikTokFeed: React.FC = () => {
                   Video unavailable
                 </div>
               )}
+              */}
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-950 text-gray-400 gap-4">
+                <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
+                <p className="text-sm">TokTik6 Video Processing...</p>
+              </div>
             </div>
           ))}
       </div>

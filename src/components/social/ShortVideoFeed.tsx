@@ -123,6 +123,7 @@ const ShortVideoFeed = () => {
               key={video.id}
               className="w-full h-full min-h-screen relative flex-shrink-0 flex items-center justify-center bg-black overflow-hidden"
             >
+                {/* 
                 <video
                   ref={(el) => {
                     if (el) videoRefs.current.set(video.id, el);
@@ -137,6 +138,11 @@ const ShortVideoFeed = () => {
                   crossOrigin="anonymous"
                   onError={(e) => handleVideoError(e, video.id, video.video_url)}
                 />
+                */}
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-950 text-gray-400 gap-4">
+                  <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
+                  <p className="text-sm">TokTik6 Video Processing...</p>
+                </div>
               {/* UI Overlays */}
               <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-50">
                 <button onClick={() => setMuted(!muted)} className="text-white">

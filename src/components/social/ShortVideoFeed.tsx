@@ -123,7 +123,7 @@ const ShortVideoFeed = () => {
                   else videoRefs.current.delete(video.id);
                 }}
                 data-id={video.id}
-                src={video.video_url}
+                src={encodeURI(video.video_url)}
                 className="w-full h-full max-w-full max-h-full object-contain pointer-events-none"
                 playsInline
                 loop

@@ -30,7 +30,8 @@ const ShortVideoFeed = () => {
   const [muted, setMuted] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
   // Track IDs of videos that have failed to load to prevent infinite retry loops
-  const [failedVideos, setFailedVideos] = useState<string[]>([]);
+  // Track broken video URLs to avoid infinite retry loops
+  const [failedVideos, setFailedVideos] = useState<Record<string, boolean>>({});
   
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
@@ -99,8 +100,8 @@ const ShortVideoFeed = () => {
     url: string
   ) => {
     console.error(`[Video Load Error] Failed to load video at: ${url}`, e);
-    // Record the failed video ID to avoid further retries for this video
-    setFailedVideos((prev) => (prev.includes(videoId) ? prev : [...prev, videoId]));
+    // Record the failed video URL to avoid further retries for this video
+    setFailedVideos((prev) => ({ ...prev, [url]: true }));
     // No further action; the video source will be switched to fallback via render logic
   };
 
@@ -122,20 +123,20 @@ const ShortVideoFeed = () => {
               key={video.id}
               className="w-full h-full min-h-screen relative flex-shrink-0 flex items-center justify-center bg-black overflow-hidden"
             >
-              <video
-                ref={(el) => {
-                  if (el) videoRefs.current.set(video.id, el);
-                  else videoRefs.current.delete(video.id);
-                }}
-                data-id={video.id}
-                src={failedVideos.includes(video.id) ? FALLBACK_VIDEO_URL : encodeURI(video.video_url)}
-                className="w-full h-full max-w-full max-h-full object-contain pointer-events-none"
-                playsInline
-                loop
-                preload="auto"
-                crossOrigin="anonymous"
-                onError={(e) => handleVideoError(e, video.id, video.video_url)}
-              />
+                <video
+                  ref={(el) => {
+                    if (el) videoRefs.current.set(video.id, el);
+                    else videoRefs.current.delete(video.id);
+                  }}
+                  data-id={video.id}
+                  src={failedVideos[video.video_url] ? FALLBACK_VIDEO_URL : encodeURI(video.video_url)}
+                  className="w-full h-full max-w-full max-h-full object-contain pointer-events-none"
+                  playsInline
+                  loop
+                  preload="auto"
+                  crossOrigin="anonymous"
+                  onError={(e) => handleVideoError(e, video.id, video.video_url)}
+                />
               {/* UI Overlays */}
               <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-50">
                 <button onClick={() => setMuted(!muted)} className="text-white">

@@ -9,6 +9,8 @@ const TikTokFeed: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [showUpload, setShowUpload] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Track broken video URLs to prevent infinite retry loops
+  const [failedVideos, setFailedVideos] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetchVideos();
@@ -42,11 +44,21 @@ const TikTokFeed: React.FC = () => {
         onScroll={handleScroll}
         className="h-[calc(100vh-120px)] w-full overflow-y-scroll snap-y snap-mandatory"
       >
-        {videos.map((video, index) => (
-          <div key={video.id} className="h-full w-full snap-start">
-            <VideoPlayer video={{ ...video, video_url: encodeURI(video.video_url) }} isActive={index === activeIndex} />
-          </div>
-        ))}
+          {videos.map((video, index) => (
+            <div key={video.id} className="h-full w-full snap-start">
+              {!failedVideos[video.video_url] ? (
+                <VideoPlayer
+                  video={{ ...video, video_url: encodeURI(video.video_url) }}
+                  isActive={index === activeIndex}
+                  onError={() => setFailedVideos(prev => ({ ...prev, [video.video_url]: true }))}
+                />
+              ) : (
+                <div className="flex items-center justify-center w-full h-full bg-black text-white">
+                  Video unavailable
+                </div>
+              )}
+            </div>
+          ))}
       </div>
     </div>
   );

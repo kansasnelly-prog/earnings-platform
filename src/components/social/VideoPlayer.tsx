@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 interface VideoPlayerProps {
   video: Video;
   isActive: boolean;
+  // Optional callback to inform parent component of a video load error
+  onError?: () => void;
 }
 
 const GIFTS: GiftType[] = [
@@ -16,56 +18,43 @@ const GIFTS: GiftType[] = [
   { id: 'gift2', name: 'Heart', coin_cost: 50 },
 ];
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive, onError }) => {
   console.log('[VideoPlayer] COMPONENT RENDERED');
   const videoRef = useRef<HTMLVideoElement>(null);
   const { user } = useAppContext();
   const { isLiked, likesCount, toggleLike, isFollowing, toggleFollow } = useEngagement(video.id, user?.id || '', video.creator_id);
   const { balance, sendGift } = useCreatorEconomy(user?.id || '');
   const [showGifts, setShowGifts] = useState(false);
-  const [errorState, setErrorState] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
+  // Track if this video encountered a load error
+  const [hasError, setHasError] = useState(false);
 
   const navigate = useNavigate();
   const handleOpenComments = () => navigate(`/video/${video.id}/comments`);
   const handleOpenShare = () => navigate(`/video/${video.id}/share`);
   const handleOpenProfile = () => navigate(`/profile/${video.creator_id}`);
 
+  // Reset error state when the video source changes
   useEffect(() => {
-    // Reset state on video change
-    setErrorState(false);
-    setRetryCount(0);
+    setHasError(false);
   }, [video.id]);
 
+  // Play/pause handling based on active state
   useEffect(() => {
-    if (isActive && !errorState) {
-      videoRef.current?.play()
-        .then(() => {
-            setErrorState(false);
-        })
-        .catch(err => {
-            console.error('[VideoPlayer] PLAY FAILED for', video.id, err);
-            setErrorState(true);
-        });
-    } else if (!isActive && videoRef.current) {
+    if (isActive) {
+      videoRef.current?.play().catch(err => {
+        console.error('[VideoPlayer] PLAY FAILED for', video.id, err);
+        // Do not set error here; playback failure is not a load error
+      });
+    } else if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
-  }, [isActive, errorState]);
+  }, [isActive]);
 
   const handleError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-    console.error(`[VideoPlayer] Error event for ${video.id}, retries: ${retryCount}:`, e);
-    
-    if (retryCount < 3) {
-        setRetryCount(prev => prev + 1);
-        // Force re-fetch by toggling src slightly or just resetting
-        if (videoRef.current) {
-            videoRef.current.load();
-            videoRef.current.play().catch(() => {});
-        }
-    } else {
-        setErrorState(true);
-    }
+    console.error(`[VideoPlayer] Error event for ${video.id}:`, e);
+    setHasError(true);
+    if (onError) onError();
   };
 
   const handleSendGift = async (gift: GiftType) => {
@@ -80,7 +69,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
 
   return (
     <div className="relative w-full h-full bg-black flex items-center justify-center">
-        {errorState ? (
+        {hasError ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 p-6 text-center text-white">
                 <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full border border-white/40 bg-white/10">
                     <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

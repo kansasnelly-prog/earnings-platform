@@ -130,12 +130,19 @@ const useURLParameterCleaner = () => {
     const searchParams = new URLSearchParams(window.location.search);
 
     // Check if 'reloaded=true' parameter exists
-    if (searchParams.has('reloaded') && searchParams.get('reloaded') === 'true') {
-      console.log('[URL Cleaner] Removing reloaded=true parameter from URL');
-      searchParams.delete('reloaded');
+      // Remove 'reloaded=true' parameter if present
+      if (searchParams.has('reloaded') && searchParams.get('reloaded') === 'true') {
+        console.log('[URL Cleaner] Removing reloaded=true parameter from URL');
+        searchParams.delete('reloaded');
+      }
+      // Remove cache-busting '_t' parameter if present
+      if (searchParams.has('_t')) {
+        console.log('[URL Cleaner] Removing _t parameter from URL');
+        searchParams.delete('_t');
+      }
+      // Update URL after cleaning parameters
       const cleanURL = window.location.pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
       window.history.replaceState({}, '', cleanURL);
-    }
   }, []);
 };
 

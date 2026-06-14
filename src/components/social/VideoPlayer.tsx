@@ -23,29 +23,49 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
   const { isLiked, likesCount, toggleLike, isFollowing, toggleFollow } = useEngagement(video.id, user?.id || '', video.creator_id);
   const { balance, sendGift } = useCreatorEconomy(user?.id || '');
   const [showGifts, setShowGifts] = useState(false);
+  const [errorState, setErrorState] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
-  // ---------- navigation helpers ----------
   const navigate = useNavigate();
   const handleOpenComments = () => navigate(`/video/${video.id}/comments`);
   const handleOpenShare = () => navigate(`/video/${video.id}/share`);
   const handleOpenProfile = () => navigate(`/profile/${video.creator_id}`);
 
   useEffect(() => {
-    console.log(`[VideoPlayer] EFFECT - isActive: ${isActive}, video.id: ${video.id}, video.url: ${video.video_url}`);
-    if (isActive) {
-      console.log(`[VideoPlayer] Attempting play() for ${video.id}`);
-      videoRef.current?.play()
-        .then(() => console.log('[VideoPlayer] PLAY SUCCESS for', video.id))
-        .catch(err => console.error('[VideoPlayer] PLAY FAILED for', video.id, err));
-    } else {
-      console.log(`[VideoPlayer] Pausing ${video.id}`);
-      videoRef.current?.pause();
-      if (videoRef.current) videoRef.current.currentTime = 0;
-    }
-  }, [isActive, video.id, video.video_url]);
+    // Reset state on video change
+    setErrorState(false);
+    setRetryCount(0);
+  }, [video.id]);
 
-  const handleCanPlay = () => {
-    console.log(`[VideoPlayer] canPlay event for ${video.id}`);
+  useEffect(() => {
+    if (isActive && !errorState) {
+      videoRef.current?.play()
+        .then(() => {
+            setErrorState(false);
+        })
+        .catch(err => {
+            console.error('[VideoPlayer] PLAY FAILED for', video.id, err);
+            setErrorState(true);
+        });
+    } else if (!isActive && videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, [isActive, errorState]);
+
+  const handleError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    console.error(`[VideoPlayer] Error event for ${video.id}, retries: ${retryCount}:`, e);
+    
+    if (retryCount < 3) {
+        setRetryCount(prev => prev + 1);
+        // Force re-fetch by toggling src slightly or just resetting
+        if (videoRef.current) {
+            videoRef.current.load();
+            videoRef.current.play().catch(() => {});
+        }
+    } else {
+        setErrorState(true);
+    }
   };
 
   const handleSendGift = async (gift: GiftType) => {
@@ -60,16 +80,30 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, isActive }) => {
 
   return (
     <div className="relative w-full h-full bg-black flex items-center justify-center">
-        <video
-          ref={videoRef}
-          src={video.video_url}
-          className="w-full h-full object-cover pointer-events-none"
-          loop
-          muted
-          playsInline
-          autoPlay
-          onCanPlay={handleCanPlay}
-        />
+        {errorState ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 p-6 text-center text-white">
+                <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full border border-white/40 bg-white/10">
+                    <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="3" y="5" width="18" height="14" rx="2" />
+                        <path d="m10 9 5 3-5 3Z" />
+                    </svg>
+                </div>
+                <p className="font-medium">Video unavailable</p>
+                <p className="mt-1 text-xs text-white/70">The video could not be loaded.</p>
+            </div>
+        ) : (
+            <video
+              ref={videoRef}
+              src={video.video_url}
+              className="w-full h-full object-cover pointer-events-none"
+              loop
+              muted
+              playsInline
+              autoPlay
+              crossOrigin="anonymous"
+              onError={handleError}
+            />
+        )}
       {/* Right Engagement Controls */}
       <div className="absolute right-4 bottom-20 flex flex-col gap-6 items-center z-10">
         <button className="flex flex-col items-center" onClick={toggleLike} onTouchStart={(e)=>{e.preventDefault();e.stopPropagation();toggleLike();}}>

@@ -44,7 +44,7 @@ const TikTokFeed: React.FC = () => {
       >
         {videos.map((video, index) => (
           <div key={video.id} className="h-full w-full snap-start">
-            <VideoPlayer video={video} isActive={index === activeIndex} />
+            <VideoPlayer video={{ ...video, video_url: encodeURI(video.video_url) }} isActive={index === activeIndex} />
           </div>
         ))}
       </div>

@@ -195,7 +195,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const hydrated = await hydrateUserFromProfile(session.user);
           if (!cancelled) {
             // Lock administrative session parameters state across page refreshes
-            // Preserve isAuthenticated as true and retain admin@test.com session
+        // (Removed legacy admin@test.com reference)
             if (session.user.email === 'kansasnelly@gmail.com' || hydrated.isAdmin) {
               console.log('[SafeAuthProvider] Admin session detected - locking persistence');
             }

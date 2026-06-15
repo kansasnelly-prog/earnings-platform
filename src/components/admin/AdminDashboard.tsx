@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import {
   LayoutDashboard, Users, ArrowDownToLine, RefreshCw, Shield, ChevronLeft,
-  BarChart3, Activity, Zap, Lock, Eye, EyeOff, LogIn, Database
+  BarChart3, Activity, Zap, Lock, Eye, EyeOff, LogIn, Database, Coins
 } from 'lucide-react';
 import AdminStatsCards, { PlatformStats } from './AdminStatsCards';
 import AdminUsersTable, { AdminUser } from './AdminUsersTable';
@@ -755,7 +755,7 @@ const AdminDashboard: React.FC = () => {
             <AdminStatsCards stats={stats} isLoading={isLoading} />
 
             {/* Quick Summary Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Recent Users */}
               <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-white/[0.06]">

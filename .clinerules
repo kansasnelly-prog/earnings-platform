@@ -1110,4 +1110,20 @@ You are an expert developer operating under strict token and execution speed con
 *   State Awareness: If you find yourself executing the same tool action or "Thinking..." loop twice without generating a file edit or an answer, you must instantly ABORT execution and output a summary of your block to the user.
 
 ## 3. RESPONSE STRUCTURE
-*   Do not write a long mental monologue. State exactly what file you are changing, apply the edit, and conclude the task.
+ *   Do not write a long mental monologue. State exactly what file you are changing, apply the edit, and conclude the task.
+
+# TOKTIK6 SYSTEM ARCHITECTURE PROTOCOL
+
+## 1. CONTEXT TOKEN SAFEGUARD PROTOCOL (ANTI-OVERFLOW CEILING)
+- Absolutely never perform global, multi-file code sweeps or massive text searches all at once.
+- Always break engineering milestones down into isolated, single-file incremental updates.
+- The moment a single component or file modification is executed, stop immediately, save the code to the disk, and request checkpoint verification. 
+- Clear working memory context loops sequentially after every file save to ensure the token bar never approaches the 131.1k crash ceiling.
+
+## 2. STRICT WORKSPACE PRESERVATION LAWS
+- Under no circumstances modify, delete, or rewrite core transaction files, database schemas, or personal training rules belonging to the optimization engine.
+- Under no circumstances touch or alter these custom UI components:
+  - Speed Match (10 NC) golden button layout
+  - Create Your Dating Profile dashboard views
+  - The rotating boy/girl love symbol animation modal
+  - Language selector and active translator system hooks

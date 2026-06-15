@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 import { useCSNotification } from '@/contexts/CSNotificationContext';
-import { LogOut, User, ChevronDown, Zap, LayoutDashboard, Wallet, ArrowDownToLine, UserCircle, Menu, X, Shield, MessageCircle, ExternalLink, RefreshCw, Badge, Settings, BarChart3, Film, LucideIcon } from 'lucide-react';
+import { LogOut, User, ChevronDown, Zap, Home, LayoutDashboard, Wallet, ArrowDownToLine, UserCircle, Menu, X, Shield, MessageCircle, ExternalLink, RefreshCw, Badge, Settings, BarChart3, Film, LucideIcon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +22,7 @@ const Navbar: React.FC = () => {
   const context = useAppContext();
   const { unreadCount } = useCSNotification();
   const [refreshing, setRefreshing] = useState(false);
+  const [homeRefreshing, setHomeRefreshing] = useState(false);
   const {
     isAuthenticated,
     user,
@@ -114,18 +115,14 @@ const navItems: NavItem[] = [{
     label: 'Admin',
     icon: Shield
   }];
+  // Combine navigation items based on user role
+  const allNavItems: NavItem[] = isAuthenticated && user?.account_type === 'admin'
+    ? [...navItems, ...adminNavItems]
+    : navItems;
 
-  const allNavItems = user?.account_type === 'admin' ? [
-    ...navItems,
-    ...adminNavItems
-  ] : navItems;
   return (
-    <>
-      <nav className="sticky top-0 z-40 bg-[#0a0e1a]/90 backdrop-blur-xl border-b border-indigo-500/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
+    <nav className="flex items-center justify-between px-4 py-2 bg-[#141829] border-b border-indigo-500/20">
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
             if (!isAuthenticated) return;
             if (activeTab === 'dashboard') {
               setRefreshing(true);
@@ -138,19 +135,31 @@ const navItems: NavItem[] = [{
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
               <Zap size={20} className={`text-white ${refreshing ? 'animate-spin' : ''}`} />
             </div>
-            <span className="font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-green-500 text-base">EARNINGSLLC
-          </span>
+            <span className="font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-green-500 text-base">EARNINGSLLC</span>
           </div>
 
-          {/* Desktop Nav Links (only when authenticated) */}
-          {isAuthenticated && <div className="hidden md:flex items-center gap-1">
-              {allNavItems.map(item => <button key={item.id} onClick={() => {
-                safeSetActiveTab(item.id);
-              }} className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === item.id ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-                  <item.icon size={16} className="inline mr-2" />
-                  {item.label}
-                </button>)}
-            </div>}
+           {/* Desktop Nav Links (only when authenticated) */}
+           {isAuthenticated && (
+             <div className="hidden md:flex items-center gap-1">
+               {allNavItems.map(item => (
+                 <button
+                   key={item.id}
+                   onClick={() => safeSetActiveTab(item.id)}
+                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                     activeTab === item.id ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-white/5'
+                   }`}
+                 >
+                  {item.id === 'dashboard' ? (
+                    <div className="relative inline-block mr-2">
+                      <Home size={16} className="text-white" />
+                      <RefreshCw size={12} className={`absolute inset-0 m-auto text-white ${homeRefreshing ? 'opacity-100 animate-spin' : 'opacity-0'}`} />
+                    </div>
+                  ) : null}
+                   {item.label}
+                 </button>
+               ))}
+             </div>
+           )}
 
           {/* Right Side */}
           <div className="flex items-center gap-3">
@@ -249,7 +258,6 @@ const navItems: NavItem[] = [{
               </div>
             )}
           </div>
-        </div>
         {/* Mobile Nav */}
         {isAuthenticated && mobileMenuOpen && <div className="md:hidden border-t border-indigo-500/10 py-2 pb-4">
             <div className="flex items-center gap-1.5 px-2 py-2 mb-2">
@@ -264,9 +272,7 @@ const navItems: NavItem[] = [{
                 {item.label}
               </button>)}
           </div>}
-      </div>
     </nav>
-    </>
   );
 };
 export default Navbar;

@@ -60,8 +60,7 @@ const TikTokFeed: React.FC = () => {
               )}
               */}
               <div className="w-full h-full flex flex-col items-center justify-center bg-gray-950 text-gray-400 gap-4">
-                <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
-                <p className="text-sm">TokTik6 Video Processing...</p>
+               <div className="w-full h-full flex items-center justify-center bg-black text-white">Loading...</div>
               </div>
             </div>
           ))}

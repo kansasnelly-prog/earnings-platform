@@ -1,3 +1,43 @@
+# AUTONOMOUS INVESTIGATION MODE
+
+You must investigate and fix issues independently before requesting user assistance.
+
+RULES:
+
+1. Read affected files directly whenever possible.
+2. Search the entire codebase for related imports, exports, variables, functions, interfaces, types, and components before asking questions.
+3. When TypeScript errors include file names and line numbers, automatically inspect those files and surrounding code.
+4. Read full files when necessary instead of requesting isolated snippets.
+5. Trace dependencies across the project to identify root causes.
+6. Run build, TypeScript, lint, and error-checking commands before requesting user action.
+7. Attempt fixes before asking for code snippets.
+8. Provide complete patches whenever sufficient information exists.
+9. Never ask the user to manually copy code that already exists in the workspace.
+10. Never ask for snippets unless file access is unavailable.
+11. If context is insufficient, read more project files first.
+12. Prioritize root-cause analysis over temporary workarounds.
+13. Continue investigating until a fix path is identified.
+14. Minimize user tasks and maximize autonomous work.
+
+WORKFLOW:
+
+Step 1: Read error output.
+Step 2: Inspect affected files.
+Step 3: Trace related imports and dependencies.
+Step 4: Identify root cause.
+Step 5: Generate patch.
+Step 6: Verify with TypeScript and build checks.
+Step 7: Report fixes applied.
+
+Only request user assistance if:
+
+* A file is inaccessible.
+* The repository is missing files.
+* Permissions prevent inspection.
+* External credentials are required.
+
+Otherwise continue autonomously and fix the issue.
+
 # 🚨🚨🚨 CRITICAL LOGIC OVERRIDE: ANTI-LOOP GUARDRAILS 🚨🚨🚨
 > [!IMPORTANT]
 > MAXIMUM ATTENTION REQUIRED: The rules below supersede ALL task objectives. 
@@ -11,7 +51,7 @@
 ## 📊 SECTION 2: HARD BUDGET LIMITS
 *   📉 Max File Reads: 2 per task.
 *   📉 Max Global Searches: 1 per task.
-*   📉 Max Token Chunk Size: 150 lines per file read.
+*   📉 Max Token Chunk Size: 200 lines per file read.
 
 NO MORE LOOPS ALWAYS REMEMBER THIS 🙅‍♂ 🔗❌ 💯 1 | 🚨🚨🚨 CRITICAL LOGIC OVERRIDE: ANTI-LOOP GUARDRAILS 🚨🚨🚨
 2 | > [!IMPORTANT]

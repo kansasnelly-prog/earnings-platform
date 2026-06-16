@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 // Corrected import path for MatchmakingOverlay component
 // Correct import path for MatchmakingOverlay component
 import MatchmakingOverlay from './MatchmakingOverlay';
@@ -25,62 +25,26 @@ const FALLBACK_VIDEO_URL = "https://www.w3schools.com/html/mov_bbb.mp4";
 const ShortVideoFeed = () => {
   const { user } = useAppContext();
   const [videos, setVideos] = useState<CreatorVideo[]>([]);
-  const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [muted, setMuted] = useState(true);
   const [showOverlay, setShowOverlay] = useState(false);
   // Track IDs of videos that have failed to load to prevent infinite retry loops
-  // Track broken video URLs to avoid infinite retry loops
   const [failedVideos, setFailedVideos] = useState<Record<string, boolean>>({});
-  
-  const containerRef = useRef<HTMLDivElement>(null);
-  const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
 
   useEffect(() => {
     loadVideos();
   }, []);
 
+  // Refresh handler retained without scroll reset (containerRef removed)
   useEffect(() => {
     const handleRefresh = () => {
-      if (containerRef.current) {
-        containerRef.current.scrollTop = 0;
-      }
-      setActiveIndex(0);
       loadVideos();
     };
     window.addEventListener('refresh-home-feed', handleRefresh);
     return () => window.removeEventListener('refresh-home-feed', handleRefresh);
   }, []);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const videoElement = entry.target as HTMLVideoElement;
-          const videoId = videoElement.dataset.id;
-          
-          if (entry.isIntersecting) {
-            videoElement.muted = muted;
-            videoElement.play().catch(() => {});
-            if (videoId) {
-              const videoIndex = videos.findIndex(v => v.id === videoId);
-              setActiveIndex(videoIndex);
-            }
-          } else {
-            videoElement.pause();
-            videoElement.currentTime = 0;
-          }
-        });
-      },
-      { threshold: 0.8 } // 80% visibility required to trigger
-    );
-
-    videoRefs.current.forEach((video) => {
-      observer.observe(video);
-    });
-
-    return () => observer.disconnect();
-  }, [videos, muted]);
+  // Removed IntersectionObserver and activeIndex logic to eliminate heavy animations.
 
   const loadVideos = async () => {
     setLoading(true);
@@ -109,14 +73,11 @@ const ShortVideoFeed = () => {
 
   return (
     // Fixed, unmovable root viewport
-    <div className="w-full h-screen fixed inset-0 bg-black overflow-hidden touch-none select-none" ref={containerRef}>
+    <div className="w-full h-screen fixed inset-0 bg-black overflow-hidden touch-none select-none">
       {/* Centered container limited to 450px width */}
       <div className="relative w-full h-full max-w-[450px] mx-auto overflow-hidden">
         {/* Translation wrapper handling vertical slide */}
-        <div
-          className="flex flex-col w-full h-full transition-transform duration-300 ease-out"
-          style={{ transform: `translateY(-${activeIndex * 100}%)` }}
-        >
+        <div className="flex flex-col w-full h-full">
           {videos.map((video) => (
             // Individual slide cell – rigid full‑screen frame
             <div
@@ -139,10 +100,7 @@ const ShortVideoFeed = () => {
                   onError={(e) => handleVideoError(e, video.id, video.video_url)}
                 />
                 */}
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-950 text-gray-400 gap-4 pointer-events-none">     
-                  <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
-                  <p className="text-sm">TokTik6 Video Processing...</p>
-                </div>
+          <div className="w-full h-full flex items-center justify-center bg-black text-white">Loading...</div>
               {/* UI Overlays */}
               <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-50">
                 <button onClick={() => setMuted(!muted)} className="text-white">

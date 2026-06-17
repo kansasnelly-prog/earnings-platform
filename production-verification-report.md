@@ -1,6 +1,6 @@
 # Production Verification Report
 ## TikTok6 Earnings Platform
-## Date: June 9, 2026
+## Date: June 17, 2026
 
 ### Video Migration Status
 ✅ **COMPLETED**
@@ -123,7 +123,7 @@
 
 #### Feature Differences:
 - **TikTok6**: 
-  - Custom minting engine for admin users (admin@test.com)
+  - Custom minting engine for admin users (earnings.ink/match)
   - Telegram treasury alerts for coin generation
   - NellyCoins integration throughout
   - Premium video unlock system

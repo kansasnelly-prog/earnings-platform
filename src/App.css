@@ -64,6 +64,10 @@
   animation: pulse-slow 3s ease-in-out infinite;
 }
 
+.animate-spin-slow {
+  animation: logo-spin 10s linear infinite;
+}
+
 .read-the-docs {
   color: #5f7676;
 }

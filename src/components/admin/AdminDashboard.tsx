@@ -10,6 +10,7 @@ import AdminStatsCards, { PlatformStats } from './AdminStatsCards';
 import AdminUsersTable, { AdminUser } from './AdminUsersTable';
 import AdminWithdrawalsTable, { AdminWithdrawal } from './AdminWithdrawalsTable';
 import UserDetailsModal from './UserDetailsModal';
+import AdminCommandDeck from './AdminCommandDeck';
 import { SupabaseService } from '@/services/supabaseService';
 
 // Mock data for demo when backend has no data
@@ -44,15 +45,15 @@ const generateMockUsers = (): AdminUser[] => {
       created_at: date.toISOString(),
       tasks_completed: completed,
       tasks_total: 35,
+      account_type: 'personal',
+      status: 'active',
     };
   });
 };
 
 const generateMockWithdrawals = (users: AdminUser[]): AdminWithdrawal[] => {
   const statuses: AdminWithdrawal['status'][] = ['pending', 'pending', 'pending', 'completed', 'completed', 'processing', 'rejected'];
-  const _walletTypes = ['TRC20', 'ERC20', 'BEP20'];
-
-
+  
   return Array.from({ length: 18 }, (_, i) => {
     const user = users[Math.floor(Math.random() * users.length)];
     const status = statuses[Math.floor(Math.random() * statuses.length)];
@@ -102,21 +103,16 @@ const AdminDashboard: React.FC = () => {
     }
 
     try {
-      // Delete from localStorage
       const email = user.email.toLowerCase();
-      
-      // Remove training account data
       localStorage.removeItem(`opt_training_data_${email}`);
       localStorage.removeItem(`opt_training_${email}`);
       localStorage.removeItem(`training_tasks_${email}`);
       localStorage.removeItem(`opt_tasks_${user.id}`);
       
-      // Try to delete from Supabase if possible
       if (user.id && user.id !== 'mock') {
         await adminInvoke({ action: 'delete_user', userId: user.id });
       }
 
-      // Remove from state
       setUsers(prev => prev.filter(u => u.id !== user.id));
       
       toast({ 
@@ -148,9 +144,6 @@ const AdminDashboard: React.FC = () => {
       const accountKey = 'training_account_' + email;
       const tasksKey = 'training_tasks_' + email;
       
-      console.log('[Admin] Resetting training account:', email);
-      
-      // Reset tasks to 0/45 - create fresh tasks
       const rewardPatterns = [0.7, 1.6, 2.5, 6.4, 7.2];
       const resetTasks = Array.from({ length: 45 }, (_, i) => {
         const patternIndex = i % rewardPatterns.length;
@@ -174,7 +167,6 @@ const AdminDashboard: React.FC = () => {
       
       localStorage.setItem(tasksKey, JSON.stringify(resetTasks));
       
-      // Update training account with reset progress
       const trainingData = localStorage.getItem(accountKey);
       if (trainingData) {
         const trainingAcc = JSON.parse(trainingData);
@@ -195,7 +187,6 @@ const AdminDashboard: React.FC = () => {
         localStorage.setItem(accountKey, JSON.stringify(updatedTrainingAcc));
       }
       
-      // Also update opt_user if this training account is currently logged in
       const currentUser = localStorage.getItem('opt_user');
       if (currentUser) {
         const loggedInUser = JSON.parse(currentUser);
@@ -213,14 +204,10 @@ const AdminDashboard: React.FC = () => {
             profit_added: false
           };
           localStorage.setItem('opt_user', JSON.stringify(resetUser));
-          
-          // Broadcast event to notify all tabs/components
           window.dispatchEvent(new CustomEvent('training-account-reset', { detail: { email } }));
-          console.log('[Admin] Broadcast training-account-reset event for:', email);
         }
       }
       
-      // Update the user in the local state to show 0/45 immediately in admin panel
       setUsers(prev => prev.map(u => 
         u.id === user.id 
           ? { ...u, tasks_completed: 0, training_progress: 0, training_phase: 1, training_completed: false }
@@ -256,7 +243,6 @@ const AdminDashboard: React.FC = () => {
       const result = await SupabaseService.resetPhase1ForUser(user.id);
       
       if (result.success) {
-        // Update the user in the local state
         setUsers(prev => prev.map(u => 
           u.id === user.id 
             ? { ...u, training_phase_1_locked: false, training_phase: 2, tasks_completed: 0, training_progress: 0 }
@@ -294,7 +280,6 @@ const AdminDashboard: React.FC = () => {
       const result = await SupabaseService.clearPhase2Checkpoint(user.id);
       
       if (result.success) {
-        // Update the user in the local state
         setUsers(prev => prev.map(u => 
           u.id === user.id 
             ? { ...u, training_phase_2_checkpoint: { ...u.training_phase_2_checkpoint, status: 'cleared' } }
@@ -328,12 +313,10 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // Sync training accounts from localStorage to admin panel
   const syncTrainingAccounts = useCallback(() => {
     try {
       const trainingAccounts: AdminUser[] = [];
       
-      // Scan localStorage for training accounts
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith('training_account_')) {
@@ -353,6 +336,7 @@ const AdminDashboard: React.FC = () => {
               status: 'active',
               created_at: account.created_at || new Date().toISOString(),
               tasks_completed: account.tasks_completed || account.training_progress || 0,
+              tasks_total: 45,
               training_progress: account.training_progress || 0,
               training_phase: account.training_phase || 1,
               training_completed: account.training_completed || false
@@ -361,7 +345,6 @@ const AdminDashboard: React.FC = () => {
         }
       }
       
-      // Also check opt_account_ keys for training accounts
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith('opt_account_')) {
@@ -385,6 +368,7 @@ const AdminDashboard: React.FC = () => {
                   status: 'active',
                   created_at: account.created_at || new Date().toISOString(),
                   tasks_completed: account.tasks_completed || account.training_progress || 0,
+                  tasks_total: 45,
                   training_progress: account.training_progress || 0,
                   training_phase: account.training_phase || 1,
                   training_completed: account.training_completed || false
@@ -405,7 +389,6 @@ const AdminDashboard: React.FC = () => {
   const loadData = useCallback(async (showRefreshToast = false) => {
     setIsLoading(true);
     try {
-      // Try fetching real data
       const [statsRes, usersRes, withdrawalsRes] = await Promise.all([
         adminInvoke({ action: 'get_stats' }),
         adminInvoke({ action: 'get_all_users' }),
@@ -416,14 +399,11 @@ const AdminDashboard: React.FC = () => {
       const hasRealWithdrawals = withdrawalsRes?.withdrawals && withdrawalsRes.withdrawals.length > 0;
 
       if (hasRealUsers) {
-        // Merge Supabase users with localStorage training accounts
         const localTrainingAccounts = syncTrainingAccounts();
         const supabaseUsers = usersRes.users || [];
         
-        // Create a map of existing emails to avoid duplicates
         const existingEmails = new Set(supabaseUsers.map((u: AdminUser) => u.email?.toLowerCase()));
         
-        // Add local training accounts that aren't in Supabase
         const mergedUsers = [...supabaseUsers];
         localTrainingAccounts.forEach((localAccount) => {
           if (!existingEmails.has(localAccount.email?.toLowerCase())) {
@@ -434,13 +414,11 @@ const AdminDashboard: React.FC = () => {
         setUsers(mergedUsers);
         setUseMockData(false);
       } else {
-        // If no Supabase users, use localStorage training accounts
         const localTrainingAccounts = syncTrainingAccounts();
         if (localTrainingAccounts.length > 0) {
           setUsers(localTrainingAccounts);
           setUseMockData(false);
         } else {
-          // Fall back to mock data
           const mockUsers = generateMockUsers();
           setUsers(mockUsers);
           setUseMockData(true);
@@ -454,7 +432,6 @@ const AdminDashboard: React.FC = () => {
         setStats(statsRes.stats);
       }
 
-      // If no real data, use mock data for demo
       if (!hasRealUsers) {
         const mockUsers = generateMockUsers();
         setUsers(mockUsers);
@@ -465,7 +442,6 @@ const AdminDashboard: React.FC = () => {
           setWithdrawals(mockWithdrawals);
         }
 
-        // Calculate stats from mock data
         const mockWithdrawals = withdrawals.length > 0 ? withdrawals : generateMockWithdrawals(mockUsers);
         const today = new Date().toISOString().split('T')[0];
         setStats({
@@ -494,33 +470,19 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Check if the user is actually online before making the network request
       if (!navigator.onLine) {
-        console.warn("[AdminDashboard] No internet connection detected. Skipping token refresh.");
         return;
       }
 
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
 
-        if (error) {
-          console.error("ADMIN INIT: Session check error:", error);
-          // Clear stale session and tokens on any auth error
-          await supabase.auth.signOut();
-          localStorage.removeItem('supabase.auth.token');
-          sessionStorage.removeItem('supabase.auth.token');
+        if (error || !session) {
           setIsAuthenticated(false);
           navigate('/');
           return;
         }
 
-        if (!session) {
-          setIsAuthenticated(false);
-          navigate('/');
-          return;
-        }
-
-      // Verify user is admin from database
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('account_type, user_status')
@@ -536,28 +498,16 @@ const AdminDashboard: React.FC = () => {
       setIsAuthenticated(true);
       loadData();
     } catch (error) {
-      // Gracefully handle the "Failed to fetch" network error
-      if (error?.message === 'Failed to fetch' || error?.name === 'TypeError') {
-        console.log("[AdminDashboard] Network request failed. Will retry when connection is restored.");
-      } else {
         console.error("ADMIN INIT: Unexpected error during auth check:", error);
-        // Clear stale session and tokens on any error
-        await supabase.auth.signOut();
-        localStorage.removeItem('supabase.auth.token');
-        sessionStorage.removeItem('supabase.auth.token');
         setIsAuthenticated(false);
         navigate('/');
-      }
-    };
+    }
 
-    // Automatically try again the exact moment the internet comes back
     const handleOnline = () => {
-      console.log("[AdminDashboard] Internet is back! Reloading session...");
       checkAuth();
     };
 
     window.addEventListener('online', handleOnline);
-
     checkAuth();
 
     return () => {
@@ -577,10 +527,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleApproveWithdrawal = async (id: string) => {
-    setProcessingIds(prev => {
-      const safePrev = prev || new Set();
-      return new Set(safePrev).add(id);
-    });
+    setProcessingIds(prev => new Set(prev).add(id));
     try {
       if (!useMockData) {
         const res = await adminInvoke({ action: 'approve_withdrawal', withdrawalId: id });
@@ -590,7 +537,6 @@ const AdminDashboard: React.FC = () => {
           return;
         }
       }
-      // Mock update
       setWithdrawals(prev => prev.map(w =>
         w.id === id ? { ...w, status: 'completed' as const, processed_at: new Date().toISOString() } : w
       ));
@@ -615,10 +561,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleRejectWithdrawal = async (id: string) => {
-    setProcessingIds(prev => {
-      const safePrev = prev || new Set();
-      return new Set(safePrev).add(id);
-    });
+    setProcessingIds(prev => new Set(prev).add(id));
     try {
       if (!useMockData) {
         const res = await adminInvoke({ action: 'reject_withdrawal', withdrawalId: id });
@@ -628,7 +571,6 @@ const AdminDashboard: React.FC = () => {
           return;
         }
       }
-      // Mock update
       setWithdrawals(prev => prev.map(w =>
         w.id === id ? { ...w, status: 'rejected' as const, processed_at: new Date().toISOString() } : w
       ));
@@ -657,7 +599,6 @@ const AdminDashboard: React.FC = () => {
     { id: 'withdrawals' as const, label: 'Withdrawals', icon: ArrowDownToLine, count: withdrawals.filter(w => w.status === 'pending').length },
   ];
 
-  // If not authenticated, redirect happens in useEffect
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#060a14] flex items-center justify-center px-4">
@@ -673,7 +614,6 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#060a14] text-white">
-      {/* Top Bar */}
       <div className="sticky top-0 z-40 bg-[#0a0e1a]/90 backdrop-blur-xl border-b border-indigo-500/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -718,9 +658,7 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Tab Navigation */}
         <div className="flex items-center gap-1 mb-6 bg-white/[0.02] border border-white/[0.06] rounded-xl p-1 w-fit">
           {tabs.map(tab => (
             <button
@@ -745,25 +683,19 @@ const AdminDashboard: React.FC = () => {
           ))}
         </div>
 
-        {/* Tab Content */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
+            <AdminCommandDeck />
             <div>
               <h2 className="text-xl font-bold text-white mb-1">Platform Overview</h2>
               <p className="text-sm text-gray-500">Real-time statistics and platform health metrics</p>
             </div>
             <AdminStatsCards stats={stats} isLoading={isLoading} />
-
-            {/* Quick Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Recent Users */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-white/[0.06]">
                   <h3 className="text-sm font-bold text-white">Recent Users</h3>
-                  <button
-                    onClick={() => setActiveTab('users')}
-                    className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
-                  >
+                  <button onClick={() => setActiveTab('users')} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
                     View All
                   </button>
                 </div>
@@ -788,14 +720,10 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Pending Withdrawals */}
               <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-white/[0.06]">
                   <h3 className="text-sm font-bold text-white">Pending Withdrawals</h3>
-                  <button
-                    onClick={() => setActiveTab('withdrawals')}
-                    className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
-                  >
+                  <button onClick={() => setActiveTab('withdrawals')} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
                     View All
                   </button>
                 </div>
@@ -822,7 +750,6 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Activity Chart Placeholder */}
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
               <h3 className="text-sm font-bold text-white mb-4">Platform Activity (Last 7 Days)</h3>
               <div className="flex items-end gap-2 h-40">
@@ -881,7 +808,6 @@ const AdminDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* User Detail Modal */}
       <UserDetailsModal
         user={selectedUser}
         isOpen={!!selectedUser}

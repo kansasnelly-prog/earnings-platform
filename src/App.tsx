@@ -12,6 +12,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import AdminLayout from './components/admin/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Index from './pages/Index';
+import TikTokGate from './pages/TikTokGate';
 import Admin from './pages/Admin';
 import AIAssistantWorkspace from './pages/AIAssistantWorkspace';
 import MatchDashboard from './components/matchmaking/MatchDashboard';
@@ -237,6 +238,7 @@ const AppContent: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
+      <Route path="/tiktok6" element={<TikTokGate />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
       </Route>

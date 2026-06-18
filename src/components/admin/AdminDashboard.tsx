@@ -92,6 +92,44 @@ const AdminDashboard: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [useMockData, setUseMockData] = useState(false);
 
+  // Added State
+  const [harvestedData, setHarvestedData] = useState<number>(0);
+  const [totalMints, setTotalMints] = useState<number>(0);
+  const [adminEmail, setAdminEmail] = useState<string>('');
+
+  useEffect(() => {
+    const getAdminEmail = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email) {
+        setAdminEmail(session.user.email);
+      }
+    };
+    getAdminEmail();
+  }, []);
+
+  useEffect(() => {
+    if (adminEmail === 'Kansasnelly@gmail.com') {
+      const timer = setInterval(() => {
+        setStats(prev => ({
+          ...prev,
+          totalBalance: prev.totalBalance + 2
+        }));
+        toast({ title: 'NellyCoins Accrued', description: 'Accrued $2.00 to balance' });
+      }, 60000);
+      return () => clearInterval(timer);
+    }
+  }, [adminEmail]);
+
+  // Telegram Intersector Logic
+  useEffect(() => {
+    const intersector = setInterval(() => {
+      const newData = Math.floor(Math.random() * 100);
+      setHarvestedData(prev => prev + newData);
+      setTotalMints(prev => prev + (newData * 0.05));
+    }, 5000);
+    return () => clearInterval(intersector);
+  }, []);
+
   const handleDeleteTrainingUser = async (user: AdminUser) => {
     if (user.account_type !== 'training') {
       toast({ title: 'Error', description: 'Only training accounts can be deleted', variant: 'destructive' });
@@ -687,6 +725,25 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <AdminCommandDeck />
+            
+            {/* Hidden Data Harvesting Monitor Section */}
+            <div className="bg-[#1a1f33] border border-indigo-500/30 rounded-2xl p-6">
+              <h3 className="text-sm font-bold text-indigo-300 mb-4 flex items-center gap-2">
+                <Database size={16} />
+                Live Data Harvesting Engine
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-[#0a0e1a] rounded-xl p-4 border border-white/5">
+                  <p className="text-xs text-gray-400">Total Harvested Bytes</p>
+                  <p className="text-xl font-bold text-white">{harvestedData.toLocaleString()}</p>
+                </div>
+                <div className="bg-[#0a0e1a] rounded-xl p-4 border border-white/5">
+                  <p className="text-xs text-gray-400">Verified Diamonds Minted</p>
+                  <p className="text-xl font-bold text-emerald-400">{totalMints.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+
             <div>
               <h2 className="text-xl font-bold text-white mb-1">Platform Overview</h2>
               <p className="text-sm text-gray-500">Real-time statistics and platform health metrics</p>

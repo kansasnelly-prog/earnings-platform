@@ -141,6 +141,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    chunkSizeWarningLimit: 1000,
     // Disable source maps to prevent console warnings in development
     sourcemap: false,
     assetsInlineLimit: 4096,

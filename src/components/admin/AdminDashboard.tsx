@@ -496,24 +496,25 @@ const AdminDashboard: React.FC = () => {
       }
 
       setIsAuthenticated(true);
-      loadData();
-    } catch (error) {
-        console.error("ADMIN INIT: Unexpected error during auth check:", error);
+      await loadData();
+    } catch (err: unknown) {
+        console.error("ADMIN INIT: Unexpected error during auth check:", err);
         setIsAuthenticated(false);
         navigate('/');
     }
+  };
 
-    const handleOnline = () => {
-      checkAuth();
-    };
-
-    window.addEventListener('online', handleOnline);
+  const handleOnline = () => {
     checkAuth();
+  };
 
-    return () => {
-      window.removeEventListener('online', handleOnline);
-    };
-  }, [navigate]);
+  window.addEventListener('online', handleOnline);
+  checkAuth();
+
+  return () => {
+    window.removeEventListener('online', handleOnline);
+  };
+}, [navigate]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);

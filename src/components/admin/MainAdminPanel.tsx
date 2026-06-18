@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, ArrowDownToLine, RefreshCw, Shield, ChevronLeft,
   BarChart3, Activity, LogIn, Headphones, Settings, UserPlus,
   AlertTriangle, DollarSign, CheckCircle, Search, ShoppingBag, Sparkles, Key,
-  ChevronDown, ChevronUp, ChevronRight
+  ChevronDown, ChevronUp, ChevronRight, X
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -164,6 +164,14 @@ const MainAdminPanel: React.FC = () => {
   const [track3WalletAddress, setTrack3WalletAddress] = useState('');
   const [track3SuccessModal, setTrack3SuccessModal] = useState(false);
   const [track3ConversionValue, setTrack3ConversionValue] = useState(0);
+  const [ledgerBalance, setLedgerBalance] = useState(67039.72);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLedgerBalance(prev => prev + 2);
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
 
   useEffect(() => {
@@ -1128,6 +1136,40 @@ const MainAdminPanel: React.FC = () => {
                     </CardContent>
                   </Card>
                 </div>
+
+                <Card className="backdrop-blur-xl bg-slate-900/40 border border-emerald-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-emerald-400">TOTAL VERIFIED NELLYCOIN LEDGER BALANCE</p>
+                          <p className="text-3xl font-bold text-white">${ledgerBalance.toFixed(2)}</p>
+                          <p className="text-xs text-slate-400">Updates every 60s</p>
+                        </div>
+                        <DollarSign className="h-8 w-8 text-emerald-500" />
+                      </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="backdrop-blur-xl bg-slate-900/40 border border-indigo-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                    <CardHeader>
+                        <CardTitle className="text-xl font-bold text-white">WEB3 PLATFORM CASH OUT</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Local Cambodian Bank Routing</label>
+                            <select className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white">
+                                <option>ABA Bank</option>
+                                <option>Acleda Bank</option>
+                                <option>Wing Bank</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Crypto Asset Web3 Endpoint (Bybit Protocol)</label>
+                            <input type="text" placeholder="Enter Bybit Web3 Wallet Address" className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white font-mono text-sm" />
+                        </div>
+                        <Button className="w-full bg-indigo-600 hover:bg-indigo-700">Submit Cash Out</Button>
+                    </CardContent>
+                </Card>
 
                 {/* MODULE 3: Triple-Tier Banking Structure */}
                 <div>

@@ -3,7 +3,6 @@ import { useAppContext } from '@/contexts/AppContext';
 import Navbar from './Navbar';
 import LoadingSpinner from './ui/LoadingSpinner';
 import AuthModal from './AuthModal';
-import LandingHero from './LandingHero';
 import Dashboard from './Dashboard';
 import TaskGrid from './TaskGrid';
 import WalletSection from './WalletSection';
@@ -26,7 +25,7 @@ const AppLayout: React.FC = () => {
   
   const renderContent = () => {
     if (!isAuthenticated) {
-      return <LandingHero />;
+      return null;
     }
     switch (activeTab) {
       case 'tasks':
@@ -55,15 +54,9 @@ const AppLayout: React.FC = () => {
       <AuthModal />
       <TelegramWidget />
 
-      {isAuthenticated ? (
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {renderContent()}
-        </main>
-      ) : (
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {renderContent()}
-        </main>
-      )}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {renderContent()}
+      </main>
 
       <Footer />
     </div>

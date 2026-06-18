@@ -4,13 +4,11 @@ import Navbar from './Navbar';
 import LoadingSpinner from './ui/LoadingSpinner';
 import AuthModal from './AuthModal';
 import LandingHero from './LandingHero';
-import Home from './Home';
 import Dashboard from './Dashboard';
 import TaskGrid from './TaskGrid';
 import WalletSection from './WalletSection';
 import WithdrawalSection from './WithdrawalSection';
 import ProfileSection from './ProfileSection';
-import TikTokFeed from './social/TikTokFeed';
 import NotificationCenter from './social/NotificationCenter';
 import AdminPanel from './AdminPanel';
 import About from '@/pages/About';
@@ -39,8 +37,6 @@ const AppLayout: React.FC = () => {
         return <WithdrawalSection />;
       case 'profile':
         return <ProfileSection />;
-      case 'tiktok6':
-        return <TikTokFeed />;
       case 'notifications':
         return <NotificationCenter />;
       case 'about':

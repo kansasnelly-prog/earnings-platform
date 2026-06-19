@@ -853,6 +853,7 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
                   <button 
                     onClick={() => setSelectedCheckpoint(null)}
                     className="text-slate-400 hover:text-white"
+                    aria-label="Close checkpoint review"
                   >
                     <X className="w-5 h-5" />
                   </button>

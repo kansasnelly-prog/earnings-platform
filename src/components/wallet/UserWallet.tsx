@@ -250,6 +250,7 @@ const UserWallet: React.FC = () => {
                   value={nigeriaBank}
                   onChange={(e) => setNigeriaBank(e.target.value)}
                   className="w-full bg-white/10 border border-green-500/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-green-500"
+                  aria-label="Select bank for deposit"
                 >
                   <option value="">Choose a bank...</option>
                   {nigeriaBanks.map((bank) => (
@@ -276,6 +277,8 @@ const UserWallet: React.FC = () => {
                   onChange={handleFileUpload}
                   accept="image/*"
                   className="w-full bg-white/10 border border-green-500/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-green-500"
+                  aria-label="Upload receipt image"
+                  placeholder="Upload receipt image"
                 />
               </div>
               <Button
@@ -335,6 +338,8 @@ const UserWallet: React.FC = () => {
                   onChange={handleFileUpload}
                   accept="image/*"
                   className="w-full bg-white/10 border border-blue-500/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500"
+                  aria-label="Upload receipt image"
+                  placeholder="Upload receipt image"
                 />
               </div>
               <Button

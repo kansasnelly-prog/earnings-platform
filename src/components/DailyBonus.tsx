@@ -319,7 +319,7 @@ const DailyBonus: React.FC = () => {
         <div className="flex flex-col items-center justify-center py-4 animate-fade-in">
           {/* Success ring */}
           <div className="relative w-28 h-28 mb-6">
-            <div className="absolute inset-0 rounded-full border-4 border-emerald-500/30 animate-ping" style={{ animationDuration: '1s' }} />
+            <div className="absolute inset-0 rounded-full border-4 border-emerald-500/30 animate-ping duration-[1000ms]" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 flex items-center justify-center animate-scale-bounce">
                 <Trophy size={40} className="text-amber-400" />
@@ -329,10 +329,9 @@ const DailyBonus: React.FC = () => {
             {[...Array(8)].map((_, i) => (
               <div
                 key={i}
-                className="absolute w-2 h-2 rounded-full animate-confetti"
+                className="absolute w-2 h-2 rounded-full animate-confetti top-1/2 left-1/2"
                 style={{
                   background: ['#818cf8', '#a78bfa', '#f472b6', '#34d399', '#fbbf24', '#60a5fa', '#f87171', '#4ade80'][i],
-                  top: '50%', left: '50%',
                   animationDelay: `${i * 0.1}s`,
                 }}
               />
@@ -340,7 +339,7 @@ const DailyBonus: React.FC = () => {
           </div>
 
           <h3 className="text-2xl font-bold text-white mb-2 animate-slide-up">Daily Bonus Complete!</h3>
-          <div className="flex items-center gap-3 animate-slide-up" style={{ animationDelay: '0.15s' }}>
+          <div className="flex items-center gap-3 animate-slide-up delay-[150ms]">
             <div className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500/15 border border-emerald-500/30 rounded-full">
               <Sparkles size={16} className="text-amber-400" />
               <span className="text-lg font-bold text-emerald-400">+${dailyReward.toFixed(2)}</span>
@@ -348,7 +347,7 @@ const DailyBonus: React.FC = () => {
             </div>
           </div>
           {bonusState.streak > 0 && (
-            <div className="mt-3 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+            <div className="mt-3 animate-slide-up delay-[300ms]">
               <StreakBadge streak={bonusState.streak} />
             </div>
           )}
@@ -364,15 +363,15 @@ const DailyBonus: React.FC = () => {
         <div className="flex flex-col items-center justify-center py-8">
           {/* Animated loading rings */}
           <div className="relative w-24 h-24 mb-6">
-            <div className="absolute inset-0 rounded-full border-2 border-amber-500/20 animate-ping" style={{ animationDuration: '1.5s' }} />
-            <div className="absolute inset-2 rounded-full border-2 border-indigo-500/30 animate-ping" style={{ animationDuration: '1.8s', animationDelay: '0.2s' }} />
-            <div className="absolute inset-4 rounded-full border-2 border-purple-500/20 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.4s' }} />
+            <div className="absolute inset-0 rounded-full border-2 border-amber-500/20 animate-ping duration-[1500ms]" />
+            <div className="absolute inset-2 rounded-full border-2 border-indigo-500/30 animate-ping duration-[1800ms] delay-[200ms]" />
+            <div className="absolute inset-4 rounded-full border-2 border-purple-500/20 animate-ping duration-[2000ms] delay-[400ms]" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-500/20 via-indigo-500/20 to-purple-500/20 flex items-center justify-center backdrop-blur-sm">
                 <Gift size={24} className="text-amber-400 animate-pulse" />
               </div>
             </div>
-            <div className="absolute inset-0 animate-spin" style={{ animationDuration: '3s' }}>
+            <div className="absolute inset-0 animate-spin duration-[3000ms]">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-amber-400 rounded-full" />
             </div>
           </div>
@@ -441,7 +440,7 @@ const DailyBonus: React.FC = () => {
             </div>
 
             {/* Daily bonus badge */}
-            <div className="absolute top-4 right-4 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 backdrop-blur-md border border-amber-500/30 rounded-full animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            <div className="absolute top-4 right-4 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 backdrop-blur-md border border-amber-500/30 rounded-full animate-slide-up delay-[100ms]">
               <span className="text-xs font-bold text-amber-300 flex items-center gap-1">
                 <Gift size={11} /> DAILY BONUS
               </span>
@@ -470,7 +469,7 @@ const DailyBonus: React.FC = () => {
             </div>
 
             {/* Reward info - enhanced */}
-            <div className="p-4 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/20 rounded-xl mb-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <div className="p-4 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/20 rounded-xl mb-4 animate-slide-up delay-[200ms]">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Sparkles size={16} className="text-amber-400" />
@@ -494,8 +493,7 @@ const DailyBonus: React.FC = () => {
             <button
               onClick={handleSubmitReview}
               disabled={phase === 'claiming'}
-              className="w-full py-4 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 hover:from-amber-500 hover:via-orange-500 hover:to-amber-500 text-white font-bold rounded-2xl transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 flex items-center justify-center gap-3 text-lg disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98] group animate-slide-up"
-              style={{ animationDelay: '0.3s' }}
+              className="w-full py-4 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 hover:from-amber-500 hover:via-orange-500 hover:to-amber-500 text-white font-bold rounded-2xl transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 flex items-center justify-center gap-3 text-lg disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98] group animate-slide-up delay-[300ms]"
             >
               {phase === 'claiming' ? (
                 <>
@@ -540,7 +538,7 @@ const DailyBonus: React.FC = () => {
                 <Gift size={28} className="text-amber-400" />
               </div>
               {/* Pulse ring */}
-              <div className="absolute inset-0 rounded-2xl border-2 border-amber-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+              <div className="absolute inset-0 rounded-2xl border-2 border-amber-500/20 animate-ping duration-[2000ms]" />
               {/* 2X badge */}
               <div className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/30">
                 <span className="text-[9px] font-black text-white">2X</span>

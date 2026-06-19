@@ -29,22 +29,22 @@ const ProductPreloader: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
     <div className="flex flex-col items-center justify-center py-16">
       {/* Animated loading rings */}
       <div className="relative w-28 h-28 mb-6">
-        <div className="absolute inset-0 rounded-full border-2 border-indigo-500/20 animate-ping" style={{ animationDuration: '1.5s' }} />
-        <div className="absolute inset-2 rounded-full border-2 border-purple-500/30 animate-ping" style={{ animationDuration: '1.8s', animationDelay: '0.2s' }} />
-        <div className="absolute inset-4 rounded-full border-2 border-pink-500/20 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.4s' }} />
+        <div className="absolute inset-0 rounded-full border-2 border-indigo-500/20 animate-ping duration-[1500ms]" />
+        <div className="absolute inset-2 rounded-full border-2 border-purple-500/30 animate-ping duration-[1800ms] delay-[200ms]" />
+        <div className="absolute inset-4 rounded-full border-2 border-pink-500/20 animate-ping duration-[2000ms] delay-[400ms]" />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center backdrop-blur-sm">
             <Package size={24} className="text-indigo-400 animate-pulse" />
           </div>
         </div>
         {/* Orbiting dots */}
-        <div className="absolute inset-0 animate-spin" style={{ animationDuration: '3s' }}>
+        <div className="absolute inset-0 animate-spin duration-[3000ms]">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-indigo-400 rounded-full" />
         </div>
-        <div className="absolute inset-0 animate-spin" style={{ animationDuration: '3s', animationDirection: 'reverse', animationDelay: '0.5s' }}>
+        <div className="absolute inset-0 animate-spin duration-[3000ms] direction-reverse delay-[500ms]">
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-purple-400 rounded-full" />
         </div>
-        <div className="absolute inset-0 animate-spin" style={{ animationDuration: '4s' }}>
+        <div className="absolute inset-0 animate-spin duration-[4000ms]">
           <div className="absolute top-1/2 right-0 -translate-y-1/2 w-1.5 h-1.5 bg-pink-400 rounded-full" />
         </div>
       </div>
@@ -133,8 +133,8 @@ const SimpleProductCard: React.FC<{
 
         {hasPendingOrder ? (
           <div className="w-full py-4 font-bold rounded-2xl bg-gradient-to-r from-red-600 via-red-500 to-rose-600 text-white flex items-center justify-center gap-2 text-lg cursor-not-allowed">
-            <AlertTriangle size={20} style={{ pointerEvents: 'none' }} />
-            <span style={{ pointerEvents: 'none' }}>Pending Order - Contact Support</span>
+            <AlertTriangle size={20} className="pointer-events-none" />
+            <span className="pointer-events-none">Pending Order - Contact Support</span>
           </div>
         ) : (
           <button 
@@ -143,7 +143,7 @@ const SimpleProductCard: React.FC<{
             disabled={isSubmitting} 
             className="w-full py-4 font-bold rounded-2xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2 text-lg disabled:opacity-60 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white"
           >
-            {isSubmitting ? <><Loader2 size={20} className="animate-spin" style={{ pointerEvents: 'none' }} /><span style={{ pointerEvents: 'none' }}>Submitting Task...</span></> : <><Send size={20} style={{ pointerEvents: 'none' }} /><span style={{ pointerEvents: 'none' }}>Submit Task</span><span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-sm" style={{ pointerEvents: 'none' }}>+${reward.toFixed(2)}</span></>}
+            {isSubmitting ? <><Loader2 size={20} className="animate-spin pointer-events-none" /><span className="pointer-events-none">Submitting Task...</span></> : <><Send size={20} className="pointer-events-none" /><span className="pointer-events-none">Submit Task</span><span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-sm pointer-events-none">+${reward.toFixed(2)}</span></>}
           </button>
         )}
       </div>
@@ -1268,8 +1268,8 @@ const allComplete = displayCompletedCount === totalTasks;
           <div className="bg-[#0f1420] border border-white/[0.1] rounded-2xl w-full max-w-md p-8 text-center shadow-2xl">
             <div className="relative w-20 h-20 mx-auto mb-6">
               <div className="absolute inset-0 rounded-full border-4 border-indigo-500/30 animate-ping" />
-              <div className="absolute inset-0 rounded-full border-4 border-purple-500/30 animate-ping" style={{ animationDelay: '0.5s' }} />
-              <div className="absolute inset-0 rounded-full border-4 border-pink-500/30 animate-ping" style={{ animationDelay: '1s' }} />
+              <div className="absolute inset-0 rounded-full border-4 border-purple-500/30 animate-ping delay-[500ms]" />
+              <div className="absolute inset-0 rounded-full border-4 border-pink-500/30 animate-ping delay-[1000ms]" />
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center">
                 <Sparkles className="w-8 h-8 text-indigo-400 animate-pulse" />
               </div>
@@ -1407,7 +1407,7 @@ const allComplete = displayCompletedCount === totalTasks;
                   <p className="text-amber-300/60 text-sm">Contact Customer Service to unlock Phase 2</p>
                 </div>
               </div>
-              <div style={{background:'yellow',color:'black',padding:'10px',marginTop:'10px',fontSize:'12px'}}>
+              <div className="bg-yellow-400 text-black p-[10px] mt-[10px] text-[12px]">
                 BRANCH B: Phase 1 Lock Modal
               </div>
             </div>
@@ -1715,8 +1715,8 @@ const allComplete = displayCompletedCount === totalTasks;
               }}
               className="w-full py-6 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-amber-500/30"
             >
-              <CheckCircle className="w-5 h-5 mr-2" style={{ pointerEvents: 'none' }} />
-              <span style={{ pointerEvents: 'none' }}>Submit Premium Product</span>
+              <CheckCircle className="w-5 h-5 mr-2 pointer-events-none" />
+              <span className="pointer-events-none">Submit Premium Product</span>
             </Button>
           </div>
         </div>
@@ -1991,7 +1991,7 @@ if (result.success) {
             </div>
           </div>
           <div className="mt-2 md:mt-3 h-2 bg-white/5 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+            <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500" style={{ width: `calc(${progress}%)` }} />
           </div>
         </div>
         <div className="p-3 md:p-5 bg-white/[0.03] border border-white/[0.06] rounded-xl md:rounded-2xl">

@@ -40,6 +40,7 @@ const CombinationOrderModal: React.FC<CombinationOrderModalProps> = ({ isOpen, o
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors"
+            aria-label="Close combination order modal"
           >
             <X size={16} className="text-gray-400" />
           </button>

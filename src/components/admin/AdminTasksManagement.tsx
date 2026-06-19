@@ -254,6 +254,7 @@ const AdminTasksManagement: React.FC = () => {
             resetForm();
             setIsAddModalOpen(true);
           }}
+          aria-label="Add New Product"
           className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all"
         >
           <Plus className="w-4 h-4" />
@@ -335,15 +336,15 @@ const AdminTasksManagement: React.FC = () => {
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <button
                     onClick={() => openEditModal(product)}
+                    aria-label="Edit Product"
                     className="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition-all"
-                    title="Edit Product"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteProduct(product.id)}
+                    aria-label="Delete Product"
                     className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 transition-all"
-                    title="Delete Product"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -382,6 +383,7 @@ const AdminTasksManagement: React.FC = () => {
                     setEditingProduct(null);
                     resetForm();
                   }}
+                  aria-label="Close"
                   className="p-2 hover:bg-white/[0.05] rounded-lg text-gray-400 hover:text-white transition-all"
                 >
                   <X className="w-5 h-5" />
@@ -439,10 +441,11 @@ const AdminTasksManagement: React.FC = () => {
 
                 {/* Category */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="categorySelect" className="block text-sm font-medium text-gray-300 mb-1">
                     Category
                   </label>
                   <select
+                    id="categorySelect"
                     value={formData.category}
                     onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                     className="w-full px-4 py-2.5 bg-white/[0.05] border border-white/[0.1] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"

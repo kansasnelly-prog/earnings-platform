@@ -1,7 +1,7 @@
 // Telegram notification service
 // This calls the server-side API route to send Telegram messages
 // The actual Telegram API call happens server-side to keep tokens secure
-import { logTelegram } from '../utils/logger';
+import { logTelegram } from '../utils/logger.js';
 
 export interface TelegramNotificationData {
   type: 'signup' | 'login' | 'withdrawal' | 'admin_action' | 'new_account';

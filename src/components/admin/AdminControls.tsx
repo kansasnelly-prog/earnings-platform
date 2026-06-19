@@ -309,15 +309,15 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
       
       // Send Telegram notification
       const telegramMessage = `
-💰 <b>ADMIN: BALANCE ADDED</b>
-
-👤 <b>Email:</b> ${email}
-💵 <b>Amount Added:</b> $${balanceAmount}
-💵 <b>New Balance:</b> $${result.newBalance}
-📝 <b>Reason:</b> ${reason}
-⚙️ <b>Source:</b> Supabase (primary)
-📅 <b>Timestamp:</b> ${new Date().toLocaleString()}
-      `.trim();
+ 💰 <b>ADMIN: BALANCE ADDED</b>
+ 
+ 👤 <b>Email:</b> ${email}
+ 💵 <b>Amount Added:</b> $${balanceAmount}
+ 💵 <b>New Balance:</b> $${result.newBalance}
+ 📝 <b>Reason:</b> ${reason}
+ ⚙️ <b>Source:</b> Supabase (primary)
+ 📅 <b>Timestamp:</b> ${new Date().toLocaleString()}
+       `.trim();
 
       try {
         await sendTelegramNotification('ADMIN_ACTION', {
@@ -1232,10 +1232,11 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
           <CardContent className="space-y-4">
             <form onSubmit={(e) => e.preventDefault()}>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="userEmail" className="block text-sm font-medium text-slate-300 mb-2">
                   User Email Address
                 </label>
                 <Input
+                  id="userEmail"
                   type="email"
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
@@ -1349,10 +1350,11 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="manualEmail" className="block text-sm font-medium text-slate-300 mb-2">
                 Training Account Email
               </label>
               <Input
+                id="manualEmail"
                 type="email"
                 value={manualResetEmail}
                 onChange={(e) => setManualResetEmail(e.target.value)}
@@ -1363,10 +1365,11 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="manualBalance" className="block text-sm font-medium text-slate-300 mb-2">
                   Balance ($)
                 </label>
                 <Input
+                  id="manualBalance"
                   type="number"
                   step="0.01"
                   value={manualBalance}
@@ -1377,10 +1380,11 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="manualEarned" className="block text-sm font-medium text-slate-300 mb-2">
                   Total Earned ($)
                 </label>
                 <Input
+                  id="manualEarned"
                   type="number"
                   step="0.01"
                   value={manualTotalEarned}
@@ -1391,10 +1395,11 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="manualPending" className="block text-sm font-medium text-slate-300 mb-2">
                   Pending Balance ($)
                 </label>
                 <Input
+                  id="manualPending"
                   type="number"
                   step="0.01"
                   value={manualPendingBalance}
@@ -1466,11 +1471,12 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
               <div className="space-y-4">
                 {/* Checkpoint Multiplier */}
                 <div>
-                  <label className="block text-sm text-slate-300 mb-1">
+                  <label htmlFor="checkpointMultiplier" className="block text-sm text-slate-300 mb-1">
                     Checkpoint Profit Multiplier
                   </label>
                   <div className="flex items-center space-x-3">
                     <Input
+                      id="checkpointMultiplier"
                       type="number"
                       step="0.1"
                       min="1"
@@ -1491,11 +1497,12 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
 
                 {/* Training Completion Percentage */}
                 <div>
-                  <label className="block text-sm text-slate-300 mb-1">
+                  <label htmlFor="completionPercent" className="block text-sm text-slate-300 mb-1">
                     Training Completion Transfer %
                   </label>
                   <div className="flex items-center space-x-3">
                     <Input
+                      id="completionPercent"
                       type="number"
                       step="0.1"
                       min="0.1"
@@ -1516,11 +1523,12 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
 
                 {/* Target Final Balance */}
                 <div>
-                  <label className="block text-sm text-slate-300 mb-1">
+                  <label htmlFor="targetBalance" className="block text-sm text-slate-300 mb-1">
                     Phase 2 Target Final Balance
                   </label>
                   <div className="flex items-center space-x-3">
                     <Input
+                      id="targetBalance"
                       type="number"
                       step="0.01"
                       min="0"
@@ -1540,10 +1548,11 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
 
                 {/* Bonus Mode */}
                 <div>
-                  <label className="block text-sm text-slate-300 mb-1">
+                  <label htmlFor="bonusMode" className="block text-sm text-slate-300 mb-1">
                     Checkpoint Bonus Mode
                   </label>
                   <select
+                    id="bonusMode"
                     value={trainingSettings.checkpoint_bonus_mode}
                     onChange={(e) => setTrainingSettings(prev => ({
                       ...prev,
@@ -1580,26 +1589,6 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
             </div>
 
             <div className="grid grid-cols-1 gap-3">
-              {/* TEST: Simple migration button */}
-              <button
-                onClick={() => {
-                  alert('Migration button clicked!');
-                  console.log('Migration test');
-                }}
-                style={{
-                  backgroundColor: '#2563eb',
-                  color: 'white',
-                  padding: '8px 16px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
-              >
-                🔄 TEST: Migrate All Training Accounts
-              </button>
-              
               <Button
                 onClick={triggerPendingOrder}
                 disabled={isResetting}
@@ -1683,7 +1672,7 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
                       ) : (
                         <>
                           <Plus className="w-4 h-4 mr-1" />
-                          Add Balance
+                          Add
                         </>
                       )}
                     </Button>
@@ -1699,219 +1688,17 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
                       ) : (
                         <>
                           <Minus className="w-4 h-4 mr-1" />
-                          Reduce Balance
+                          Reduce
                         </>
                       )}
                     </Button>
                   </div>
                 </div>
               </div>
-
-              <Button
-                variant="outline"
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
-              >
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Training Analytics
-              </Button>
-            </div>
-
-            <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-              <div className="flex items-start space-x-2">
-                <CheckCircle className="w-4 h-4 text-blue-400 mt-0.5" />
-                <div>
-                  <p className="text-green-400 text-sm font-medium">System Features:</p>
-                  <ul className="text-green-300 text-xs space-y-1 mt-1">
-                    <li>• Training accounts: 2-phase system (45/45 each)</li>
-                    <li>• Combination products: Auto-trigger at tasks 19/24/31</li>
-                    <li>• 6x profit system: Fixed for combination clearance</li>
-                    <li>• Task pausing: During pending orders</li>
-                    <li>• Withdrawal blocking: During training</li>
-                    <li>• Referral tracking: Link accounts to users</li>
-                  </ul>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Instructions */}
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center">
-            <Shield className="w-5 h-5 mr-2 text-yellow-500" />
-            Admin Instructions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="text-sm font-medium text-yellow-400 mb-2">Training Account Flow:</h4>
-              <ul className="text-xs text-slate-300 space-y-1">
-                <li>• Phase 1: Complete 45/45 tasks normally</li>
-                <li>• Phase 2: Complete another 45/45 tasks</li>
-                <li>• Auto-trigger at task 31 in Phase 2 ONLY</li>
-                <li>• Negative balance until cleared</li>
-                <li>• 6x profit added after clearing</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-green-400 mb-2">Personal Account Flow:</h4>
-              <ul className="text-xs text-slate-300 space-y-1">
-                <li>• 1% profit transfer after training (training earnings moved to personal account)</li>
-                <li>• Withdrawal restrictions during training</li>
-                <li>• Separate balance tracking</li>
-                <li>• No combination products</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Debug / Testing Section */}
-      <Card className="bg-slate-900/50 border-yellow-500/20">
-        <CardHeader>
-          <CardTitle className="text-yellow-400 flex items-center gap-2">
-            <RefreshCw className="w-5 h-5" />
-            Debug & Testing Tools
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              className="bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20"
-              onClick={async () => {
-                // Try to get the currently logged-in user with email
-                let user = JSON.parse(localStorage.getItem('optimize_user') || '{}');
-                let userEmail = user?.email;
-                
-                // If no email found, try training_account
-                if (!userEmail) {
-                  const trainingAccount = JSON.parse(localStorage.getItem('training_account') || '{}');
-                  if (trainingAccount?.email) {
-                    user = trainingAccount;
-                    userEmail = trainingAccount.email;
-                  }
-                }
-                
-                // If still no email, try current_user
-                if (!userEmail) {
-                  const currentUser = JSON.parse(localStorage.getItem('current_user') || '{}');
-                  if (currentUser?.email) {
-                    user = currentUser;
-                    userEmail = currentUser.email;
-                  }
-                }
-                
-                // Try to find any training account with email
-                if (!userEmail) {
-                  for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key?.startsWith('training_') && key.includes('@')) {
-                      const account = JSON.parse(localStorage.getItem(key) || '{}');
-                      if (account?.email) {
-                        user = account;
-                        userEmail = account.email;
-                        break;
-                      }
-                    }
-                  }
-                }
-                
-                const currentBalance = user.balance || 1100;
-                const triggerTask = Math.random() < 0.5 ? 31 : 32;
-                
-                user.has_pending_order = true;
-                user.pending_amount = 210;
-                user.trigger_task_number = triggerTask;
-                // Subtract 210 from current balance (don't overwrite it!)
-                user.balance = currentBalance - 210;
-                user.profit_added = false;
-                user.training_phase = 2;
-                user.pending_product = {
-                  name: `Premium Combination Product - Task ${triggerTask}`,
-                  brand: 'Optimize',
-                  price: 210,
-                  category: 'Premium',
-                  image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400'
-                };
-                
-                // Save to ALL localStorage keys for consistency
-                localStorage.setItem('optimize_user', JSON.stringify(user));
-                localStorage.setItem('training_account', JSON.stringify(user));
-                localStorage.setItem('current_user', JSON.stringify(user));
-                
-                // Save to email-specific keys
-                if (userEmail) {
-                  localStorage.setItem(`training_${userEmail}`, JSON.stringify(user));
-                  localStorage.setItem(`optimize_user_${userEmail}`, JSON.stringify(user));
-                }
-                
-                // ALSO sync to Supabase for cross-device persistence
-                if (user.id && user.id !== 'local-admin') {
-                  try {
-                    await SupabaseService.syncUserBalance(user.id, user.balance, user.total_earned || 0);
-                    console.log('[Simulate Pending] Balance synced to Supabase:', user.balance);
-                  } catch (e) {
-                    console.log('[Simulate Pending] Supabase sync failed (offline)');
-                  }
-                }
-                
-                alert(`Pending order simulated at Task ${triggerTask}!\n\nEmail: ${userEmail || 'Unknown'}\nPrevious Balance: $${currentBalance.toFixed(2)}\nPending Amount: -$210\nNew Balance: $${user.balance.toFixed(2)}\n\nGo to Tasks page to see the Combination Product!`);
-              }}
-            >
-              <AlertTriangle className="w-4 h-4 mr-2" />
-              Simulate Pending Order
-            </Button>
-            
-            <Button
-              variant="outline"
-              className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
-              onClick={() => {
-                // Clear pending order (admin action simulation)
-                const user = JSON.parse(localStorage.getItem('optimize_user') || localStorage.getItem('training_account') || '{}');
-                user.has_pending_order = false;
-                user.pending_amount = 0;
-                user.is_negative_balance = false;
-                // Keep trigger_task_number and pending_product for claim
-                localStorage.setItem('optimize_user', JSON.stringify(user));
-                alert('Pending order cleared by admin!\n\nGo to Tasks page to see "Claim 6x Profit" modal.');
-              }}
-            >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Simulate Admin Clear
-            </Button>
-            
-            <Button
-              variant="outline"
-              className="bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20"
-              onClick={() => {
-                // Reset everything
-                const user = JSON.parse(localStorage.getItem('optimize_user') || localStorage.getItem('training_account') || '{}');
-                user.has_pending_order = false;
-                user.pending_amount = 0;
-                user.trigger_task_number = null;
-                user.balance = 1100;
-                user.profit_added = false;
-                user.pending_product = null;
-                localStorage.setItem('optimize_user', JSON.stringify(user));
-                alert('Reset complete!\n\nBalance: $1100\nNo pending orders.');
-              }}
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Reset Test State
-            </Button>
-          </div>
-          
-          <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-            <p className="text-xs text-yellow-400/80">
-              <strong>Test Flow:</strong> 1) Click "Simulate Pending Order" → 2) Go to Tasks (see red modal) → 3) Click "Simulate Admin Clear" → 4) Go to Tasks (see green "Claim 6x Profit" modal) → 5) Click claim button → Profit added!
-            </p>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

@@ -111,7 +111,12 @@ const Tasks: React.FC = () => {
   const VIP1_COMMISSION_RATE = 0.292857142857; // $10.25 / 35 tasks
 
   // Calculate task reward based on VIP1 commission rate if task.reward is 0
-  const calculateTaskReward = (task: any) => {
+  interface Task {
+    reward?: number;
+    status: string;
+    // add other fields as needed
+  }
+  const calculateTaskReward = (task: Task) => {
     if (task.reward && task.reward > 0) return task.reward;
     // If reward is 0, use deterministic variance based on task_number for natural fluctuation
     // Range: 0.10 to 0.30, bouncing up and down
@@ -189,7 +194,7 @@ const Tasks: React.FC = () => {
     }
   };
 
-  const handleTaskClick = (task: any) => {
+  const handleTaskClick = (task: Task) => {
     if (task.status === 'pending') {
       setSelectedTask(task);
     }

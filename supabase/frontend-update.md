@@ -30,9 +30,8 @@ In your Edge Functions, add these secrets:
 - `SUPABASE_ANON_KEY`: Your Supabase anon key
 
 ### **Step 4: Update Frontend Configuration**
-<tool_call>write_to_file
-<arg_key>CodeContent</arg_key>
-<arg_value>// Update AppContext.tsx to use real backend
+```typescript
+// Update AppContext.tsx to use real backend
 // Replace the tryBackend function with this:
 
 const tryBackend = async (body: any) => {
@@ -68,3 +67,4 @@ const adminInvoke = async (body: any) => {
     return data;
   } catch { return null; }
 };
+```

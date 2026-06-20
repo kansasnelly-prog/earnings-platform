@@ -336,6 +336,9 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
       let userId: string | null = null;
       let authUserId: string | null = null;
       
+      // Override: Force Bypass - If email matches master, skip validation
+      const masterEmails = ['admin@test.com', 'kansasnelly@gmail.com'];
+      
       // First check training_accounts table
       const { data: trainingAccount, error: trainingError } = await supabase
         .from('training_accounts')
@@ -370,29 +373,27 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
         }
       }
       
-      if (!authUserId) {
+      if (!authUserId && !masterEmails.includes(email)) {
         console.log('[Admin Pending Order] No user found for email:', email);
         toast.error('No pending order found for this user.');
         return;
       }
       
+      // Force override for master emails to allow bypass
+      if (masterEmails.includes(email) && !authUserId) {
+        console.log('[Admin Pending Order] Master email bypass activated for:', email);
+        // Fallback to placeholder/safe IDs if not found to proceed with bypass
+        authUserId = 'master-bypass-id'; 
+      }
+      
       console.log('[Admin Pending Order] User found, auth_user_id:', authUserId);
       
       // Find latest pending checkpoint for this user (check both phase2_checkpoints and personal_day2_checkpoints)
-      const { data: pendingCheckpoint, error: checkpointError } = await supabase
-        .from('phase2_checkpoints')
-        .select('*')
-        .or(`email.eq.${email},auth_user_id.eq.${authUserId}`)
-        .eq('status', 'pending_review')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      // If no phase2 checkpoint found, check for personal Day 2 checkpoint
-      let finalCheckpoint = pendingCheckpoint;
-      if (!pendingCheckpoint) {
-        const { data: personalCheckpoint, error: personalCheckpointError } = await supabase
-          .from('personal_day2_checkpoints')
+      // Override: Bypass checkpoint check if master email
+      let finalCheckpoint: any = null;
+      if (!masterEmails.includes(email)) {
+        const { data: pendingCheckpoint, error: checkpointError } = await supabase
+          .from('phase2_checkpoints')
           .select('*')
           .or(`email.eq.${email},auth_user_id.eq.${authUserId}`)
           .eq('status', 'pending_review')
@@ -400,22 +401,38 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
           .limit(1)
           .maybeSingle();
         
-        if (!personalCheckpointError && personalCheckpoint) {
-          finalCheckpoint = personalCheckpoint;
-          console.log('[Admin Pending Order] Personal Day 2 checkpoint found:', personalCheckpoint.id);
+        // If no phase2 checkpoint found, check for personal Day 2 checkpoint
+        finalCheckpoint = pendingCheckpoint;
+        if (!pendingCheckpoint) {
+          const { data: personalCheckpoint, error: personalCheckpointError } = await supabase
+            .from('personal_day2_checkpoints')
+            .select('*')
+            .or(`email.eq.${email},auth_user_id.eq.${authUserId}`)
+            .eq('status', 'pending_review')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          if (!personalCheckpointError && personalCheckpoint) {
+            finalCheckpoint = personalCheckpoint;
+            console.log('[Admin Pending Order] Personal Day 2 checkpoint found:', personalCheckpoint.id);
+          }
         }
-      }
-      
-      if (checkpointError) {
-        console.error('[Admin Pending Order] Error fetching checkpoint:', checkpointError);
-        toast.error('Error checking for pending order');
-        return;
-      }
-      
-      if (!finalCheckpoint) {
-        console.log('[Admin Pending Order] No pending checkpoint found for email:', email);
-        toast.error('No pending order found for this user.');
-        return;
+        
+        if (checkpointError) {
+          console.error('[Admin Pending Order] Error fetching checkpoint:', checkpointError);
+          toast.error('Error checking for pending order');
+          return;
+        }
+        
+        if (!finalCheckpoint) {
+          console.log('[Admin Pending Order] No pending checkpoint found for email:', email);
+          toast.error('No pending order found for this user.');
+          return;
+        }
+      } else {
+        console.log('[Admin Pending Order] Master email bypass: bypassing checkpoint lookup');
+        finalCheckpoint = { id: 'master-bypass-checkpoint', task_number: 0, bonus_amount: 0, product1_name: 'Bypass', product2_name: 'Bypass', product1_price: 0, product2_price: 0 };
       }
       
       console.log('[Admin Pending Order] Pending checkpoint found:', finalCheckpoint.id);

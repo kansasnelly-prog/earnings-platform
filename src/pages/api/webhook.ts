@@ -1,10 +1,20 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Telegraf } from 'telegraf';
+import { createClient } from '@supabase/supabase-js';
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 if (!token) throw new Error('CRITICAL ERROR: TELEGRAM_BOT_TOKEN is missing from your Vercel Dashboard Environment Variables.');
 
 const bot = new Telegraf(token);
+
+// Initialize Supabase client for status checks
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let supabase: any = null;
+
+if (supabaseUrl && supabaseKey) {
+  supabase = createClient(supabaseUrl, supabaseKey);
+}
 
 // 🔒 MASTER IDENTITY IDENTITY LOCK (6STARS AUTHENTICATION CORE)
 const MASTER_ADMIN_ID = 7683177085; 
@@ -26,7 +36,25 @@ bot.use(async (ctx, next) => {
 
 // 📊 SYSTEM STATUS & EXECUTIVE ENVIRONMENT CONTROL
 bot.command('status', async (ctx) => {
+  // Check database connection
+  let dbStatus = 'Inactive';
+  if (supabase) {
+    try {
+      const { error } = await supabase.from('users').select('id').limit(1);
+      dbStatus = error ? 'Error' : 'Active';
+    } catch (err) {
+      dbStatus = 'Error';
+    }
+  }
+
+  // Check AI integration (OpenAI)
+  const aiKey = process.env.OPENAI_API_KEY;
+  const aiStatus = aiKey ? 'Ready' : 'Not Configured';
+
   const report = 
+    `📊 System Status: Online\n` +
+    `🗄️ Database Connection: ${dbStatus}\n` +
+    `🤖 AI Engine: ${aiStatus}\n\n` +
     `🌟 **6STARS GLOBAL EXECUTIVE SYSTEM (12vtg)**\n` +
     `----------------------------------\n` +
     `📁 **Core Analytics:** SILVE Business Framework Protected\n` +

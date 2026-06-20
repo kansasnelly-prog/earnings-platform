@@ -126,13 +126,46 @@ bot.command('status', async (ctx) => {
     }
   }
 
-  // Check AI integration (OpenAI)
-  const aiKey = process.env.OPENAI_API_KEY;
-  const aiStatus = aiKey ? 'Ready' : 'Not Configured';
+  // Check AI integration (OpenAI/Gemini)
+  const openaiKey = process.env.OPENAI_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY;
+  let aiStatus = 'Not Configured';
+  
+  if (openaiKey) {
+    aiStatus = 'Active [OpenAI GPT-4]';
+  } else if (geminiKey) {
+    aiStatus = 'Active [Google Gemini]';
+  }
 
-  // 6STARS GLOBAL PARADISE LEDGER Metrics
-  const usdtPool = 0; // This would be fetched from database in production
-  const ncCoinsPot = 0; // This would be fetched from database in production
+  // 6STARS GLOBAL PARADISE LEDGER Metrics - Live Financial Aggregation
+  let usdtPool = 0;
+  let ncCoinsPot = 0;
+  
+  if (supabase) {
+    try {
+      // Aggregate USDT Pool from user balances
+      const { data: usdtData, error: usdtError } = await supabase
+        .from('users')
+        .select('total_balance');
+      
+      if (!usdtError && usdtData) {
+        usdtPool = usdtData.reduce((sum, user) => sum + (user.total_balance || 0), 0);
+      }
+      
+      // Aggregate NC COINS Pot from user nc_coins
+      const { data: ncData, error: ncError } = await supabase
+        .from('users')
+        .select('nc_coins');
+      
+      if (!ncError && ncData) {
+        ncCoinsPot = ncData.reduce((sum, user) => sum + (user.nc_coins || 0), 0);
+      }
+    } catch (err) {
+      console.error('[FINANCIAL AGGREGATION ERROR]', err);
+      // Keep default values on error
+    }
+  }
+  
   const dualPipelineFlow = 'Active (30-sec intervals)';
 
   const report = 

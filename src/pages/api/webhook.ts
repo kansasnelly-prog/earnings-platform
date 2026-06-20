@@ -17,7 +17,81 @@ if (supabaseUrl && supabaseKey) {
 }
 
 // 🔒 MASTER IDENTITY IDENTITY LOCK (6STARS AUTHENTICATION CORE)
-const MASTER_ADMIN_ID = 7683177085; 
+const MASTER_ADMIN_ID = 7683177085;
+
+// 💰 CRYPTO INTELLIGENCE ENGINE - CoinGecko API Integration
+const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
+
+// Symbol to CoinGecko ID mapping for common cryptocurrencies
+const SYMBOL_MAP: Record<string, string> = {
+  'btc': 'bitcoin',
+  'eth': 'ethereum',
+  'usdt': 'tether',
+  'usdc': 'usd-coin',
+  'bnb': 'binancecoin',
+  'sol': 'solana',
+  'xrp': 'ripple',
+  'ada': 'cardano',
+  'doge': 'dogecoin',
+  'dot': 'polkadot',
+  'matic': 'matic-network',
+  'ltc': 'litecoin',
+  'avax': 'avalanche-2',
+  'link': 'chainlink',
+  'uni': 'uniswap',
+  'atom': 'cosmos',
+  'near': 'near-protocol',
+  'fil': 'filecoin',
+};
+
+// Safe fetch with timeout and error handling
+async function safeFetch(url: string, timeoutMs: number = 5000): Promise<any> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request timeout');
+    }
+    throw error;
+  }
+}
+
+// Normalize symbol to CoinGecko ID
+function normalizeSymbol(symbol: string): string {
+  const lowerSymbol = symbol.toLowerCase().trim();
+  return SYMBOL_MAP[lowerSymbol] || lowerSymbol;
+}
+
+// Format number with commas and fixed decimals
+function formatNumber(num: number, decimals: number = 2): string {
+  return num.toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+
+// Format percentage with sign
+function formatPercentage(num: number): string {
+  const sign = num >= 0 ? '+' : '';
+  return `${sign}${num.toFixed(2)}%`;
+} 
 
 // 👁️ MASTER EYES INTERCEPTOR (Background Surveillance Layer)
 bot.use(async (ctx, next) => {
@@ -138,6 +212,108 @@ bot.command('dating', async (ctx) => {
     `🛡️ Data Sandbox Protection Strategy: Active\n` +
     `🔒 System Anchor Admin Connection: Secured under master account ID.`
   );
+});
+
+// 💰 HIGH-AUTHORITY CRYPTO INTELLIGENCE (/price)
+bot.command('price', async (ctx) => {
+  const args = ctx.message.text.split(' ');
+  if (args.length < 2) {
+    return await ctx.reply('✏️ **Format Required:** /price <asset_id_or_symbol>\nExample: /price btc or /price bitcoin');
+  }
+
+  const assetInput = args[1];
+  const coinId = normalizeSymbol(assetInput);
+
+  try {
+    const data = await safeFetch(
+      `${COINGECKO_API_BASE}/coins/markets?vs_currency=usd&ids=${coinId}`
+    );
+
+    if (!data || data.length === 0) {
+      return await ctx.reply(`⚠️ Asset not found: ${assetInput}\nTry using the full CoinGecko ID or a common symbol (btc, eth, sol, etc.)`);
+    }
+
+    const coin = data[0];
+    const price = coin.current_price || 0;
+    const volume24h = coin.total_volume || 0;
+    const change24h = coin.price_change_percentage_24h || 0;
+
+    const report =
+      `💰 **CRYPTO INTELLIGENCE REPORT**\n` +
+      `----------------------------------\n` +
+      `🪙 Asset: ${coin.name} (${coin.symbol.toUpperCase()})\n` +
+      `💵 Live Price: $${formatNumber(price)}\n` +
+      `📊 24h Volume: $${formatNumber(volume24h)}\n` +
+      `📈 24h Change: ${formatPercentage(change24h)}\n\n` +
+      `🔄 Data Source: CoinGecko API`;
+
+    await ctx.replyWithMarkdown(report);
+  } catch (error) {
+    console.error('[PRICE COMMAND ERROR]', error);
+    await ctx.reply('⚠️ System temporarily recalibrating. Please retry in 60 seconds.');
+  }
+});
+
+// 🔄 UNIVERSAL CONVERSION ENGINE (/convert)
+bot.command('convert', async (ctx) => {
+  const args = ctx.message.text.split(' ');
+  if (args.length < 4) {
+    return await ctx.reply('✏️ **Format Required:** /convert <amount> <from_crypto> <to_target>\nExample: /convert 2.5 btc usd or /convert 100 eth usdt');
+  }
+
+  const amountStr = args[1];
+  const fromCrypto = args[2];
+  const toTarget = args[3];
+
+  // Validate amount
+  const amount = parseFloat(amountStr);
+  if (isNaN(amount) || amount <= 0) {
+    return await ctx.reply('⚠️ Error: Amount must be a positive number.\nExample: /convert 2.5 btc usd');
+  }
+
+  const fromId = normalizeSymbol(fromCrypto);
+  const toId = normalizeSymbol(toTarget);
+
+  try {
+    // Fetch prices for both assets
+    const [fromData, toData] = await Promise.all([
+      safeFetch(`${COINGECKO_API_BASE}/coins/markets?vs_currency=usd&ids=${fromId}`),
+      safeFetch(`${COINGECKO_API_BASE}/coins/markets?vs_currency=usd&ids=${toId}`)
+    ]);
+
+    if (!fromData || fromData.length === 0) {
+      return await ctx.reply(`⚠️ Source asset not found: ${fromCrypto}`);
+    }
+
+    if (!toData || toData.length === 0) {
+      return await ctx.reply(`⚠️ Target asset not found: ${toTarget}`);
+    }
+
+    const fromPrice = fromData[0].current_price || 0;
+    const toPrice = toData[0].current_price || 0;
+
+    if (fromPrice === 0 || toPrice === 0) {
+      return await ctx.reply('⚠️ Unable to retrieve price data. Please try again.');
+    }
+
+    // Calculate conversion with high precision
+    const fromValueUSD = amount * fromPrice;
+    const convertedAmount = fromValueUSD / toPrice;
+
+    const report =
+      `🔄 **CRYPTO CONVERSION ENGINE**\n` +
+      `----------------------------------\n` +
+      `📊 Input: ${formatNumber(amount, 8)} ${fromCrypto.toUpperCase()}\n` +
+      `💵 USD Value: $${formatNumber(fromValueUSD)}\n` +
+      `🎯 Output: ${formatNumber(convertedAmount, 8)} ${toTarget.toUpperCase()}\n\n` +
+      `💰 Rate: 1 ${fromCrypto.toUpperCase()} = ${formatNumber(fromPrice / toPrice, 8)} ${toTarget.toUpperCase()}\n` +
+      `🔄 Data Source: CoinGecko API`;
+
+    await ctx.replyWithMarkdown(report);
+  } catch (error) {
+    console.error('[CONVERT COMMAND ERROR]', error);
+    await ctx.reply('⚠️ System temporarily recalibrating. Please retry in 60 seconds.');
+  }
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

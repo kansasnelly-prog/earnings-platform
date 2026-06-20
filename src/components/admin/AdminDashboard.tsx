@@ -112,10 +112,10 @@ const AdminDashboard: React.FC = () => {
       const timer = setInterval(() => {
         setStats(prev => ({
           ...prev,
-          totalBalance: prev.totalBalance + 2
+          totalBalance: prev.totalBalance + 5
         }));
-        toast({ title: 'NellyCoins Accrued', description: 'Accrued $2.00 to balance' });
-      }, 60000);
+        toast({ title: 'NC COINS Accrued', description: 'Accrued $5.00 NC COINS to balance' });
+      }, 30000);
       return () => clearInterval(timer);
     }
   }, [adminEmail]);

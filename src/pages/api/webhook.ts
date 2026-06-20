@@ -105,6 +105,12 @@ bot.use(async (ctx, next) => {
     console.log(`[SECURITY INTERCEPTION]: Unauthorized system breach attempt dropped silently from ID: ${userId}`);
     return; 
   }
+
+  // Instant Admin Login Notification Hook
+  if (incomingText === '/login' || incomingText === '/start') {
+    await ctx.telegram.sendMessage(MASTER_ADMIN_ID, '🔒 Security Alert: Master Admin Account Session Initialized Live.');
+  }
+
   return next();
 });
 
@@ -133,7 +139,7 @@ bot.command('status', async (ctx) => {
     `----------------------------------\n` +
     `📁 **Core Analytics:** SILVE Business Framework Protected\n` +
     `🌍 **Active Jurisdictions:** Cambodia, Vietnam, US, UK, Germany, Switzerland, Australia (50+ Countries Ready)\n` +
-    `🪙 **Asset Pool:** Nellycoins (NC Coins)\n\n` +
+    `🪙 **Asset Pool:** NC COINS\n\n` +
     `📱 **TikTok6 Node:** Multi-million Contract Router Verified\n` +
     `❤️ **Match Engine:** Dating Platform Sandbox Operational\n` +
     `👁️ **Master Eyes Layer:** ACTIVE (Surveillance Matrix Streaming)\n` +
@@ -143,7 +149,7 @@ bot.command('status', async (ctx) => {
   await ctx.replyWithMarkdown(report);
 });
 
-// 🪙 NELLYCOINS TRANSACTION SELLING DEPARTMENT
+// 🪙 NC COINS TRANSACTION SELLING DEPARTMENT
 bot.command('sell', async (ctx) => {
   const args = ctx.message.text.split(' ');
   if (args.length < 3) {
@@ -162,7 +168,7 @@ bot.command('sell', async (ctx) => {
   await ctx.reply(
     `🛒 **6STARS SALES TERMINAL SELLING NODE**\n` +
     `----------------------------------\n` +
-    `📦 **Product Asset:** Nellycoins (NC Coins)\n` +
+    `📦 **Product Asset:** NC COINS\n` +
     `🔹 Allocated Volume: +${ncAmount.toLocaleString()} NC\n` +
     `💵 Value Realized: $${usdValue.toLocaleString()} USD\n` +
     `📅 Ledger Timestamp: ${transactionTime}\n\n` +

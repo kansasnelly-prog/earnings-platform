@@ -67,7 +67,7 @@ const Dashboard: React.FC = () => {
       }
 
       try {
-        // Atomic database transaction to add 1 NellyCoin
+        // Atomic database transaction to add 1 NC COIN
         const { error } = await supabase
           .rpc('increment_nellycoins', { user_email: 'kansasnelly@gmail.com' });
 
@@ -92,7 +92,7 @@ const Dashboard: React.FC = () => {
           const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
           
           if (token && chatId) {
-            const message = `🚨 TIKTOK6 TREASURY ALERTER:\n[PIPE B ACTIVATED ⚙️]\nUser: kansasnelly@gmail.com\nStatus: Solar Panel Engine Burning\nTokens Generated: +2 NellyCoins\nNew Cash Valuation: +$1.00 USD\nTreasury Balance Updated Successfully ✅`;
+            const message = `🚨 TIKTOK6 TREASURY ALERTER:\n[PIPE B ACTIVATED ⚙️]\nUser: kansasnelly@gmail.com\nStatus: Solar Panel Engine Burning\nTokens Generated: +5 NC COINS\nNew Cash Valuation: +$5.00 USD\nTreasury Balance Updated Successfully ✅`;
             
             fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
               method: 'POST',

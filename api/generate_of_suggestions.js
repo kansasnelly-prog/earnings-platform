@@ -1,7 +1,0 @@
-// Modern ES Module entry point for the frontend suggestions route
-import generateAiSuggestions from './generate-ai-suggestions.js';
-
-export default async function handler(req, res) {
-  console.log('[API Route] Forwarding frontend request to AI handler');
-  return await generateAiSuggestions(req, res);
-}

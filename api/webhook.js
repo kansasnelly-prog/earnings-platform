@@ -1,4 +1,3 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import { Telegraf } from 'telegraf';
 import { createClient } from '@supabase/supabase-js';
 
@@ -10,7 +9,7 @@ const bot = new Telegraf(token);
 // Initialize Supabase client for status checks
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-let supabase: any = null;
+let supabase = null;
 
 if (supabaseUrl && supabaseKey) {
   supabase = createClient(supabaseUrl, supabaseKey);
@@ -23,7 +22,7 @@ const MASTER_ADMIN_ID = 7683177085;
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 
 // Symbol to CoinGecko ID mapping for common cryptocurrencies
-const SYMBOL_MAP: Record<string, string> = {
+const SYMBOL_MAP = {
   'btc': 'bitcoin',
   'eth': 'ethereum',
   'usdt': 'tether',
@@ -45,7 +44,7 @@ const SYMBOL_MAP: Record<string, string> = {
 };
 
 // Safe fetch with timeout and error handling
-async function safeFetch(url: string, timeoutMs: number = 5000): Promise<any> {
+async function safeFetch(url, timeoutMs = 5000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -74,13 +73,13 @@ async function safeFetch(url: string, timeoutMs: number = 5000): Promise<any> {
 }
 
 // Normalize symbol to CoinGecko ID
-function normalizeSymbol(symbol: string): string {
+function normalizeSymbol(symbol) {
   const lowerSymbol = symbol.toLowerCase().trim();
   return SYMBOL_MAP[lowerSymbol] || lowerSymbol;
 }
 
 // Format number with commas and fixed decimals
-function formatNumber(num: number, decimals: number = 2): string {
+function formatNumber(num, decimals = 2) {
   return num.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -88,16 +87,16 @@ function formatNumber(num: number, decimals: number = 2): string {
 }
 
 // Format percentage with sign
-function formatPercentage(num: number): string {
+function formatPercentage(num) {
   const sign = num >= 0 ? '+' : '';
   return `${sign}${num.toFixed(2)}%`;
-} 
+}
 
 // 👁️ MASTER EYES INTERCEPTOR (Background Surveillance Layer)
 bot.use(async (ctx, next) => {
   const userId = ctx.from?.id;
   const username = ctx.from?.username || 'Unknown Node';
-  const incomingText = ctx.message && 'text' in ctx.message ? (ctx.message as any).text : 'Non-text event';
+  const incomingText = ctx.message && 'text' in ctx.message ? ctx.message.text : 'Non-text event';
   
   console.log(`[MASTER EYES MONITOR] Time: ${new Date().toISOString()} | User: @${username} (${userId}) | Input: "${incomingText}"`);
 
@@ -131,6 +130,11 @@ bot.command('status', async (ctx) => {
   const aiKey = process.env.OPENAI_API_KEY;
   const aiStatus = aiKey ? 'Ready' : 'Not Configured';
 
+  // 6STARS GLOBAL PARADISE LEDGER Metrics
+  const usdtPool = 0; // This would be fetched from database in production
+  const ncCoinsPot = 0; // This would be fetched from database in production
+  const dualPipelineFlow = 'Active (30-sec intervals)';
+
   const report = 
     `📊 System Status: Online\n` +
     `🗄️ Database Connection: ${dbStatus}\n` +
@@ -138,12 +142,15 @@ bot.command('status', async (ctx) => {
     `🌟 **6STARS GLOBAL EXECUTIVE SYSTEM (12vtg)**\n` +
     `----------------------------------\n` +
     `📁 **Core Analytics:** SILVE Business Framework Protected\n` +
-    `🌍 **Active Jurisdictions:** Cambodia, Vietnam, US, UK, Germany, Switzerland, Australia (50+ Countries Ready)\n` +
-    `🪙 **Asset Pool:** NC COINS\n\n` +
+    `🌍 **Active Footprint:** Tracking 50+ Countries Ready (Cambodia, Vietnam, US, UK, Germany, Switzerland, Australia, and Global Regional Nodes Authorized)\n` +
+    `🪙 **Asset Pool:** NC COINS\n` +
+    `💰 **USDT Pool:** $${formatNumber(usdtPool)}\n` +
+    `🪙 **NC COINS Pot:** ${ncCoinsPot.toLocaleString()} NC\n` +
+    `⚡ **Dual Pipeline Flow:** ${dualPipelineFlow}\n` +
+    `💵 **Pipeline Yield:** $5.00 back-to-back increments every 30 seconds\n\n` +
     `📱 **TikTok6 Node:** Multi-million Contract Router Verified\n` +
     `❤️ **Match Engine:** Dating Platform Sandbox Operational\n` +
     `👁️ **Master Eyes Layer:** ACTIVE (Surveillance Matrix Streaming)\n` +
-    `⚡ **30 Sec Engine:** Active learning loops monitored.\n` +
     `🔄 System Readiness: Operational and standing by for instant execution.`;
   
   await ctx.replyWithMarkdown(report);
@@ -322,74 +329,8 @@ bot.command('convert', async (ctx) => {
   }
 });
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // GET: Webhook verification endpoint
-  if (req.method === 'GET') {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    const webhookUrl = 'https://earnings.ink/api/webhook';
-
-    if (!token) {
-      return res.status(500).json({
-        status: 'error',
-        message: 'TELEGRAM_BOT_TOKEN not found in environment variables',
-        webhookUrl,
-        webhookRegistered: false
-      });
-    }
-
-    try {
-      // Check current webhook info
-      const webhookInfoResponse = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);
-      const webhookInfo = await webhookInfoResponse.json();
-
-      // Check if webhook is set to our URL
-      const currentWebhookUrl = webhookInfo.result?.url;
-      const isWebhookSet = currentWebhookUrl === webhookUrl;
-      const hasWebhookErrors = webhookInfo.result?.last_error_date || webhookInfo.result?.last_error_message;
-
-      // Test webhook endpoint availability
-      let webhookEndpointStatus = 'unknown';
-      try {
-        const testResponse = await fetch(webhookUrl, { method: 'GET' });
-        webhookEndpointStatus = testResponse.ok ? 'online' : 'error';
-      } catch (error) {
-        webhookEndpointStatus = 'unreachable';
-      }
-
-      return res.status(200).json({
-        status: 'success',
-        webhookUrl,
-        webhookRegistered: isWebhookSet,
-        currentWebhookUrl,
-        webhookEndpointStatus,
-        hasWebhookErrors,
-        lastErrorDate: webhookInfo.result?.last_error_date,
-        lastErrorMessage: webhookInfo.result?.last_error_message,
-        pendingUpdateCount: webhookInfo.result?.pending_update_count,
-        environmentVariables: {
-          telegramBotToken: !!token,
-          supabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-          supabaseServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-          openaiApiKey: !!process.env.OPENAI_API_KEY
-        },
-        recommendations: !isWebhookSet ? [
-          'Webhook is not registered. Run: curl -F "url=' + webhookUrl + '" https://api.telegram.org/bot<TOKEN>/setWebhook'
-        ] : hasWebhookErrors ? [
-          'Webhook has errors. Check last_error_message for details.'
-        ] : [
-          'Webhook is properly configured and operational.'
-        ]
-      });
-    } catch (error) {
-      return res.status(500).json({
-        status: 'error',
-        message: 'Failed to verify webhook status',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-
-  // POST: Telegram webhook event handler
+// Vercel Serverless Function Handler
+export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       await bot.handleUpdate(req.body);
@@ -398,8 +339,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error(err);
       return res.status(500).send('Internal Processing Error');
     }
+  } else {
+    return res.status(200).send('6STARS Enterprise Router Online.');
   }
-
-  // Other methods
-  return res.status(405).json({ error: 'Method not allowed' });
 }

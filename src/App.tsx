@@ -16,6 +16,8 @@ import Index from './pages/Index';
 import TikTokGate from './pages/TikTokGate';
 import AdminCommandDeck from './components/admin/AdminCommandDeck';
 import AIAssistantWorkspace from './pages/AIAssistantWorkspace';
+import DigitalHome from './pages/admin/index';
+import AdminMatchDigitalHome from './pages/admin-match/index';
 import MatchDashboard from './components/matchmaking/MatchDashboard';
 import MatchingFeed from './components/social/MatchingFeed';
 import AudioMatchRoom from './components/social/AudioMatchRoom';
@@ -199,10 +201,10 @@ const AppContent: React.FC = () => {
       <Routes>
         {/* Strict Admin Routes - Top Priority */}
         <Route element={<MasterAdminRoute><Outlet /></MasterAdminRoute>}>
-          <Route path="/admin-match" element={<AdminCommandDeck />} />
-          <Route element={<AdminLayout />}>
-            <Route path="/admin/*" element={<AIAssistantWorkspace />} />
-          </Route>
+          <Route path="/admin" element={<DigitalHome />} />
+          <Route path="/admin-match" element={<AdminMatchDigitalHome />} />
+          <Route path="/admin/command-deck" element={<AdminCommandDeck />} />
+          <Route path="/admin/ai" element={<AIAssistantWorkspace />} />
         </Route>
         
         {/* Public Routes */}

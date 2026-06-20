@@ -3,6 +3,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import LoadingSpinner from "./ui/LoadingSpinner";
 
 export const MASTER_ADMIN_EMAIL = 'kansasnelly@gmail.com';
+export const DUAL_ADMIN_EMAIL = 'admin@earnings.ink';
 
 /**
  * A wrapper that ensures the user is authenticated before rendering child routes.
@@ -59,6 +60,39 @@ export const MasterAdminRoute: React.FC<{ children: React.ReactNode }> = ({ chil
   // Ironclad email check - must match exactly
   if (user?.email !== MASTER_ADMIN_EMAIL) {
     console.error(`[SECURITY] Unauthorized admin access attempt by: ${user?.email}`);
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+/**
+ * Dual-admin route guard - allows both master and secondary admin accounts.
+ * Used for shared monitoring dashboards and analytics panels.
+ */
+export const DualAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  let authContext;
+  try {
+    authContext = useAuth();
+  } catch (e) {
+    console.error('DualAdminRoute: AuthProvider missing', e);
+    return null;
+  }
+  const { isAuthenticated, isLoading, user } = authContext;
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!isAuthenticated) {
+    console.error('[SECURITY] Unauthorized access attempt - not authenticated');
+    return <Navigate to="/" replace />;
+  }
+
+  // Dual-admin email check - allows both admin accounts
+  const isAuthorized = user?.email === MASTER_ADMIN_EMAIL || user?.email === DUAL_ADMIN_EMAIL;
+  if (!isAuthorized) {
+    console.error(`[SECURITY] Unauthorized dual-admin access attempt by: ${user?.email}`);
     return <Navigate to="/" replace />;
   }
 

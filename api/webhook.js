@@ -17,6 +17,16 @@ if (supabaseUrl && supabaseKey) {
 
 // 🔒 MASTER IDENTITY IDENTITY LOCK (6STARS AUTHENTICATION CORE)
 const MASTER_ADMIN_ID = 7683177085;
+// 🔒 DUAL-ADMIN TELEGRAM ID (Secondary monitoring account)
+// Set DUAL_ADMIN_TELEGRAM_ID env var to enable; falls back to master-only if unset
+const DUAL_ADMIN_ID = process.env.DUAL_ADMIN_TELEGRAM_ID ? parseInt(process.env.DUAL_ADMIN_TELEGRAM_ID, 10) : null;
+
+/** Check if a Telegram user ID is authorized (master or dual-admin) */
+function isAuthorizedAdmin(userId) {
+  if (userId === MASTER_ADMIN_ID) return true;
+  if (DUAL_ADMIN_ID && userId === DUAL_ADMIN_ID) return true;
+  return false;
+}
 
 // 💰 CRYPTO INTELLIGENCE ENGINE - CoinGecko API Integration
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
@@ -100,7 +110,7 @@ bot.use(async (ctx, next) => {
   
   console.log(`[MASTER EYES MONITOR] Time: ${new Date().toISOString()} | User: @${username} (${userId}) | Input: "${incomingText}"`);
 
-  if (userId !== MASTER_ADMIN_ID) {
+  if (!isAuthorizedAdmin(userId)) {
     console.log(`[SECURITY INTERCEPTION]: Unauthorized system breach attempt dropped silently from ID: ${userId}`);
     return; 
   }
@@ -108,6 +118,9 @@ bot.use(async (ctx, next) => {
   // Instant Admin Login Notification Hook
   if (incomingText === '/login' || incomingText === '/start') {
     await ctx.telegram.sendMessage(MASTER_ADMIN_ID, '🔒 Security Alert: Master Admin Account Session Initialized Live.');
+    if (DUAL_ADMIN_ID) {
+      await ctx.telegram.sendMessage(DUAL_ADMIN_ID, '🔒 Security Alert: Admin Session Initialized Live.');
+    }
   }
 
   return next();
@@ -424,10 +437,4 @@ export default async function handler(req, res) {
   } else {
     return res.status(200).send('6STARS Enterprise Router Online.');
   }
-}</arg_value>
-<task_progress>
-- [x] Run tsc to identify errors
-- [x] Fix 10 errors and 12 warnings
-- [ ] Rebuild with vercel --prod --force
-</task_progress>
-</write_to_file>
+}

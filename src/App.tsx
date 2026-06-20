@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from './components/ui/tooltip';
 import { Toaster } from './components/ui/toaster';
@@ -10,7 +10,8 @@ import { AuthProvider } from './contexts/SafeAuthProvider';
 import { AppProvider } from './contexts/AppContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import AdminLayout from './components/admin/AdminLayout';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute, { MasterAdminRoute } from './components/ProtectedRoute';
+import PlatformSwitch from './components/PlatformSwitch';
 import Index from './pages/Index';
 import TikTokGate from './pages/TikTokGate';
 import AdminCommandDeck from './components/admin/AdminCommandDeck';
@@ -196,40 +197,56 @@ const AppContent: React.FC = () => {
 
   if (isMatchAdminRoute) {
     return (
-      <Routes>
-        <Route path="/admin-match" element={<AdminCommandDeck />} />
-      </Routes>
+      <>
+        <PlatformSwitch />
+        <Routes>
+          <Route 
+            path="/admin-match" 
+            element={
+              <MasterAdminRoute>
+                <AdminCommandDeck />
+              </MasterAdminRoute>
+            } 
+          />
+        </Routes>
+      </>
     );
   }
 
   if (isAdminRoute) {
     return (
-      <Routes>
-        <Route path="/admin/*" element={<AdminLayout />}>
-          <Route index element={<AIAssistantWorkspace />} />
-        </Route>
-      </Routes>
+      <>
+        <PlatformSwitch />
+        <Routes>
+          <Route element={<MasterAdminRoute><Outlet /></MasterAdminRoute>}>
+            <Route path="/admin/*" element={<AdminLayout><AIAssistantWorkspace /></AdminLayout>} />
+          </Route>
+        </Routes>
+      </>
     );
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/tiktok6" element={<TikTokGate />} />
-      <Route element={<ProtectedRoute />}>
-        <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
-      </Route>
-      <Route path="/match-feed" element={<MatchingFeed />} />
-      <Route path="/voice-match" element={<AudioMatchRoom />} />
-      <Route path="/premium-chat" element={<PremiumChatView />} />
-      <Route path="/inbox" element={<Inbox />} />
-      <Route path="/friends" element={<FriendsPage />} />
-      <Route path="/messages/:conversationId" element={<MessageConversation />} />
-      <Route path="/story/:storyId" element={<StoryViewer />} />
-      <Route path="/explore" element={<ExplorePage />} />
-      <Route path="/profile/:userId" element={<CreatorProfile />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <>
+      <PlatformSwitch />
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/tiktok6" element={<TikTokGate />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
+        </Route>
+        <Route path="/match-feed" element={<MatchingFeed />} />
+        <Route path="/voice-match" element={<AudioMatchRoom />} />
+        <Route path="/premium-chat" element={<PremiumChatView />} />
+        <Route path="/inbox" element={<Inbox />} />
+        <Route path="/friends" element={<FriendsPage />} />
+        <Route path="/messages/:conversationId" element={<MessageConversation />} />
+        <Route path="/story/:storyId" element={<StoryViewer />} />
+        <Route path="/explore" element={<ExplorePage />} />
+        <Route path="/profile/:userId" element={<CreatorProfile />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 };
 

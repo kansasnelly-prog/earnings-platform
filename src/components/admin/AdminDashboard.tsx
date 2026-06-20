@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import {
   LayoutDashboard, Users, ArrowDownToLine, RefreshCw, Shield, ChevronLeft,
-  BarChart3, Activity, Zap, Lock, Eye, EyeOff, LogIn, Database, Coins
+  BarChart3, Activity, Zap, Lock, Eye, EyeOff, LogIn, Database, Coins, Wallet
 } from 'lucide-react';
 import AdminStatsCards, { PlatformStats } from './AdminStatsCards';
 import AdminUsersTable, { AdminUser } from './AdminUsersTable';
@@ -12,6 +12,7 @@ import AdminWithdrawalsTable, { AdminWithdrawal } from './AdminWithdrawalsTable'
 import UserDetailsModal from './UserDetailsModal';
 import AdminCommandDeck from './AdminCommandDeck';
 import { SupabaseService } from '@/services/supabaseService';
+import { MASTER_TREASURY, getAllTreasuryAddresses } from '@/config/treasury';
 
 // Mock data for demo when backend has no data
 const generateMockUsers = (): AdminUser[] => {
@@ -794,6 +795,32 @@ const AdminDashboard: React.FC = () => {
                     <p className="text-xs text-gray-500 italic">Waiting for dual pipeline flow...</p>
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* 🔒 MASTER TREASURY CONFIGURATION - Multi-Chain Settlement Destinations */}
+            <div className="bg-gradient-to-br from-emerald-900/30 to-teal-900/30 border border-emerald-500/40 rounded-2xl p-6">
+              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <Wallet size={20} className="text-emerald-400" />
+                🔒 Master Treasury Configuration
+              </h2>
+              
+              <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-4 mb-4">
+                <p className="text-sm text-emerald-200 font-medium">
+                  Multi-Chain Settlement Destinations - Verified Master Public Deposit Addresses
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {getAllTreasuryAddresses().map(({ network, displayName, address }) => (
+                  <div key={network} className="bg-black/40 rounded-xl p-4 border border-emerald-500/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-emerald-300 font-semibold">{displayName}</p>
+                      <p className="text-[10px] text-gray-500 font-mono">{network}</p>
+                    </div>
+                    <p className="text-xs text-gray-300 font-mono break-all">{address}</p>
+                  </div>
+                ))}
               </div>
             </div>
             

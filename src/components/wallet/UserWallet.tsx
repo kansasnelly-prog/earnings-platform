@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
+import { MASTER_TREASURY } from '@/config/treasury';
 
 const UserWallet: React.FC = () => {
   const [selectedCountry, setSelectedCountry] = useState<'nigeria' | 'cambodia' | 'global'>('nigeria');
@@ -442,8 +443,8 @@ const UserWallet: React.FC = () => {
                   </p>
                   <p className="text-white text-xs break-all font-mono">
                     {cryptoType === 'USDT'
-                      ? 'T9yX14BjQJ9E1GDv8Y4s9Z2f3W4R5T6Y7U8I9O0P'
-                      : 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'}
+                      ? MASTER_TREASURY.USDT_TRC20
+                      : MASTER_TREASURY.BTC}
                   </p>
                 </div>
               </div>

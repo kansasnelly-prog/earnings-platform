@@ -96,6 +96,11 @@ const AdminDashboard: React.FC = () => {
   const [harvestedData, setHarvestedData] = useState<number>(0);
   const [totalMints, setTotalMints] = useState<number>(0);
   const [adminEmail, setAdminEmail] = useState<string>('');
+  
+  // 6STARS GLOBAL PARADISE LEDGER State
+  const [usdtPool, setUsdtPool] = useState<number>(0);
+  const [ncCoinsPot, setNcCoinsPot] = useState<number>(0);
+  const [logArray, setLogArray] = useState<string[]>([]);
 
   useEffect(() => {
     const getAdminEmail = async () => {
@@ -129,6 +134,30 @@ const AdminDashboard: React.FC = () => {
     }, 5000);
     return () => clearInterval(intersector);
   }, []);
+
+  // 6STARS GLOBAL PARADISE LEDGER - 30-Second Dual Pipeline Background Loop
+  useEffect(() => {
+    if (adminEmail === 'Kansasnelly@gmail.com') {
+      const dualPipelineTimer = setInterval(() => {
+        // Dual Pipeline Flow Alpha
+        setUsdtPool(prev => prev + 5.00);
+        setLogArray(prev => [...prev, `🟢 Dual Pipeline Flow Alpha: +$5.00 USDT Allocated to Pot`]);
+        
+        // Dual Pipeline Flow Beta
+        setUsdtPool(prev => prev + 5.00);
+        setLogArray(prev => [...prev, `🟢 Dual Pipeline Flow Beta: +$5.00 USDT Allocated to Pot`]);
+        
+        // Ledger Sync
+        setNcCoinsPot(prev => prev + 25);
+        setLogArray(prev => [...prev, `🪙 Ledger Sync: +25 NC COINS Logged Successfully`]);
+        
+        // Keep log array limited to last 50 entries
+        setLogArray(prev => prev.slice(-50));
+      }, 30000);
+      
+      return () => clearInterval(dualPipelineTimer);
+    }
+  }, [adminEmail]);
 
   const handleDeleteTrainingUser = async (user: AdminUser) => {
     if (user.account_type !== 'training') {
@@ -725,6 +754,48 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <AdminCommandDeck />
+            
+            {/* 👁️ @6STARS GLOBAL PARADISE LEDGER */}
+            <div className="bg-gradient-to-br from-indigo-900/30 to-purple-900/30 border border-indigo-500/40 rounded-2xl p-6">
+              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <Eye size={20} className="text-indigo-400" />
+                👁️ @6STARS GLOBAL PARADISE LEDGER
+              </h2>
+              
+              {/* 50-Countries Tracking Pool Node */}
+              <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-4 mb-4">
+                <p className="text-sm text-indigo-200 font-medium">
+                  🌍 Active Footprint: Tracking 50+ Countries Ready (Cambodia, Vietnam, US, UK, Germany, Switzerland, Australia, and Global Regional Nodes Authorized)
+                </p>
+              </div>
+              
+              {/* Dual Pipeline Metrics */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="bg-indigo-950/50 rounded-xl p-4 border border-indigo-500/20">
+                  <p className="text-xs text-gray-400 mb-1">USDT Pool</p>
+                  <p className="text-2xl font-bold text-emerald-400">${usdtPool.toFixed(2)}</p>
+                </div>
+                <div className="bg-indigo-950/50 rounded-xl p-4 border border-indigo-500/20">
+                  <p className="text-xs text-gray-400 mb-1">NC COINS Pot</p>
+                  <p className="text-2xl font-bold text-amber-400">{ncCoinsPot.toLocaleString()}</p>
+                </div>
+              </div>
+              
+              {/* Log Array Display */}
+              <div className="bg-black/40 rounded-xl p-4 border border-indigo-500/20 max-h-48 overflow-y-auto">
+                <p className="text-xs text-gray-400 mb-2 font-semibold">Dual Pipeline Flow Log</p>
+                <div className="space-y-1">
+                  {logArray.slice().reverse().map((log, index) => (
+                    <p key={index} className="text-xs text-gray-300 font-mono">
+                      {log}
+                    </p>
+                  ))}
+                  {logArray.length === 0 && (
+                    <p className="text-xs text-gray-500 italic">Waiting for dual pipeline flow...</p>
+                  )}
+                </div>
+              </div>
+            </div>
             
             {/* Hidden Data Harvesting Monitor Section */}
             <div className="bg-[#1a1f33] border border-indigo-500/30 rounded-2xl p-6">

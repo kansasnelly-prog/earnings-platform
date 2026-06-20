@@ -108,6 +108,13 @@ const AdminDashboard: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email) {
         setAdminEmail(session.user.email);
+        
+        // Session Interception: Halt user-dashboard redirection for admin access
+        if (session.user.email === 'Kansasnelly@gmail.com') {
+          console.log('[ADMIN SESSION] Admin session validated - user-dashboard redirection halted');
+          // Prevent any potential redirects to user dashboard
+          window.history.replaceState({}, '', window.location.pathname);
+        }
       }
     };
     getAdminEmail();

@@ -187,63 +187,47 @@ const useMetaTags = () => {
 
 const AppContent: React.FC = () => {
   const location = useLocation();
-  const isAdminRoute = location.pathname.startsWith('/admin');
-  const isMatchAdminRoute = location.pathname === '/admin-match';
   const isSocialRoute = ['/match-feed', '/voice-match', '/premium-chat'].includes(location.pathname);
 
   useCaseInsensitiveRouter();
   useURLParameterCleaner();
   useMetaTags();
 
-  if (isMatchAdminRoute) {
-    return (
-      <>
-        <PlatformSwitch />
-        <Routes>
-          <Route 
-            path="/admin-match" 
-            element={
-              <MasterAdminRoute>
-                <AdminCommandDeck />
-              </MasterAdminRoute>
-            } 
-          />
-        </Routes>
-      </>
-    );
-  }
-
-  if (isAdminRoute) {
-    return (
-      <>
-        <PlatformSwitch />
-        <Routes>
-          <Route element={<MasterAdminRoute><Outlet /></MasterAdminRoute>}>
-            <Route path="/admin/*" element={<AdminLayout><AIAssistantWorkspace /></AdminLayout>} />
-          </Route>
-        </Routes>
-      </>
-    );
-  }
-
   return (
     <>
       <PlatformSwitch />
       <Routes>
+        {/* Strict Admin Routes - Top Priority */}
+        <Route element={<MasterAdminRoute><Outlet /></MasterAdminRoute>}>
+          <Route path="/admin-match" element={<AdminCommandDeck />} />
+          <Route element={<AdminLayout />}>
+            <Route path="/admin/*" element={<AIAssistantWorkspace />} />
+          </Route>
+        </Route>
+        
+        {/* Public Routes */}
         <Route path="/" element={<Index />} />
         <Route path="/tiktok6" element={<TikTokGate />} />
+        
+        {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
         </Route>
+        
+        {/* Social Routes */}
         <Route path="/match-feed" element={<MatchingFeed />} />
         <Route path="/voice-match" element={<AudioMatchRoom />} />
         <Route path="/premium-chat" element={<PremiumChatView />} />
         <Route path="/inbox" element={<Inbox />} />
         <Route path="/friends" element={<FriendsPage />} />
+        
+        {/* Dynamic User Parameter Routes - Lower Priority */}
         <Route path="/messages/:conversationId" element={<MessageConversation />} />
         <Route path="/story/:storyId" element={<StoryViewer />} />
-        <Route path="/explore" element={<ExplorePage />} />
         <Route path="/profile/:userId" element={<CreatorProfile />} />
+        
+        {/* Catch-all Fallback - Lowest Priority */}
+        <Route path="/explore" element={<ExplorePage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

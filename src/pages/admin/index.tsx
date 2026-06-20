@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../../contexts/SafeAuthProvider';
 import { MASTER_ADMIN_EMAIL, DUAL_ADMIN_EMAIL } from '../../components/ProtectedRoute';
 import Navbar from '../../components/Navbar';
+import TikTok6ConversionChart from '../../components/admin/TikTok6ConversionChart';
 
 /**
  * Digital Home Dashboard Grid Layer - Admin Panel
@@ -96,8 +97,8 @@ export default function DigitalHome() {
             </div>
           </div>
 
-          {/* Door 4: TikTok6 Node */}
-          <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 shadow-2xl shadow-slate-950/50 hover:border-pink-500/30 transition-all duration-300">
+          {/* Door 4: TikTok6 Node — with Conversion Tracker Chart */}
+          <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 shadow-2xl shadow-slate-950/50 hover:border-pink-500/30 transition-all duration-300 lg:col-span-2">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
                 <span className="text-xl">📱</span>
@@ -111,6 +112,9 @@ export default function DigitalHome() {
               <span className="px-2 py-1 text-xs rounded-md bg-pink-500/10 text-pink-400 border border-pink-500/20">Active</span>
               <span className="px-2 py-1 text-xs rounded-md bg-slate-700/50 text-slate-400 border border-slate-600/30">Global</span>
             </div>
+
+            {/* Animated Product Conversion Tracker Chart */}
+            <TikTok6ConversionChart />
           </div>
 
           {/* Door 5: Match Engine */}

@@ -2,7 +2,7 @@ import { useAuth } from "../contexts/SafeAuthProvider";
 import { Navigate, Outlet } from "react-router-dom";
 import LoadingSpinner from "./ui/LoadingSpinner";
 
-const MASTER_ADMIN_EMAIL = 'kansasnelly@gmail.com';
+export const MASTER_ADMIN_EMAIL = 'kansasnelly@gmail.com';
 
 /**
  * A wrapper that ensures the user is authenticated before rendering child routes.

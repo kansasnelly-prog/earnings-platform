@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../../contexts/SafeAuthProvider';
 import Navbar from '../Navbar';
 import { Outlet } from 'react-router-dom';
+import { MASTER_ADMIN_EMAIL } from '../ProtectedRoute';
 
 /**
  * AdminLayout is a simple wrapper that ensures the user is authenticated
@@ -17,7 +18,8 @@ const AdminLayout: React.FC = ({ children }) => {
   }
 
   // If authenticated but not an admin, show access denied
-  if (!isAdmin) {
+  // Allow master admin to bypass isAdmin check
+  if (!isAdmin && user?.email !== MASTER_ADMIN_EMAIL) {
     return <div className="p-4">Access denied. Admins only.</div>;
   }
 

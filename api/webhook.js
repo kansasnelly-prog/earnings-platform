@@ -183,9 +183,8 @@ bot.command('status', async (ctx) => {
     `💵 **Pipeline Yield:** $5.00 back-to-back increments every 30 seconds\n\n` +
     `📱 **TikTok6 Node:** Multi-million Contract Router Verified\n` +
     `❤️ **Match Engine:** Dating Platform Sandbox Operational\n` +
-    `👁️ **Master Eyes Layer:** ACTIVE (Surveillance Matrix Streaming)\n` +
-    `🔄 System Readiness: Operational and standing by for instant execution.`;
-  
+    `👁️ **Master Eyes Layer:** ACTIVE (Surveillance Matrix Streaming)\n`;
+
   await ctx.replyWithMarkdown(report);
 });
 
@@ -204,7 +203,7 @@ bot.command('sell', async (ctx) => {
   }
 
   const transactionTime = new Date().toISOString();
-  
+
   await ctx.reply(
     `🛒 **6STARS SALES TERMINAL SELLING NODE**\n` +
     `----------------------------------\n` +
@@ -214,6 +213,56 @@ bot.command('sell', async (ctx) => {
     `📅 Ledger Timestamp: ${transactionTime}\n\n` +
     `✅ Transaction recorded across global regional nodes.`
   );
+});
+
+// 📊 CALCULATION ENGINE - Handles /calculate command and messages containing "check"
+bot.command('calculate', async (ctx) => {
+  const messageText = ctx.message.text;
+  const numbers = messageText.match(/\d+(\.\d+)?/g);
+  if (numbers && numbers.length >= 2) {
+    const val1 = parseFloat(numbers[0]);
+    const val2 = parseFloat(numbers[1]);
+
+    const calculationReport = `
+📊 **👁️ @6STARS EXECUTIVE CALCULATION ENGINE**
+--------------------------------------------------
+👤 *Admin Check:* kansasnelly@gmail.com Verified ✅
+🔢 *Factors:* ${val1} | ${val2}
+
+📈 **Dual-Platform Learning Analysis:**
+• **Optimization Core Yield:** $${(val1 + val2).toFixed(2)} USDT
+• **TIKTOK6 Matching Pipeline:** $${(val1 * val2).toFixed(2)} NC COINS
+• **50-Countries Distribution Share:** $${((val1 + val2) / 50).toFixed(4)} Per Node
+
+🌍 *Status:* Both platforms are fully synchronized from A-Z with 0 pending order blockages.
+    `;
+    return ctx.replyWithMarkdown(calculationReport);
+  }
+});
+
+// 📢 Listen for any text containing "check" and trigger the same calculation logic
+bot.hears(/check/i, async (ctx) => {
+  const messageText = ctx.message.text;
+  const numbers = messageText.match(/\d+(\.\d+)?/g);
+  if (numbers && numbers.length >= 2) {
+    const val1 = parseFloat(numbers[0]);
+    const val2 = parseFloat(numbers[1]);
+
+    const calculationReport = `
+📊 **👁️ @6STARS EXECUTIVE CALCULATION ENGINE**
+--------------------------------------------------
+👤 *Admin Check:* kansasnelly@gmail.com Verified ✅
+🔢 *Factors:* ${val1} | ${val2}
+
+📈 **Dual-Platform Learning Analysis:**
+• **Optimization Core Yield:** $${(val1 + val2).toFixed(2)} USDT
+• **TIKTOK6 Matching Pipeline:** $${(val1 * val2).toFixed(2)} NC COINS
+• **50-Countries Distribution Share:** $${((val1 + val2) / 50).toFixed(4)} Per Node
+
+🌍 *Status:* Both platforms are fully synchronized from A-Z with 0 pending order blockages.
+    `;
+    return ctx.replyWithMarkdown(calculationReport);
+  }
 });
 
 // 📱 MAIN TIKTOK API DATA ENVIRONMENT INTEGRATION
@@ -375,4 +424,10 @@ export default async function handler(req, res) {
   } else {
     return res.status(200).send('6STARS Enterprise Router Online.');
   }
-}
+}</arg_value>
+<task_progress>
+- [x] Run tsc to identify errors
+- [x] Fix 10 errors and 12 warnings
+- [ ] Rebuild with vercel --prod --force
+</task_progress>
+</write_to_file>

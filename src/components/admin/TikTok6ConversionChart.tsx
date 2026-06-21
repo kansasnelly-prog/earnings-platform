@@ -196,7 +196,7 @@ export default function TikTok6ConversionChart() {
                 {/* Shimmer effect on active bar */}
                 {isActive && (
                   <div
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-full animate-[shimmer_2s_infinite]"
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-full animate-shimmer"
                     style={{ width: `${barWidth}%` }}
                   ></div>
                 )}

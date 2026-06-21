@@ -29,22 +29,22 @@ const ProductPreloader: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
     <div className="flex flex-col items-center justify-center py-16">
       {/* Animated loading rings */}
       <div className="relative w-28 h-28 mb-6">
-        <div className="absolute inset-0 rounded-full border-2 border-indigo-500/20 animate-ping duration-[1500ms]" />
-        <div className="absolute inset-2 rounded-full border-2 border-purple-500/30 animate-ping duration-[1800ms] delay-[200ms]" />
-        <div className="absolute inset-4 rounded-full border-2 border-pink-500/20 animate-ping duration-[2000ms] delay-[400ms]" />
+        <div className="absolute inset-0 rounded-full border-2 border-indigo-500/20 animate-ping" style={{ animationDuration: '1500ms' }} />
+        <div className="absolute inset-2 rounded-full border-2 border-purple-500/30 animate-ping" style={{ animationDuration: '1800ms', animationDelay: '200ms' }} />
+        <div className="absolute inset-4 rounded-full border-2 border-pink-500/20 animate-ping" style={{ animationDuration: '2000ms', animationDelay: '400ms' }} />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center backdrop-blur-sm">
             <Package size={24} className="text-indigo-400 animate-pulse" />
           </div>
         </div>
         {/* Orbiting dots */}
-        <div className="absolute inset-0 animate-spin duration-[3000ms]">
+        <div className="absolute inset-0 animate-spin" style={{ animationDuration: '3000ms' }}>
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-indigo-400 rounded-full" />
         </div>
-        <div className="absolute inset-0 animate-spin duration-[3000ms] direction-reverse delay-[500ms]">
+        <div className="absolute inset-0 animate-spin direction-reverse" style={{ animationDuration: '3000ms', animationDelay: '500ms' }}>
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-purple-400 rounded-full" />
         </div>
-        <div className="absolute inset-0 animate-spin duration-[4000ms]">
+        <div className="absolute inset-0 animate-spin" style={{ animationDuration: '4000ms' }}>
           <div className="absolute top-1/2 right-0 -translate-y-1/2 w-1.5 h-1.5 bg-pink-400 rounded-full" />
         </div>
       </div>
@@ -1268,8 +1268,8 @@ const allComplete = displayCompletedCount === totalTasks;
           <div className="bg-[#0f1420] border border-white/[0.1] rounded-2xl w-full max-w-md p-8 text-center shadow-2xl">
             <div className="relative w-20 h-20 mx-auto mb-6">
               <div className="absolute inset-0 rounded-full border-4 border-indigo-500/30 animate-ping" />
-              <div className="absolute inset-0 rounded-full border-4 border-purple-500/30 animate-ping delay-[500ms]" />
-              <div className="absolute inset-0 rounded-full border-4 border-pink-500/30 animate-ping delay-[1000ms]" />
+              <div className="absolute inset-0 rounded-full border-4 border-purple-500/30 animate-ping" style={{ animationDelay: '500ms' }} />
+              <div className="absolute inset-0 rounded-full border-4 border-pink-500/30 animate-ping" style={{ animationDelay: '1000ms' }} />
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center">
                 <Sparkles className="w-8 h-8 text-indigo-400 animate-pulse" />
               </div>

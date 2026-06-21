@@ -1,33 +1,21 @@
 import React from 'react';
 import { useAuth } from '../../contexts/SafeAuthProvider';
-import { MASTER_ADMIN_EMAIL, DUAL_ADMIN_EMAIL } from '../../components/ProtectedRoute';
 import Navbar from '../../components/Navbar';
 import TikTok6ConversionChart from '../../components/admin/TikTok6ConversionChart';
 
 /**
  * Digital Home Dashboard Grid Layer - Admin Panel
  * Ultra-premium executive digital estate interface
+ * Note: Authorization is handled by MasterAdminRoute wrapper in App.tsx
  */
 export default function DigitalHome() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
+  // Show loading spinner while session is being restored from Supabase
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  const isAuthorized = user?.email === MASTER_ADMIN_EMAIL || user?.email === DUAL_ADMIN_EMAIL;
-  if (!isAuthorized) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <p className="text-red-400">Access denied. Admins only.</p>
       </div>
     );
   }

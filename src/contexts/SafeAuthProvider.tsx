@@ -29,7 +29,7 @@ const initialState: AuthState = {
   user: null,
   isAdmin: false,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true,  // Start loading so route guards wait for session restore
   error: null,
 };
 

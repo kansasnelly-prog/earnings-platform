@@ -18,6 +18,7 @@ import AdminCommandDeck from './components/admin/AdminCommandDeck';
 import AIAssistantWorkspace from './pages/AIAssistantWorkspace';
 import DigitalHome from './pages/admin/index';
 import AdminMatchDigitalHome from './pages/admin-match/index';
+import TikTok6DatingCockpit from './pages/TikTok6DatingCockpit';
 import MatchDashboard from './components/matchmaking/MatchDashboard';
 import MatchingFeed from './components/social/MatchingFeed';
 import AudioMatchRoom from './components/social/AudioMatchRoom';
@@ -210,6 +211,7 @@ const AppContent: React.FC = () => {
         {/* Public Routes */}
         <Route path="/" element={<Index />} />
         <Route path="/tiktok6" element={<TikTokGate />} />
+        <Route path="/dating-cockpit" element={<TikTok6DatingCockpit />} />
         
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>

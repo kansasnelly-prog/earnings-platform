@@ -31,6 +31,7 @@ import ExplorePage from './components/social/ExplorePage';
 import CreatorProfile from './components/social/CreatorProfile';
 import FriendsPage from './components/social/FriendsPage';
 import NotFound from './pages/NotFound';
+import UserProfilePage from './pages/TikTok6MeProfile';
 import { supabase } from './lib/supabase';
 import { useAuth } from './contexts/SafeAuthProvider';
 
@@ -218,6 +219,9 @@ const AppContent: React.FC = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
         </Route>
+        
+        {/* Profile Routes */}
+        <Route path="/me" element={<UserProfilePage />} />
         
         {/* Social Routes */}
         <Route path="/match-feed" element={<MatchingFeed />} />

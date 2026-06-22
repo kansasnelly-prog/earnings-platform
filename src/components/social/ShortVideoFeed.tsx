@@ -130,7 +130,7 @@ const ShortVideoFeed = () => {
             <Plus size={24} className="text-black" />
           </button>
           <button className="flex flex-col items-center gap-1"><MessageSquare size={24} /></button>
-          <button className="flex flex-col items-center gap-1"><User size={24} /></button>
+          <button onClick={() => window.location.href = '/me'} className="flex flex-col items-center gap-1"><User size={24} /></button>
         </div>
       </div>
       {/* Floating HUD button */}

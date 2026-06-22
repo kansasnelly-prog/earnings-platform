@@ -116,6 +116,11 @@ export const setupRealtimeListeners = () => {
   };
 };
 
+export const logAdminAction = async (action: string, admin: string, details: any) => {
+  // Implementation...
+  console.log(`[Admin Action] ${action} by ${admin}`, details);
+};
+
 // Telegram notification function
 export const sendTelegramNotification = async (type: string, data: any) => {
   try {

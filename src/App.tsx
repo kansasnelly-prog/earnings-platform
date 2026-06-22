@@ -17,7 +17,7 @@ import TikTokGate from './pages/TikTokGate';
 import AdminCommandDeck from './components/admin/AdminCommandDeck';
 import AIAssistantWorkspace from './pages/AIAssistantWorkspace';
 import DigitalHome from './pages/admin/index';
-import AdminDashboard from './components/admin/EnhancedAdminDashboard';
+import EnhancedAdminDashboard from './components/admin/EnhancedAdminDashboard';
 import AdminMatchDigitalHome from './pages/admin-match/index';
 import TikTok6SoulmateHub from './pages/TikTok6SoulmateHub';
 import TikTok6DatingCockpit from './pages/TikTok6DatingCockpit';

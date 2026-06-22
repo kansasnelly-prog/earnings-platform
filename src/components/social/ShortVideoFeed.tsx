@@ -5,6 +5,7 @@ import MatchmakingOverlay from './MatchmakingOverlay';
 import { supabase } from '@/lib/supabase';
 import { Volume2, VolumeX, Heart, MessageCircle, Home, Users, Plus, User, MessageSquare } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
+import { useNavigate } from 'react-router-dom';
 
 interface CreatorVideo {
   id: string;
@@ -24,6 +25,7 @@ const FALLBACK_VIDEO_URL = "https://www.w3schools.com/html/mov_bbb.mp4";
 
 const ShortVideoFeed = () => {
   const { user } = useAppContext();
+  const navigate = useNavigate();
   const [videos, setVideos] = useState<CreatorVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [muted, setMuted] = useState(true);
@@ -125,7 +127,7 @@ const ShortVideoFeed = () => {
         {/* Bottom navigation – pinned inside the 450px slot */}
         <div className="max-w-[450px] mx-auto absolute bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-t border-white/10 p-4 flex justify-between items-center text-white">
           <button className="flex flex-col items-center gap-1"><Home size={24} /></button>
-          <button className="flex flex-col items-center gap-1"><Users size={24} /></button>
+          <button className="flex flex-col items-center gap-1" onClick={() => navigate('/soulmate')}><Heart size={24} /></button>
           <button className="flex items-center justify-center w-12 h-9 bg-white rounded-lg border-2 border-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.5)]">
             <Plus size={24} className="text-black" />
           </button>

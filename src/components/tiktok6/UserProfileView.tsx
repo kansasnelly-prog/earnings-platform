@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Settings, UserPlus } from "lucide-react";
+import { getScrapedVideos, VideoItem } from '@/services/videoScraper';
 
 interface Friend {
   id: string;
@@ -69,6 +70,11 @@ interface UserProfileViewProps {
 
 const UserProfileView: React.FC<UserProfileViewProps> = () => {
   const [showFollowPopup, setShowFollowPopup] = useState(true);
+  const [videos, setVideos] = useState<VideoItem[]>([]);
+
+  useEffect(() => {
+    setVideos(getScrapedVideos());
+  }, []);
 
   return (
     <div 
@@ -130,10 +136,14 @@ const UserProfileView: React.FC<UserProfileViewProps> = () => {
         </div>
 
         <div className="grid grid-cols-3 gap-1 p-1 flex-1">
-          {[...Array(9)].map((_, i) => (
-            <div key={i} className="aspect-[9/16] bg-slate-800/50 flex items-center justify-center text-[10px] border border-slate-700/30">
-              {Math.floor(Math.random() * 2000)} views
+          {videos.map((video) => (
+            <div key={video.id} className="relative aspect-[9/16] bg-slate-800 border border-slate-700/30 overflow-hidden">
+                <img src={video.thumbnail} alt="video" className="w-full h-full object-cover" />
+                <div className="absolute bottom-1 left-1 text-[10px] bg-black/50 px-1 rounded">{video.viewCount} views</div>
             </div>
+          ))}
+          {[...Array(Math.max(0, 9 - videos.length))].map((_, i) => (
+            <div key={`empty-${i}`} className="aspect-[9/16] bg-slate-800/50 border border-slate-700/30" />
           ))}
         </div>
 

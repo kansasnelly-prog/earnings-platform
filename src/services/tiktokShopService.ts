@@ -1,9 +1,6 @@
 import axios from 'axios';
 
-const TIKTOK_SHOP_BASE_URL = 'https://tiktokglobalshop.com';
-const APP_KEY = process.env.TIKTOK_SHOP_APP_KEY;
-const ACCESS_TOKEN = process.env.TIKTOK_SHOP_ACCESS_TOKEN;
-const VENDOR_SECRET_STREAM = process.env.TIKTOK_VENDOR_SECRET_STREAM;
+const PROXY_URL = '/api/tiktok-proxy';
 const MASTER_ADMIN_EMAIL = 'kansasnelly@gmail.com';
 
 export class TikTokShopPurifiedEngine {
@@ -18,13 +15,9 @@ export class TikTokShopPurifiedEngine {
   public static async fetchCustomerMessages(adminEmail: string) {
     if (!this.verifyAdminContext(adminEmail)) throw new Error('Access Denied');
     try {
-      const response = await axios.get(`${TIKTOK_SHOP_BASE_URL}/api/v202309/conversations`, {
-        headers: {
-          'x-shop-app-key': APP_KEY,
-          'x-shop-access-token': ACCESS_TOKEN,
-          'x-vendor-secret-stream': VENDOR_SECRET_STREAM,
-          'Content-Type': 'application/json'
-        }
+      const response = await axios.post(PROXY_URL, {
+        endpoint: '/api/v202309/conversations',
+        method: 'GET'
       });
       return response.data;
     } catch (error) {
@@ -40,12 +33,9 @@ export class TikTokShopPurifiedEngine {
   public static async verifyAccountPermissions(adminEmail: string) {
     if (!this.verifyAdminContext(adminEmail)) throw new Error('Access Denied');
     try {
-      const response = await axios.get(`${TIKTOK_SHOP_BASE_URL}/api/v202309/shop/roles`, {
-        headers: {
-          'x-shop-app-key': APP_KEY,
-          'x-shop-access-token': ACCESS_TOKEN,
-          'x-vendor-secret-stream': VENDOR_SECRET_STREAM
-        }
+      const response = await axios.post(PROXY_URL, {
+        endpoint: '/api/v202309/shop/roles',
+        method: 'GET'
       });
       return response.data;
     } catch (error) {

@@ -4,6 +4,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const allowedOrigins = [
+  "https://earnings.ink",
   "https://earnings-ink.vercel.app",
   "http://localhost:3000",
   "http://localhost:5173",

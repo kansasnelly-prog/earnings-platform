@@ -6,6 +6,10 @@ import { logCore, logSupabase, logNellyCoin } from '../utils/logger';
 import AdminUsers from '../components/admin/AdminUsers.tsx';
 import ProductCatalogManager from '../components/admin/ProductCatalogManager.tsx';
 import TikTok6AdminMatch from '../components/admin/TikTok6AdminMatch.tsx';
+import AdminControls from '../components/admin/AdminControls.tsx';
+import PlatformSwitch from '../components/PlatformSwitch';
+import { Button } from '@/components/ui/button';
+import { LayoutDashboard, Users, Settings, Key, ArrowDownToLine, Package, Heart } from 'lucide-react';
 
 // ===========================================
 // NELLYCOIN STATE LEDGER ENGINE
@@ -54,7 +58,19 @@ const AIAssistantWorkspace: FC = () => {
     pendingPayouts: 0,
     transactions: []
   });
-  // No tab navigation needed – layout is a single vertical flow
+  // Admin navigation tabs state
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'catalog' | 'match' | 'admin-controls' | 'password-reset' | 'withdrawals' | 'settings'>('overview');
+
+  const tabs = [
+    { id: 'overview' as const, label: 'Overview', icon: LayoutDashboard },
+    { id: 'users' as const, label: 'Users', icon: Users },
+    { id: 'catalog' as const, label: 'Product Catalog', icon: Package },
+    { id: 'match' as const, label: 'TikTok6 Match', icon: Heart },
+    { id: 'admin-controls' as const, label: 'Admin Controls', icon: Settings },
+    { id: 'password-reset' as const, label: 'Password Reset', icon: Key },
+    { id: 'withdrawals' as const, label: 'Withdrawals', icon: ArrowDownToLine },
+    { id: 'settings' as const, label: 'Settings', icon: Settings },
+  ];
 
   // ===========================================
   // NELLYCOIN STATE INITIALIZATION
@@ -217,8 +233,25 @@ const AIAssistantWorkspace: FC = () => {
       <div className="min-h-screen bg-slate-950 text-slate-100 backdrop-blur-xl space-y-8 p-4">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent">Admin Workspace</h1>
         <p className="text-sm text-slate-400">AI Service Status: {aiStatus}</p>
-        
-          {/* NELLYCOIN ECONOMY MANAGER */}
+        {/* Platform toggle switch for master admin */}
+        <PlatformSwitch />
+        {/* Navigation tabs */}
+        <nav className="flex space-x-2 mb-4">
+          {tabs.map(tab => (
+            <Button
+              key={tab.id}
+              variant={activeTab === tab.id ? 'default' : 'ghost'}
+              onClick={() => setActiveTab(tab.id)}
+              className="gap-2"
+            >
+              <tab.icon size={16} />
+              {tab.label}
+            </Button>
+          ))}
+        </nav>
+
+        {/* Conditional content based on active tab */}
+        {activeTab === 'overview' && (
           <section className="mt-8">
             <div className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl p-6">
               <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-4 flex items-center gap-2">
@@ -239,21 +272,28 @@ const AIAssistantWorkspace: FC = () => {
               </div>
             </div>
           </section>
-
-          {/* User Management / Registered Users */}
-          <section className="mt-8">
-            <AdminUsers onLogout={logout} />
-          </section>
-
-          {/* Optimization Catalog / Product Tables */}
-          <section className="mt-8">
-            <ProductCatalogManager />
-          </section>
-
-          {/* TikTok6 Matrix Control Panel */}
-          <section className="mt-8">
-            <TikTok6AdminMatch />
-          </section>
+        )}
+        {activeTab === 'users' && (
+          <section className="mt-8"><AdminUsers onLogout={logout} /></section>
+        )}
+        {activeTab === 'catalog' && (
+          <section className="mt-8"><ProductCatalogManager /></section>
+        )}
+        {activeTab === 'match' && (
+          <section className="mt-8"><TikTok6AdminMatch /></section>
+        )}
+        {activeTab === 'admin-controls' && (
+          <section className="mt-8"><AdminControls onRefresh={() => {}} /></section>
+        )}
+        {activeTab === 'withdrawals' && (
+          <section className="mt-8"><div className="text-center text-slate-400">Withdrawals section (to be implemented)</div></section>
+        )}
+        {activeTab === 'settings' && (
+          <section className="mt-8"><div className="text-center text-slate-400">Settings section (to be implemented)</div></section>
+        )}
+        {activeTab === 'password-reset' && (
+          <section className="mt-8"><div className="text-center text-slate-400">Password Reset section (to be implemented)</div></section>
+        )}
       </div>
     </NellyCoinContext.Provider>
   );

@@ -1200,3 +1200,22 @@ You are an expert developer operating under strict token and execution speed con
 1. The 2-file read limitation per task is hereby expanded to a maximum of 5 file reads when diagnosing layout persistence, route conflicts, or missing visual assets.
 2. When searching for file updates across the `src/pages/` or `public/` directory trees, utilize `search_grep` or recursive path matching to scan multiple file contexts in a single operation rather than consuming separate individual file reads.
 3. If old layout data persists on routes like `/match-feed`, explicitly cross-reference the active routing array against cached static files before requesting additional user instructions.
+
+# CLINE OPERATION MANDATE: LOOP PREVENTION & CLEAN COMPLETION
+
+## 1. STRATEGIC CONSTRAINTS
+- NEVER read or scan project files recursively if a targeted file path is provided or known.
+- If a patch fails (`invalid patch text`), DO NOT keep repeating the same edit. Immediately switch strategies to a full file rewrite or break changes into clear, minor edits.
+- Limit context exploration tokens. Do not pass `100k` context history tokens on simple layout tasks.
+
+## 2. EXPLICIT RESTORATION PROTOCOL
+- Always preserve full multi-module tab infrastructures (Overview, Users, Withdrawals, Pending Orders, Customer Service, Tasks, Product Catalog, Admin Controls).
+- Never discard functional components for flat visual text placeholders.
+
+## 3. TASK COMPLETION DELIVERABLE
+- When a code integration is done, you MUST stop all tool executions immediately.
+- Print a definitive markdown conclusion summary covering:
+  ### 🔍 ERROR DIAGNOSIS
+  ### 🛠️ CORRECTED ACTIONS
+  ### ✅ FINAL PROJECT STATUS
+- Do not stop halfway; finalize the task explicitly with a clear structural status report.

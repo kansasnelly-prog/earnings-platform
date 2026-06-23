@@ -205,7 +205,7 @@ const AppContent: React.FC = () => {
       <Routes>
         {/* Strict Admin Routes - Top Priority */}
         <Route element={<MasterAdminRoute><Outlet /></MasterAdminRoute>}>
-          <Route path="/admin" element={<EnhancedAdminDashboard />} />
+          <Route path="/admin" element={<AIAssistantWorkspace />} />
           <Route path="/admin-match" element={<AdminMatchDigitalHome />} />
           <Route path="/admin/command-deck" element={<AdminCommandDeck />} />
           <Route path="/admin/ai" element={<AIAssistantWorkspace />} />

@@ -6,7 +6,8 @@ import {
   LayoutDashboard, Users, ArrowDownToLine, RefreshCw, Shield, ChevronLeft,
   BarChart3, Activity, Zap, Lock, Eye, EyeOff, LogIn, TrendingUp,
   UserPlus, DollarSign, Clock, CheckCircle, AlertTriangle, Settings,
-  Bell, Database, FileText, CreditCard, UserCheck, Target, Award, Mail
+  Bell, Database, FileText, CreditCard, UserCheck, Target, Award, Mail,
+  Package, Headset, SwitchCamera
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { setupRealtimeListeners, logAdminAction } from '@/lib/realtime';
 import { sendTelegramNotification } from '@/utils/telegramHelper';
 import EnhancedPendingOrdersManager from './EnhancedPendingOrdersManager';
+import ProductCatalogManager from './ProductCatalogManager';
+import AdminCustomerService from './AdminCustomerService';
+import SupabaseService from '@/services/supabaseService';
+// @ts-ignore
+import TikTok6AdminMatch from '@/pages/admin-match/index';
 
 interface RealUser {
   id: string;
@@ -68,7 +74,7 @@ interface RealStats {
 
 const EnhancedAdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'accounts' | 'tasks' | 'pending_orders' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'accounts' | 'tasks' | 'pending_orders' | 'settings' | 'catalog' | 'support' | 'admin_match'>('overview');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -759,7 +765,9 @@ const EnhancedAdminDashboard: React.FC = () => {
               { id: 'pending_orders', label: 'Pending Orders', icon: AlertTriangle },
               { id: 'accounts', label: 'Account Reset', icon: RefreshCw },
               { id: 'tasks', label: 'Tasks', icon: FileText },
-              { id: 'settings', label: 'Settings', icon: Settings },
+                { id: 'settings', label: 'Settings', icon: Settings },
+                { id: 'catalog', label: 'Training Products', icon: Package },
+                { id: 'support', label: 'Customer Service', icon: Headset },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -923,6 +931,7 @@ const EnhancedAdminDashboard: React.FC = () => {
                         />
                       </div>
                       <select
+                        aria-label="Filter status"
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
                         className="bg-slate-700 border-slate-600 text-white px-3 py-2 rounded-md"
@@ -1225,6 +1234,14 @@ const EnhancedAdminDashboard: React.FC = () => {
                   <p className="text-slate-400">Admin settings interface coming soon...</p>
                 </CardContent>
               </Card>
+            )}
+            {/* Training Products Tab */}
+            {activeTab === 'catalog' && (
+              <ProductCatalogManager />
+            )}
+            {/* Customer Service Tab */}
+            {activeTab === 'support' && (
+              <AdminCustomerService />
             )}
           </>
         )}

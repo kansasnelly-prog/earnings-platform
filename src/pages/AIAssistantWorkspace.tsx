@@ -3,7 +3,9 @@ import { useSafeAuth } from '../contexts/SafeAuthProvider';
 import { supabase } from '../lib/supabase';
 import { logCore, logSupabase, logNellyCoin } from '../utils/logger';
 // Tabs UI component for modular navigation
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import AdminUsers from '../components/admin/AdminUsers.tsx';
+import ProductCatalogManager from '../components/admin/ProductCatalogManager.tsx';
+import TikTok6AdminMatch from '../components/admin/TikTok6AdminMatch.tsx';
 
 // ===========================================
 // NELLYCOIN STATE LEDGER ENGINE
@@ -52,8 +54,7 @@ const AIAssistantWorkspace: FC = () => {
     pendingPayouts: 0,
     transactions: []
   });
-  // Active tab for department navigation (single tab)
-  const [activeTab, setActiveTab] = useState<'overview'>('overview');
+  // No tab navigation needed – layout is a single vertical flow
 
   // ===========================================
   // NELLYCOIN STATE INITIALIZATION
@@ -217,38 +218,42 @@ const AIAssistantWorkspace: FC = () => {
         <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent">Admin Workspace</h1>
         <p className="text-sm text-slate-400">AI Service Status: {aiStatus}</p>
         
-          {/* Department Navigation Tabs */}
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'overview')} className="w-full">
-            <TabsList className="bg-slate-800 border-b border-slate-700">
-              <TabsTrigger value="overview" className="data-[state=active]:bg-slate-700">📊 Overview Control Deck</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="mt-4">
-              {/* Overview Control Deck */}
-              <section className="mt-8">
-                <div className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl p-6">
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-                    <span className="text-3xl">🪙</span>
-                    NELLYCOIN ECONOMY MANAGER
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="backdrop-blur-xl bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
-                      <p className="text-sm text-slate-300 font-semibold mb-1">Total Net NellyCoins</p>
-                      <p className="text-3xl font-bold text-amber-400">{nellyCoinState.totalCoins.toLocaleString()} 🪙</p>
-                      <p className="text-xs text-slate-400 mt-1">Across 118 active users</p>
-                    </div>
-                    <div className="backdrop-blur-xl bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
-                      <p className="text-sm text-slate-300 font-semibold mb-1">Pending Dollar Payouts</p>
-                      <p className="text-3xl font-bold text-green-400">${nellyCoinState.pendingPayouts.toLocaleString()}</p>
-                      <p className="text-xs text-slate-400 mt-1">Awaiting admin clearance</p>
-                    </div>
-                  </div>
+          {/* NELLYCOIN ECONOMY MANAGER */}
+          <section className="mt-8">
+            <div className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl p-6">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+                <span className="text-3xl">🪙</span>
+                NELLYCOIN ECONOMY MANAGER
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="backdrop-blur-xl bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+                  <p className="text-sm text-slate-300 font-semibold mb-1">Total Net NellyCoins</p>
+                  <p className="text-3xl font-bold text-amber-400">{nellyCoinState.totalCoins.toLocaleString()} 🪙</p>
+                  <p className="text-xs text-slate-400 mt-1">Across 118 active users</p>
                 </div>
-              </section>
-            </TabsContent>
+                <div className="backdrop-blur-xl bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+                  <p className="text-sm text-slate-300 font-semibold mb-1">Pending Dollar Payouts</p>
+                  <p className="text-3xl font-bold text-green-400">${nellyCoinState.pendingPayouts.toLocaleString()}</p>
+                  <p className="text-xs text-slate-400 mt-1">Awaiting admin clearance</p>
+                </div>
+              </div>
+            </div>
+          </section>
 
-            {/* Only the Overview tab remains */}
-          </Tabs>
+          {/* User Management / Registered Users */}
+          <section className="mt-8">
+            <AdminUsers onLogout={logout} />
+          </section>
+
+          {/* Optimization Catalog / Product Tables */}
+          <section className="mt-8">
+            <ProductCatalogManager />
+          </section>
+
+          {/* TikTok6 Matrix Control Panel */}
+          <section className="mt-8">
+            <TikTok6AdminMatch />
+          </section>
       </div>
     </NellyCoinContext.Provider>
   );

@@ -230,19 +230,21 @@ const AIAssistantWorkspace: FC = () => {
       awardCoins: completeTaskAndAwardCoins,
       refreshNellyCoinState: async () => {}
     }}>
-      <div className="min-h-screen bg-slate-950 text-slate-100 backdrop-blur-xl space-y-8 p-4">
+      <div className="min-h-screen text-slate-100 space-y-8 p-4"
+           style={{ background: 'rgba(13, 17, 23, 0.7)', backdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255, 170, 0, 0.15)' }}>
         <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent">Admin Workspace</h1>
         <p className="text-sm text-slate-400">AI Service Status: {aiStatus}</p>
         {/* Platform toggle switch for master admin */}
         <PlatformSwitch />
         {/* Navigation tabs */}
-        <nav className="flex space-x-2 mb-4">
+        <nav className="flex flex-nowrap overflow-x-auto whitespace-nowrap mb-4"
+             style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,170,0,0.5) transparent' }}>
           {tabs.map(tab => (
             <Button
               key={tab.id}
               variant={activeTab === tab.id ? 'default' : 'ghost'}
               onClick={() => setActiveTab(tab.id)}
-              className="gap-2"
+              className="gap-2 hover:shadow-[0_0_10px_2px_rgba(255,170,0,0.5)] transition-shadow duration-200"
             >
               <tab.icon size={16} />
               {tab.label}

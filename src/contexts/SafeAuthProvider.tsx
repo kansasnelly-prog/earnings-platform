@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, ReactNode } fr
 import { useNavigate } from 'react-router-dom';
 import type { User as SupabaseAuthUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { sendTelegramLoginAlert } from '../services/telegramNotifier';
 
 interface SafeAuthUser {
   id: string;
@@ -292,9 +293,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       dispatch({ type: 'LOGIN_SUCCESS', payload: hydrated });
       
       // Trigger Telegram notification
-      import('../lib/telegramNotifications').then(mod => {
-        mod.sendLoginNotification(data.user.email || 'unknown');
-      });
+      // The notifier is called without awaiting to avoid blocking the
+      // authentication flow. Errors are handled internally by the
+      // notifier, so we simply fire and forget.
+      void sendTelegramLoginAlert(data.user.email || 'unknown');
 
       return { success: true, isAdmin: hydrated.isAdmin };
     } catch (e: unknown) {

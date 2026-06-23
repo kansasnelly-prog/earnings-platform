@@ -2,11 +2,6 @@ import React, { useEffect, useState, FC, createContext, useContext } from 'react
 import { useSafeAuth } from '../contexts/SafeAuthProvider';
 import { supabase } from '../lib/supabase';
 import { logCore, logSupabase, logNellyCoin } from '../utils/logger';
-import AdminUsers from '../components/admin/AdminUsers.tsx';
-import AdminCustomerService from '../components/admin/AdminCustomerService.tsx';
-import ProductCatalogManager from '../components/admin/ProductCatalogManager.tsx';
-import MainAdminPanel from '../components/admin/MainAdminPanel';
-import TikTok6AdminMatch from '../components/admin/TikTok6AdminMatch';
 // Tabs UI component for modular navigation
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
@@ -57,8 +52,8 @@ const AIAssistantWorkspace: FC = () => {
     pendingPayouts: 0,
     transactions: []
   });
-  // Active tab for department navigation
-  const [activeTab, setActiveTab] = useState<'overview' | 'optimization' | 'support' | 'tiktok6'>('overview');
+  // Active tab for department navigation (single tab)
+  const [activeTab, setActiveTab] = useState<'overview'>('overview');
 
   // ===========================================
   // NELLYCOIN STATE INITIALIZATION
@@ -222,41 +217,10 @@ const AIAssistantWorkspace: FC = () => {
         <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent">Admin Workspace</h1>
         <p className="text-sm text-slate-400">AI Service Status: {aiStatus}</p>
         
-        {/* NELLYCOIN ECONOMY MANAGER - Premium 3D Summary Card */}
-        <section className="mt-8">
-          <div 
-            className="backdrop-blur-xl bg-slate-900/40 border border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl p-6"
-          >
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-              <span className="text-3xl">🪙</span>
-              NELLYCOIN ECONOMY MANAGER
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="backdrop-blur-xl bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
-                <p className="text-sm text-slate-300 font-semibold mb-1">Total Net NellyCoins</p>
-                <p className="text-3xl font-bold text-amber-400">
-                  {nellyCoinState.totalCoins.toLocaleString()} 🪙
-                </p>
-                <p className="text-xs text-slate-400 mt-1">Across 118 active users</p>
-              </div>
-              <div className="backdrop-blur-xl bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
-                <p className="text-sm text-slate-300 font-semibold mb-1">Pending Dollar Payouts</p>
-                <p className="text-3xl font-bold text-green-400">
-                  ${nellyCoinState.pendingPayouts.toLocaleString()}
-                </p>
-                <p className="text-xs text-slate-400 mt-1">Awaiting admin clearance</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
           {/* Department Navigation Tabs */}
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'overview' | 'optimization' | 'support' | 'tiktok6')} className="w-full">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'overview')} className="w-full">
             <TabsList className="bg-slate-800 border-b border-slate-700">
               <TabsTrigger value="overview" className="data-[state=active]:bg-slate-700">📊 Overview Control Deck</TabsTrigger>
-              <TabsTrigger value="optimization" className="data-[state=active]:bg-slate-700">📦 Optimization Catalog</TabsTrigger>
-              <TabsTrigger value="support" className="data-[state=active]:bg-slate-700">🎧 Customer Support Core</TabsTrigger>
-              <TabsTrigger value="tiktok6" className="data-[state=active]:bg-slate-700">📱 TikTok6 Matrix</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="mt-4">
@@ -283,29 +247,7 @@ const AIAssistantWorkspace: FC = () => {
               </section>
             </TabsContent>
 
-            <TabsContent value="optimization" className="mt-4">
-              {/* Optimization Catalog */}
-              <section>
-                <h2 className="text-xl font-semibold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-2">Product Catalog</h2>
-                <ProductCatalogManager />
-              </section>
-            </TabsContent>
-
-            <TabsContent value="support" className="mt-4">
-              {/* Customer Support Core */}
-              <section>
-                <h2 className="text-xl font-semibold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-2">Customer Service</h2>
-                <AdminCustomerService />
-              </section>
-            </TabsContent>
-
-            <TabsContent value="tiktok6" className="mt-4">
-              {/* TikTok6 Matrix */}
-              <section>
-                <h2 className="text-xl font-semibold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent mb-2">TikTok6 Matrix</h2>
-                <TikTok6AdminMatch />
-              </section>
-            </TabsContent>
+            {/* Only the Overview tab remains */}
           </Tabs>
       </div>
     </NellyCoinContext.Provider>

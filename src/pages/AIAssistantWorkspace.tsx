@@ -251,7 +251,7 @@ const AIAssistantWorkspace: FC = () => {
         </section>
 
           {/* Department Navigation Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'overview' | 'optimization' | 'support' | 'tiktok6')} className="w-full">
             <TabsList className="bg-slate-800 border-b border-slate-700">
               <TabsTrigger value="overview" className="data-[state=active]:bg-slate-700">📊 Overview Control Deck</TabsTrigger>
               <TabsTrigger value="optimization" className="data-[state=active]:bg-slate-700">📦 Optimization Catalog</TabsTrigger>

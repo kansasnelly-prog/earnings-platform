@@ -35,6 +35,7 @@ import NotFound from './pages/NotFound';
 import UserProfilePage from './pages/TikTok6MeProfile';
 import { supabase } from './lib/supabase';
 import { useAuth } from './contexts/SafeAuthProvider';
+import TelegramMiniView from './components/telegram/TelegramMiniView';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -215,7 +216,8 @@ const AppContent: React.FC = () => {
         <Route path="/" element={<Index />} />
         <Route path="/tiktok6" element={<TikTokGate />} />
         <Route path="/soulmate" element={<TikTok6SoulmateHub />} />
-        <Route path="/dating-cockpit" element={<TikTok6DatingCockpit />} />
+          <Route path="/dating-cockpit" element={<TikTok6DatingCockpit />} />
+          <Route path="/telegram-mini" element={<TelegramMiniView />} />
         
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>

@@ -230,6 +230,67 @@ const AIAssistantWorkspace: FC = () => {
       awardCoins: completeTaskAndAwardCoins,
       refreshNellyCoinState: async () => {}
     }}>
+      {/* Cyber Glassmorphism & Keyframes */}
+      <style>{`
+        @keyframes cyberGlow7 {
+          0% { box-shadow: 0 0 10px 2px #ffbf00; }
+          14% { box-shadow: 0 0 10px 2px #ff0000; }
+          28% { box-shadow: 0 0 10px 2px #ff7f00; }
+          42% { box-shadow: 0 0 10px 2px #00ff00; }
+          56% { box-shadow: 0 0 10px 2px #00ffff; }
+          70% { box-shadow: 0 0 10px 2px #8000ff; }
+          84% { box-shadow: 0 0 10px 2px #ff00ff; }
+          100% { box-shadow: 0 0 10px 2px #ffbf00; }
+        }
+        .cyber-glass {
+          background: rgba(3,7,18,0.90);
+          backdrop-filter: blur(24px) saturate(220%);
+          animation: cyberGlow7 12s infinite;
+        }
+        .matrix-bg {
+          background: radial-gradient(circle, #0f0 1px, transparent 1px);
+          background-size: 10px 10px;
+          animation: matrixScroll 5s linear infinite;
+        }
+        @keyframes matrixScroll {
+          from { background-position: 0 0; }
+          to { background-position: 0 100%; }
+        }
+        .radar-sweep {
+          background: conic-gradient(from 0deg, rgba(0,255,0,0.2), transparent);
+          animation: radarRotate 3s linear infinite;
+        }
+        @keyframes radarRotate {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .pulse-indicator {
+          width: 100%;
+          height: 4px;
+          background: linear-gradient(90deg, #00ff00, #00ffff);
+          animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+          0% { opacity: 0.2; }
+          50% { opacity: 1; }
+          100% { opacity: 0.2; }
+        }
+        .monetization-grid {
+          background: rgba(3,7,18,0.90);
+          backdrop-filter: blur(24px) saturate(220%);
+          animation: cyberGlow7 12s infinite;
+        }
+        .metric-bar {
+          height: 6px;
+          background: linear-gradient(90deg, #ffbf00, #ff007f);
+          animation: barGrow 3s infinite;
+        }
+        @keyframes barGrow {
+          0% { width: 0%; }
+          50% { width: 80%; }
+          100% { width: 0%; }
+        }
+      `}</style>
       <div className="min-h-screen text-slate-100 space-y-8 p-4"
            style={{ background: 'rgba(13, 17, 23, 0.7)', backdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255, 170, 0, 0.15)' }}>
         <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent">Admin Workspace</h1>

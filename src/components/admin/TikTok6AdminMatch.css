@@ -20,3 +20,78 @@
 .animate-cyberGlow {
   animation: cyberGlow7 7s linear infinite;
 }
+
+/* ---------------------------------------------------------------------------
+   NC Coins Minting Portal Styles (additive)
+   --------------------------------------------------------------------------- */
+
+/* Card container for the minting portal */
+.nc-minting-card {
+  background: rgba(3, 7, 18, 0.95);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 170, 0, 0.25);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+/* Placeholder for QR code visual */
+.qr-placeholder {
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  margin: 0 auto;
+}
+
+/* Copy button styling */
+.copy-button {
+  margin-top: 0.5rem;
+  background: rgba(255, 170, 0, 0.2);
+  color: #ffaa00;
+  border: 1px solid rgba(255, 170, 0, 0.4);
+  border-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.copy-button:hover {
+  background: rgba(255, 170, 0, 0.3);
+}
+
+/* Verification matrix grid */
+.verification-matrix {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.verification-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  text-align: center;
+  color: #ddd;
+}
+
+/* AI Handshake node visual */
+.ai-handshake-node {
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+  color: #00ffff;
+  font-style: italic;
+}

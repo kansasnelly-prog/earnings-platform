@@ -1,5 +1,5 @@
-// @ts-ignore: Suppress default import warning without esModuleInterop
-1 | import React, { createContext, useContext, useReducer, useEffect, useState, ReactNode } from 'react';
+// Updated import to avoid default React import which requires esModuleInterop
+import { createContext, useContext, useReducer, useEffect, useState, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { SecurityManager } from '../utils/security';

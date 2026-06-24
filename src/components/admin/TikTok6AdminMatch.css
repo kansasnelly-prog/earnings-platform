@@ -1,0 +1,22 @@
+/* Glassmorphism background for engine cards */
+.bg-glassmorphism {
+  background: rgba(3, 7, 18, 0.90);
+  backdrop-filter: blur(24px) saturate(220%);
+  -webkit-backdrop-filter: blur(24px) saturate(220%);
+}
+
+/* Cyber glow animation keyframes */
+@keyframes cyberGlow7 {
+  0%   { box-shadow: 0 0 8px 2px #ffbf00; }   /* Amber Gold */
+  14%  { box-shadow: 0 0 8px 2px #ff0040; }   /* Neon Red */
+  28%  { box-shadow: 0 0 8px 2px #ff6600; }   /* Electric Orange */
+  42%  { box-shadow: 0 0 8px 2px #00ff7f; }   /* Emerald Green */
+  56%  { box-shadow: 0 0 8px 2px #00e5ff; }   /* Laser Cyan */
+  70%  { box-shadow: 0 0 8px 2px #9d00ff; }   /* Cosmic Purple */
+  84%  { box-shadow: 0 0 8px 2px #ff1493; }   /* Hot Pink */
+  100% { box-shadow: 0 0 8px 2px #ffbf00; }
+}
+
+.animate-cyberGlow {
+  animation: cyberGlow7 7s linear infinite;
+}

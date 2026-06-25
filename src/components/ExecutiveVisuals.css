@@ -1,0 +1,90 @@
+/*
+ * Executive Visuals – custom CSS for the Executive Cyber Paradise UI.
+ * This file provides visual-only enhancements such as underglow, reflections,
+ * depth layers, and hover effects. No functional logic is introduced.
+ */
+
+.exec-panel {
+  background: rgba(3, 7, 18, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px); /* Safari support */
+  border: 1px solid rgba(255, 170, 0, 0.25);
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+  /* CyberGlow7 animation for the panel border */
+  animation: cyberGlow7 7s infinite ease-in-out;
+}
+
+/* Top glass reflection layer */
+.exec-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0)
+  );
+  pointer-events: none;
+}
+
+/* Bottom glass reflection layer (optional) */
+.exec-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0)
+  );
+  pointer-events: none;
+}
+
+/* Floating underglow – applied to child elements that need a glow from beneath */
+.under-glow {
+  box-shadow: 0 0 12px #FFD700; /* gold */
+  transition: box-shadow 0.3s ease;
+}
+
+/* Hover experience – slight elevation and stronger underglow */
+.exec-panel:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0 20px rgba(255, 170, 0, 0.5);
+}
+
+/* Depth layers – use pseudo‑elements for layered visual depth */
+.exec-panel .depth-layer-1 {
+  /* Atmospheric background – already set by panel background */
+}
+
+.exec-panel .depth-layer-2 {
+  /* Energy glow – subtle inner glow */
+  box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.05);
+}
+
+.exec-panel .depth-layer-3 {
+  /* Glass container – already defined by panel */
+}
+
+.exec-panel .depth-layer-4 {
+  /* Reflection overlays – handled by ::before/::after */
+}
+
+.exec-panel .depth-layer-5 {
+  /* Status indicators – child elements can use .under-glow */
+}
+
+.exec-panel .depth-layer-6 {
+  /* Animated highlights – can be added via additional pseudo‑elements */
+}
+
+.exec-panel .depth-layer-7 {
+  /* Hover interactions – already defined in :hover */
+}
+
+/* Ensure smooth transitions for interactive elements */
+.exec-panel * {
+  transition: all 0.2s ease;
+}

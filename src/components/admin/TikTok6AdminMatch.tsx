@@ -100,9 +100,22 @@ const AIVerificationHandshakeNode = () => (
 
 const TikTok6AdminMatch = () => {
   // 10 active Monetization Machines (preserved for backward compatibility)
-  const machines: Machine[] = Array.from({ length: 10 }, (_, i) => ({
-    id: i + 1,
-    name: `Machine ${i + 1}`,
+  // Rebranded Monetization Machine titles (10 machines)
+  const machineTitles = [
+    'Sovereign Citadel',
+    'Executive Mansion',
+    'Billionaire Castle',
+    'Hyperion Core',
+    'Imperial Estate',
+    'Diamond Fortress',
+    'Titan Reactor',
+    'Platinum Kingdom',
+    'Infinity Nexus',
+    'Legacy Palace',
+  ];
+  const machines: Machine[] = machineTitles.map((title, idx) => ({
+    id: idx + 1,
+    name: title,
     status: 'active',
   }));
 
@@ -192,9 +205,11 @@ const TikTok6AdminMatch = () => {
         <h3 className="text-lg font-medium text-slate-100 mb-2">Monetization Machines</h3>
         <div className="grid grid-cols-2 gap-4">
           {machines.map(machine => (
-            <div key={machine.id} className="p-3 bg-slate-700 rounded-md text-slate-200">
-              <p className="font-semibold">{machine.name}</p>
-              <p>Status: {machine.status}</p>
+            <div key={machine.id} className="p-3 bg-glassmorphism border border-white/10 rounded-xl shadow-lg animate-cyberGlow monit-card">
+              <p className="font-semibold text-slate-100 mb-1">{machine.name}</p>
+              <p className="text-sm text-slate-300">
+                Status: <span className="heartbeat">● LIVE</span>
+              </p>
             </div>
           ))}
         </div>

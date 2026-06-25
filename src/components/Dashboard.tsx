@@ -3,10 +3,11 @@ import { useAppContext } from '@/contexts/AppContext';
 import { useCSNotification } from '@/contexts/CSNotificationContext';
 import { supabase } from '@/lib/supabase';
 import { DollarSign, Zap, Award, Wallet, ArrowDownToLine, TrendingUp, CheckCircle, Clock, Lock, ArrowRight, BarChart3, Target, GraduationCap, Star, MessageCircle, AlertTriangle, Home, Play, FileText, Headphones } from 'lucide-react';
-import { DailyBonusCompact } from './DailyBonus';
+import DailyBonusCompact from './DailyBonus';
 import CombinationOrderModal from './CombinationOrderModal';
 import CustomerService from './CustomerService';
 import CSSelectionModal from './CSSelectionModal';
+import ExecutiveTVPanel from './ExecutiveTVPanel';
 
 const Dashboard: React.FC = () => {
   const context = useAppContext();
@@ -391,6 +392,9 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Executive TV Panel – premium streaming theatre */}
+      <ExecutiveTVPanel />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">

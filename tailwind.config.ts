@@ -95,6 +95,15 @@ export default {
           from: { transform: 'translateX(-100%)' },
           to: { transform: 'translateX(100%)' },
         },
+      'cyberGlow7': {
+        '0%, 100%': { boxShadow: '0 0 12px #FFD700' }, // gold
+        '14%': { boxShadow: '0 0 12px #800080' }, // purple
+        '28%': { boxShadow: '0 0 12px #00FFFF' }, // cyan
+        '42%': { boxShadow: '0 0 12px #0000FF' }, // blue
+        '56%': { boxShadow: '0 0 12px #50C878' }, // emerald
+        '70%': { boxShadow: '0 0 12px #DC143C' }, // crimson
+        '84%': { boxShadow: '0 0 12px #FFC0CB' }, // pink
+      },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -102,6 +111,7 @@ export default {
         'fade-in': 'fade-in 0.3s ease-out',
         'slide-in': 'slide-in 0.3s ease-out',
         'shimmer': 'shimmer 2s infinite',
+      'cyberGlow7': 'cyberGlow7 7s infinite ease-in-out',
       },
       typography: {
         DEFAULT: {

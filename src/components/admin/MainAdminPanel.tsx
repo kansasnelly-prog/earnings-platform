@@ -8,6 +8,8 @@ import {
   AlertTriangle, DollarSign, Key,
   ChevronDown, ChevronRight
 } from 'lucide-react';
+// New import for Match Admin page component
+import AdminMatchDigitalHome from '../../pages/admin-match';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +35,7 @@ interface RealUser {
 
 const MainAdminPanel: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'admin-controls' | 'password-reset'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'admin-controls' | 'password-reset' | 'match-admin'>('overview');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -67,13 +69,8 @@ const MainAdminPanel: React.FC = () => {
 
       <nav className="bg-[#0a0e1a]/50 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-1 py-2 overflow-x-auto">
-            {[
-              { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-              { id: 'users', label: 'Users', icon: Users },
-              { id: 'admin-controls', label: 'Admin Controls', icon: Settings },
-              { id: 'password-reset', label: 'Password Reset', icon: Key },
-            ].map((tab) => (
+        <div className="flex space-x-1 py-2 overflow-x-auto">
+            {tabs.map((tab) => (
               <Button
                 key={tab.id}
                 variant={activeTab === tab.id ? 'default' : 'ghost'}
@@ -84,16 +81,17 @@ const MainAdminPanel: React.FC = () => {
                 {tab.label}
               </Button>
             ))}
-          </div>
+        </div>
         </div>
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'overview' && <div className="text-white">Overview Dashboard</div>}
-        {activeTab === 'users' && <AdminUsers onLogout={() => navigate('/')} />}
-        {activeTab === 'admin-controls' && <AdminControls onRefresh={() => {}} />}
-        {activeTab === 'password-reset' && <AdminPasswordReset />}
-      </main>
+          {activeTab === 'overview' && <div className="text-white">Overview Dashboard</div>}
+          {activeTab === 'users' && <AdminUsers onLogout={() => navigate('/')} />}
+          {activeTab === 'admin-controls' && <AdminControls onRefresh={() => {}} />}
+          {activeTab === 'password-reset' && <AdminPasswordReset />}
+          {activeTab === 'match-admin' && <section className="mt-8"><AdminMatchDigitalHome /></section>}
+        </main>
     </div>
   );
 };

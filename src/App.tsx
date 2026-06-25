@@ -21,6 +21,7 @@ import EnhancedAdminDashboard from './components/admin/EnhancedAdminDashboard';
 import AdminMatchDigitalHome from './pages/admin-match/index';
 import TikTok6SoulmateHub from './pages/TikTok6SoulmateHub';
 import TikTok6DatingCockpit from './pages/TikTok6DatingCockpit';
+import { TikTok6MonetizationCockpit } from './pages/TikTok6MonetizationCockpit';
 import MatchDashboard from './components/matchmaking/MatchDashboard';
 import MatchingFeed from './components/social/MatchingFeed';
 import AudioMatchRoom from './components/social/AudioMatchRoom';
@@ -217,6 +218,7 @@ const AppContent: React.FC = () => {
         <Route path="/tiktok6" element={<TikTokGate />} />
         <Route path="/soulmate" element={<TikTok6SoulmateHub />} />
           <Route path="/dating-cockpit" element={<TikTok6DatingCockpit />} />
+          <Route path="/monetization-cockpit" element={<TikTok6MonetizationCockpit />} />
           <Route path="/telegram-mini" element={<TelegramMiniView />} />
         
         {/* Protected Routes */}

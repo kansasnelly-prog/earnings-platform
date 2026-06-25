@@ -13,7 +13,8 @@
   position: relative;
   overflow: hidden;
   /* CyberGlow7 animation for the panel border */
-  animation: cyberGlow7 7s infinite ease-in-out;
+    /* Updated to longer, smoother cyber glow animation */
+    animation: cyberGlow7 25s linear infinite;
 }
 
 /* Top glass reflection layer */
@@ -86,5 +87,36 @@
 
 /* Ensure smooth transitions for interactive elements */
 .exec-panel * {
-  transition: all 0.2s ease;
+    transition: all 0.2s ease;
+}
+
+/* ---------------------------------------------------------------
+   Cyber Glow 7-Color Dimming Aura Engine (keyframes)
+   --------------------------------------------------------------- */
+@keyframes cyberGlow7 {
+  0%   { box-shadow: 0 0 8px 2px #ffbf00; }   /* Gold */
+  14%  { box-shadow: 0 0 8px 2px #8000ff; }   /* Purple */
+  28%  { box-shadow: 0 0 8px 2px #00e5ff; }   /* Cyan */
+  42%  { box-shadow: 0 0 8px 2px #0066ff; }   /* Blue */
+  56%  { box-shadow: 0 0 8px 2px #00ff7f; }   /* Emerald */
+  70%  { box-shadow: 0 0 8px 2px #ff0033; }   /* Crimson */
+  84%  { box-shadow: 0 0 8px 2px #ff1493; }   /* Pink */
+  100% { box-shadow: 0 0 8px 2px #ffbf00; }
+}
+
+/* ---------------------------------------------------------------
+   Cyber Card – applies animated border glow and underglow effect
+   --------------------------------------------------------------- */
+.cyber-card {
+  /* Animated border glow using the cyberGlow7 keyframes */
+  animation: cyberGlow7 25s linear infinite;
+  /* Soft atmospheric underglow */
+  box-shadow: 0 0 12px #ffd700;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.cyber-card:hover {
+  /* Slight elevation on hover with intensified glow */
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px #ffd700;
 }

@@ -1,3 +1,49 @@
+/* ---------------------------------------------------------------------------
+   Executive Typography & Depth Enhancements
+   --------------------------------------------------------------------------- */
+
+/* Title and header enhancements */
+.title-lg {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+/* Header for cards */
+.header-lg {
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+/* Label enhancements */
+.label-lg {
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+/* Ambient glow for containers */
+.ambient-glow {
+  box-shadow: 0 0 20px rgba(255,255,255,0.2);
+}
+
+/* Black glass background for primary containers */
+.bg-black-glass {
+  background: rgba(3, 7, 18, 0.95);
+  backdrop-filter: blur(24px) saturate(220%);
+  -webkit-backdrop-filter: blur(24px) saturate(220%);
+}
+
+/* Multiplier indicator styling */
+.multiplier-indicator {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ff00ff;
+  text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff;
+  margin: 0.5rem;
+  transition: transform 0.2s;
+}
+.multiplier-indicator:hover {
+  transform: scale(1.1);
+}
 /* Glassmorphism background for engine cards */
 .bg-glassmorphism {
   background: rgba(3, 7, 18, 0.90);

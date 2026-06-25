@@ -173,12 +173,12 @@ const TikTok6AdminMatch = () => {
   };
 
   return (
-    <section className="p-4 bg-slate-800 rounded-lg">
+    <section className="p-4 bg-black-glass rounded-lg ambient-glow animate-cyberGlow">
       <h2 className="text-2xl font-bold text-slate-100 mb-4">TikTok6 Monetization Cockpit</h2>
       {/* Engine Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {engines.map(engine => (
-          <div key={engine.id} className="p-4 bg-glassmorphism rounded-xl border border-white/10 shadow-lg animate-cyberGlow">
+          <div key={engine.id} className="p-4 bg-glassmorphism rounded-xl border border-white/10 shadow-lg animate-cyberGlow ambient-glow">
             <h3 className="text-lg font-semibold text-slate-200 mb-1">{engine.title}</h3>
             <p className="text-sm text-slate-300">
               Status: <span className={engine.status === 'online' ? 'text-green-400' : engine.status === 'offline' ? 'text-red-400' : 'text-yellow-400'}>{engine.status}</span>
@@ -205,7 +205,7 @@ const TikTok6AdminMatch = () => {
         <h3 className="text-lg font-medium text-slate-100 mb-2">Monetization Machines</h3>
         <div className="grid grid-cols-2 gap-4">
           {machines.map(machine => (
-            <div key={machine.id} className="p-3 bg-glassmorphism border border-white/10 rounded-xl shadow-lg animate-cyberGlow monit-card">
+          <div key={machine.id} className="p-3 bg-glassmorphism border border-white/10 rounded-xl shadow-lg animate-cyberGlow ambient-glow monit-card">
               <p className="font-semibold text-slate-100 mb-1">{machine.name}</p>
               <p className="text-sm text-slate-300">
                 Status: <span className="heartbeat">● LIVE</span>
@@ -228,7 +228,7 @@ const TikTok6AdminMatch = () => {
 
       <div className="mt-8">
         <h3 className="text-lg font-medium text-slate-100 mb-2">Neon Countdown Clock</h3>
-        <div className="text-4xl font-bold text-center" style={{ color: '#39ff14', textShadow: '0 0 5px #39ff14, 0 0 10px #39ff14' }}>
+        <div className="text-4xl font-bold text-center animate-cyberGlow" style={{ color: '#39ff14', textShadow: '0 0 5px #39ff14, 0 0 10px #39ff14' }}>
           {countdown}
         </div>
       </div>

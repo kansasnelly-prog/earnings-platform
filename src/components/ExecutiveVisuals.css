@@ -105,6 +105,107 @@
 }
 
 /* ---------------------------------------------------------------
+   Phase 1 – Merlin's Arc Data‑Snake System
+   --------------------------------------------------------------- */
+@keyframes merlinArcTrace {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* ---------------------------------------------------------------
+   Phase 2 – Morgana's Pulse Target Node
+   --------------------------------------------------------------- */
+@keyframes morganaPulseLock {
+  0%   { background: #ffd700; box-shadow: 0 0 8px #ffd700; }
+  14%  { background: #8000ff; box-shadow: 0 0 8px #8000ff; }
+  28%  { background: #00e5ff; box-shadow: 0 0 8px #00e5ff; }
+  42%  { background: #0066ff; box-shadow: 0 0 8px #0066ff; }
+  56%  { background: #00ff7f; box-shadow: 0 0 8px #00ff7f; }
+  70%  { background: #ff0033; box-shadow: 0 0 8px #ff0033; }
+  84%  { background: #ff1493; box-shadow: 0 0 8px #ff1493; }
+  100% { background: #ffd700; box-shadow: 0 0 8px #ffd700; }
+}
+
+/* ---------------------------------------------------------------
+   Visual Elements – Merlins Arc & Morgana Pulse
+   --------------------------------------------------------------- */
+.exec-panel .merlin-arc {
+  position: absolute;
+  inset: 0;
+  border: 2px solid transparent;
+  border-radius: 24px;
+  pointer-events: none;
+  background: linear-gradient(90deg, #ffd700, #8000ff, #00e5ff, #0066ff, #00ff7f, #ff0033, #ff1493);
+  background-size: 400% 400%;
+  animation: merlinArcTrace 8s linear infinite;
+}
+
+.exec-panel .morgana-pulse {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffd700;
+  box-shadow: 0 0 8px #ffd700;
+  pointer-events: none;
+  animation: morganaPulseLock 8s linear infinite;
+}
+
+/* ---------------------------------------------------------------
+   Phase 3 – Atmospheric Glow Layers & Ambient Particles
+   --------------------------------------------------------------- */
+.exec-panel .atmospheric-layer {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.08), transparent 70%);
+  pointer-events: none;
+  animation: atmosphericGlow 20s linear infinite;
+}
+
+@keyframes atmosphericGlow {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
+
+/* ---------------------------------------------------------------
+   Phase 5 – Executive Typography Pass
+   --------------------------------------------------------------- */
+.exec-panel h1,
+.exec-panel h2,
+.exec-panel .stat,
+.exec-panel .label,
+.exec-panel .metric {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .exec-panel h1,
+  .exec-panel h2,
+  .exec-panel .stat,
+  .exec-panel .label,
+  .exec-panel .metric {
+    font-size: 1rem;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Phase 7 – Reduced‑Motion Fallbacks
+   --------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .exec-panel,
+  .cyber-card,
+  .exec-panel .merlin-arc,
+  .exec-panel .morgana-pulse,
+  .exec-panel .atmospheric-layer {
+    animation: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------
    Cyber Card – applies animated border glow and underglow effect
    --------------------------------------------------------------- */
 .cyber-card {

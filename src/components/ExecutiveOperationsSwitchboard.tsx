@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 /**
  * ExecutiveOperationsSwitchboard – visual panel representing executive command functions.
@@ -158,6 +158,153 @@ const ExecutiveOperationsSwitchboard: React.FC = () => {
           </div>
         </div>
       </div>
+      {/* Global Executive Master Deck */}
+      <GlobalExecutiveMasterDeck />
+      {/* Bybit Multi-Payment Gate */}
+      <BybitMultiPaymentGate />
+    </section>
+  );
+};
+
+// ====================
+// GlobalExecutiveMasterDeck Component
+// ====================
+const GlobalExecutiveMasterDeck: React.FC = () => {
+  const [currentWorld, setCurrentWorld] = useState<'optimization' | 'tiktok6'>('tiktok6');
+  const [globalTreasury, setGlobalTreasury] = useState(1450930822.45);
+  const [isMintingActive, setIsMintingActive] = useState(false);
+  const [mintedDiamonds, setMintedDiamonds] = useState(1420930);
+
+  const engines = [
+    { id: '01', name: 'Real-Time Bidder', status: 'online', telemetry: 'TPS: 1200', latency: '12ms' },
+    { id: '02', name: 'Ad Delivery Engine', status: 'online', telemetry: 'Impressions: 3.2M', latency: '15ms' },
+    { id: '03', name: 'Data Sync Processor', status: 'maintenance', telemetry: 'Sync Lag: 5s', latency: 'N/A' },
+    { id: '04', name: 'User Matching Engine', status: 'online', telemetry: 'Matches/sec: 450', latency: '9ms' },
+    { id: '05', name: 'Revenue Optimizer', status: 'offline', telemetry: 'Revenue: $0', latency: 'N/A' },
+    { id: '06', name: 'Ad Payload Injector', status: 'online', telemetry: 'Payloads: 800', latency: '11ms' },
+  ];
+
+  const adMatrices = [
+    { name: 'AETHERIS-PRIME-QUANTUM', rate: 12.5, accumulated: 42093040.5 },
+    { name: 'VALERIAN-FORTRESS-MATRIX', rate: 15.2, accumulated: 98402100.2 },
+    { name: 'CHRONOS-PULSE-ARTILLERY', rate: 18.0, accumulated: 12054000.8 },
+  ];
+
+  const countries = [
+    { code: 'US', name: 'United States', flag: '🇺🇸', earnings: 4209300.5 },
+    { code: 'NG', name: 'Nigeria', flag: '🇳🇬', earnings: 1840210.2 },
+    { code: 'KH', name: 'Cambodia', flag: '🇰🇭', earnings: 1205400.8 },
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      let drop = Math.random() * 5;
+      if (isMintingActive) {
+        setMintedDiamonds(prev => prev + Math.floor(Math.random() * 12 + 4));
+        drop += 25.5;
+      }
+      setGlobalTreasury(prev => prev + drop);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isMintingActive]);
+
+  return (
+    <section className="p-4 bg-gray-900 text-white rounded-lg mb-4">
+      <h3 className="text-xl font-bold mb-2">Global Executive Master Deck</h3>
+      <div className="flex items-center space-x-4 mb-2">
+        <button
+          className={`px-2 py-1 ${currentWorld === 'tiktok6' ? 'bg-blue-600' : 'bg-gray-700'}`}
+          onClick={() => setCurrentWorld('tiktok6')}
+        >
+          TikTok6
+        </button>
+        <button
+          className={`px-2 py-1 ${currentWorld === 'optimization' ? 'bg-blue-600' : 'bg-gray-700'}`}
+          onClick={() => setCurrentWorld('optimization')}
+        >
+          Optimization
+        </button>
+      </div>
+      <p className="mb-2">Current World: {currentWorld}</p>
+      <p className="mb-2">Total Treasury: ${globalTreasury.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+      {currentWorld === 'tiktok6' && (
+        <div>
+          <h4 className="font-semibold">Engines</h4>
+          <ul className="list-disc list-inside">
+            {engines.map(e => (
+              <li key={e.id}>
+                {e.name} – {e.status} – {e.telemetry} – {e.latency}
+              </li>
+            ))}
+          </ul>
+          <h4 className="font-semibold mt-2">Ad Matrices</h4>
+          <ul className="list-disc list-inside">
+            {adMatrices.map((m, i) => (
+              <li key={i}>
+                {m.name}: +{m.rate}x/s – ${m.accumulated.toLocaleString()}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+};
+
+// ====================
+// BybitMultiPaymentGate Component
+// ====================
+const BybitMultiPaymentGate: React.FC = () => {
+  const MASTER_BYBIT_WALLET = "THw79g2JzNj2GYtLnCXR6kRQpYRSvR2mo6";
+
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'verifying' | 'success' | 'failed'>('idle');
+  const [transactionHash, setTransactionHash] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const copyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(MASTER_BYBIT_WALLET);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Copy failed', err);
+    }
+  };
+
+  const startPayment = () => {
+    setPaymentStatus('verifying');
+    setTimeout(() => {
+      const success = Math.random() > 0.3;
+      setPaymentStatus(success ? 'success' : 'failed');
+      if (success) {
+        setTransactionHash('0x' + Math.random().toString(16).substr(2, 64));
+      }
+    }, 1500);
+  };
+
+  return (
+    <section className="p-4 bg-gray-800 text-white rounded-lg">
+      <h3 className="text-xl font-bold mb-2">Bybit Multi-Payment Gate</h3>
+      <p className="mb-2">Master Wallet (TRON): {MASTER_BYBIT_WALLET}</p>
+      <button
+        className="px-3 py-1 bg-blue-600 rounded mr-2"
+        onClick={copyAddress}
+      >
+        {copied ? 'Copied!' : 'Copy Address'}
+      </button>
+      <button
+        className="px-3 py-1 bg-green-600 rounded"
+        onClick={startPayment}
+        disabled={paymentStatus === 'verifying'}
+      >
+        {paymentStatus === 'verifying' ? 'Verifying...' : 'Start Payment'}
+      </button>
+      {paymentStatus === 'success' && (
+        <p className="mt-2 text-green-400">Payment successful! Tx: {transactionHash}</p>
+      )}
+      {paymentStatus === 'failed' && (
+        <p className="mt-2 text-red-400">Payment failed. Try again.</p>
+      )}
     </section>
   );
 };

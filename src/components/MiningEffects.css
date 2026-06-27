@@ -1,0 +1,35 @@
+/* 7 Rainbow Color Cycle Animation */
+@keyframes rainbowGlow {
+  0% { color: #ff0000; text-shadow: 0 0 10px #ff0000; }
+  14% { color: #ff7f00; text-shadow: 0 0 10px #ff7f00; }
+  28% { color: #ffff00; text-shadow: 0 0 10px #ffff00; }
+  42% { color: #00ff00; text-shadow: 0 0 10px #00ff00; }
+  56% { color: #0000ff; text-shadow: 0 0 10px #0000ff; }
+  70% { color: #4b0082; text-shadow: 0 0 10px #4b0082; }
+  84% { color: #9400d3; text-shadow: 0 0 10px #9400d3; }
+  100% { color: #ff0000; text-shadow: 0 0 10px #ff0000; }
+}
+
+/* Glitter Sparkle Keyframe Effect */
+@keyframes glitterSparkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.9); filter: brightness(1); }
+  50% { opacity: 1; transform: scale(1.2); filter: brightness(1.8) drop-shadow(0 0 8px #fff); }
+}
+
+.multiplier-badge {
+  font-size: 2.5rem;
+  font-weight: 900;
+  font-family: 'Courier New', monospace;
+  animation: rainbowGlow 4s infinite linear;
+}
+
+.glitter-active {
+  animation: glitterSparkle 0.4s ease-in-out;
+}
+
+.engine-grid-premium {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}

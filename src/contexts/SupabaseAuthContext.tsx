@@ -1,10 +1,10 @@
 // Updated import to avoid default React import which requires esModuleInterop
-import { createContext, useContext, useReducer, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { SecurityManager } from '../utils/security';
-5 | // Use the full SupabaseService which provides all required methods
-5 | import { SupabaseService, DatabaseUser, DatabaseTask } from '../services/supabaseService';
+// Use the full SupabaseService which provides all required methods
+import { SupabaseService, DatabaseUser, DatabaseTask } from '../services/supabaseService';
 
 interface AuthState {
   user: DatabaseUser | null;
@@ -24,8 +24,7 @@ type AuthAction =
   | { type: 'SESSION_EXPIRED' }
   | { type: 'TASKS_LOADED'; payload: DatabaseTask[] }
   | { type: 'TASK_UPDATED'; payload: DatabaseTask }
-  | { type: 'USER_UPDATED'; payload: DatabaseUser }
-  | { type: 'BALANCE_SYNCED'; payload: number };
+  | { type: 'USER_UPDATED'; payload: DatabaseUser };
 
 const initialState: AuthState = {
   user: null,
@@ -88,7 +87,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
     case 'TASK_UPDATED':
       return {
         ...state,
-        tasks: state.tasks.map(task => 
+        tasks: state.tasks.map(task =>
           task.id === action.payload.id ? action.payload : task
         ),
       };
@@ -96,11 +95,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       return {
         ...state,
         user: action.payload,
-      };
-    case 'BALANCE_SYNCED':
-      return {
-        ...state,
-        user: state.user ? { ...state.user, balance: action.payload } : null,
       };
     default:
       return state;
@@ -111,9 +105,8 @@ interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   clearError: () => void;
-  completeTask: (taskId: number) => Promise<boolean>;
+  completeTask: (taskNumber: number) => Promise<boolean>;
   refreshUserData: () => Promise<void>;
-  syncBalance: () => Promise<void>;
   requireAdmin: () => boolean;
 }
 
@@ -135,10 +128,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const navigate = useNavigate();
 
-  // Real-time subscriptions
-  const [userSubscription, setUserSubscription] = useState<any>(null);
-  const [taskSubscription, setTaskSubscription] = useState<any>(null);
-
   // Secure login function with Supabase integration
   const login = async (email: string, password: string): Promise<boolean> => {
     dispatch({ type: 'LOGIN_START' });
@@ -153,35 +142,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Check admin credentials first
       if (email === 'admin@optimize.com' && password === 'admin123') {
         const adminUser = await SupabaseService.getUserByEmail(email);
-        
+
         if (!adminUser) {
           dispatch({ type: 'LOGIN_FAILURE', payload: 'Admin account not found in database' });
           return false;
         }
 
-        // Validate admin user data
-        const validation = await SupabaseService.validateUserIntegrity(adminUser.id);
-        if (!validation.isValid) {
-          console.warn('Admin data validation issues:', validation.issues);
-        }
-
-        // Update last login
-        await SupabaseService.updateUserLastLogin(adminUser.id);
-
         // Create secure session
         SecurityManager.createSession(adminUser, true);
-        
-        dispatch({ 
-          type: 'LOGIN_SUCCESS', 
-          payload: { user: adminUser, isAdmin: true } 
+
+        dispatch({
+          type: 'LOGIN_SUCCESS',
+          payload: { user: adminUser, isAdmin: true }
         });
-        
+
         return true;
       }
 
       // Check for user in Supabase
       const user = await SupabaseService.getUserByEmail(email.toLowerCase());
-      
+
       if (!user) {
         dispatch({ type: 'LOGIN_FAILURE', payload: 'Account not found' });
         return false;
@@ -193,41 +173,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
 
-      // Validate user data integrity
-      const validation = await SupabaseService.validateUserIntegrity(user.id);
-      if (!validation.isValid) {
-        console.warn('User data validation issues:', validation.issues);
-        
-        // Auto-correct balance if needed
-        if (validation.correctedBalance !== undefined) {
-          await SupabaseService.updateUser(user.id, { balance: validation.correctedBalance });
-          user.balance = validation.correctedBalance;
-        }
-      }
-
       // Load user tasks
       const tasks = await SupabaseService.getUserTasks(user.id);
 
-      // Update last login
-      await SupabaseService.updateUserLastLogin(user.id);
-
       // Create secure session
       SecurityManager.createSession(user, user.account_type === 'admin');
-      
+
       // Store minimal data in localStorage for offline support
       localStorage.setItem('opt_user', JSON.stringify(user));
-      
-      dispatch({ 
-        type: 'LOGIN_SUCCESS', 
-        payload: { 
-          user, 
-          isAdmin: user.account_type === 'admin',
-          tasks 
-        } 
-      });
-      
-      return true;
 
+      dispatch({
+        type: 'LOGIN_SUCCESS',
+        payload: {
+          user,
+          isAdmin: user.account_type === 'admin',
+          tasks
+        }
+      });
+
+      return true;
     } catch (error) {
       console.error('Login error:', error);
       dispatch({ type: 'LOGIN_FAILURE', payload: 'Login failed' });
@@ -237,16 +201,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Secure logout
   const logout = () => {
-    // Cleanup subscriptions
-    if (userSubscription) {
-      SupabaseService.unsubscribe(userSubscription);
-      setUserSubscription(null);
-    }
-    if (taskSubscription) {
-      SupabaseService.unsubscribe(taskSubscription);
-      setTaskSubscription(null);
-    }
-
     SecurityManager.destroySession();
     localStorage.removeItem('opt_user');
     dispatch({ type: 'LOGOUT' });
@@ -266,63 +220,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!state.user) return false;
 
     try {
-      // Find the task
-      const task = state.tasks.find(t => t.task_number === taskNumber);
-      if (!task || task.status !== 'pending') {
-        toast.error('Task not available for completion');
+      const result = await SupabaseService.completeTask(state.user.id, taskNumber);
+      if (!result.success) {
+        toast.error(result.error || 'Failed to complete task');
         return false;
       }
 
-      // Complete task in database
-      const completedTask = await SupabaseService.completeTask(task.id);
-      if (!completedTask) {
-        toast.error('Failed to complete task');
-        return false;
-      }
-
-      // Update user stats
-      const newTasksCompleted = state.user.tasks_completed + 1;
-      const newBalance = state.user.balance + task.reward;
-      const newTotalEarned = state.user.total_earned + task.reward;
-
-      const updatedUser = await SupabaseService.updateUser(state.user.id, {
-        tasks_completed: newTasksCompleted,
-        balance: newBalance,
-        total_earned: newTotalEarned,
-        updated_at: new Date().toISOString()
-      });
-
-      if (!updatedUser) {
-        toast.error('Failed to update user stats');
-        return false;
-      }
-
-      // Unlock next task
-      await SupabaseService.unlockNextTask(state.user.id, taskNumber);
-
-      // Create transaction record
-      await SupabaseService.createTransaction({
-        user_id: state.user.id,
-        type: 'deposit',
-        amount: task.reward,
-        status: 'completed',
-        description: `Task ${taskNumber} completion reward`
-      });
-
-      // Log activity
       SecurityManager.logAction('TASK_COMPLETED', state.user.email, {
         taskNumber,
-        reward: task.reward,
-        newBalance
+        reward: result.reward,
       });
 
-      // Update local state
-      dispatch({ type: 'TASK_UPDATED', payload: completedTask });
-      dispatch({ type: 'USER_UPDATED', payload: updatedUser });
-
-      toast.success(`Task ${taskNumber} completed! Earned $${task.reward.toFixed(2)}`);
+      toast.success(`Task ${taskNumber} completed! Earned $${result.reward?.toFixed(2)}`);
       return true;
-
     } catch (error) {
       console.error('Error completing task:', error);
       toast.error('Failed to complete task');
@@ -353,57 +263,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Sync balance from server
-  const syncBalance = async () => {
-    if (!state.user) return;
-
-    try {
-      const syncedUser = await SupabaseService.syncUserBalance(state.user.id);
-      if (syncedUser) {
-        dispatch({ type: 'BALANCE_SYNCED', payload: syncedUser.balance });
-        localStorage.setItem('opt_user', JSON.stringify(syncedUser));
-        toast.success('Balance synced with server');
-      }
-    } catch (error) {
-      console.error('Error syncing balance:', error);
-      toast.error('Failed to sync balance');
-    }
-  };
-
   // Admin protection
   const requireAdminAccess = () => {
     return state.isAdmin;
   };
-
-  // Setup real-time subscriptions
-  useEffect(() => {
-    let userSub: any = null;
-    let taskSub: any = null;
-
-    if (state.isAuthenticated && state.user) {
-      // Subscribe to user changes
-      userSub = SupabaseService.subscribeToUserChanges(state.user.id, (updatedUser) => {
-        dispatch({ type: 'USER_UPDATED', payload: updatedUser });
-        localStorage.setItem('opt_user', JSON.stringify(updatedUser));
-      });
-      setUserSubscription(userSub);
-
-      // Subscribe to task changes
-      taskSub = SupabaseService.subscribeToTaskChanges(state.user.id, (updatedTask) => {
-        dispatch({ type: 'TASK_UPDATED', payload: updatedTask });
-      });
-      setTaskSubscription(taskSub);
-    }
-
-    return () => {
-      if (userSub) {
-        SupabaseService.unsubscribe(userSub);
-      }
-      if (taskSub) {
-        SupabaseService.unsubscribe(taskSub);
-      }
-    };
-  }, [state.isAuthenticated, state.user?.id]);
 
   // Validate session on mount
   useEffect(() => {
@@ -415,10 +278,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const user = await SupabaseService.getUserByEmail(session.user.email);
         if (user && SecurityManager.validateUserData(user)) {
           const tasks = await SupabaseService.getUserTasks(user.id);
-          
-          dispatch({ 
-            type: 'LOGIN_SUCCESS', 
-            payload: { user, isAdmin: session.isAdmin, tasks } 
+
+          dispatch({
+            type: 'LOGIN_SUCCESS',
+            payload: { user, isAdmin: session.isAdmin, tasks }
           });
           return;
         }
@@ -434,12 +297,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const dbUser = await SupabaseService.getUserByEmail(user.email);
             if (dbUser) {
               const tasks = await SupabaseService.getUserTasks(dbUser.id);
-              
+
               SecurityManager.createSession(dbUser, dbUser.account_type === 'admin');
-              
-              dispatch({ 
-                type: 'LOGIN_SUCCESS', 
-                payload: { user: dbUser, isAdmin: dbUser.account_type === 'admin', tasks } 
+
+              dispatch({
+                type: 'LOGIN_SUCCESS',
+                payload: { user: dbUser, isAdmin: dbUser.account_type === 'admin', tasks }
               });
             }
           }
@@ -460,7 +323,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     clearError,
     completeTask,
     refreshUserData,
-    syncBalance,
     requireAdmin: requireAdminAccess,
   };
 

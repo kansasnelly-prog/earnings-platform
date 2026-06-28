@@ -774,6 +774,8 @@ const allComplete = displayCompletedCount === totalTasks;
       return;
     }
 
+    let timeoutId: NodeJS.Timeout | undefined;
+
     // CRITICAL: Block task submission if Day 2 checkpoint is pending review
     if (day2CheckpointPending) {
       clearTimeout(timeoutId);
@@ -813,7 +815,7 @@ const allComplete = displayCompletedCount === totalTasks;
     setPendingCompletionTask(pendingTask.task_number);
     
     // TIMEOUT PROTECTION: Prevent infinite processing
-    const timeoutId = setTimeout(() => {
+    timeoutId = setTimeout(() => {
       // Only reset state if submission is still in progress (check the lock)
       if (submissionLockRef.current) {
         console.error('[TaskGrid] Task submission timeout - resetting state');

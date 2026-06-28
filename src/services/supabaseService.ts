@@ -830,7 +830,8 @@ export class SupabaseService {
         accountType: userData.account_type as 'personal' | 'training' | 'admin',
         vipLevel: userData.vip_level,
         balance: userData.balance,
-        referralCode: userData.referral_code,
+        // Ensure referralCode is a string; fallback to empty string if undefined
+        referralCode: userData.referral_code || '',
         userStatus: userData.user_status,
         createdAt: userData.created_at,
         isTrainingAccount: userData.account_type === 'training',

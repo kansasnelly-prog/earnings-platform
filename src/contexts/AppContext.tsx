@@ -28,7 +28,7 @@ import { TelegramService } from '@/services/telegramService';
     account_type: 'training' | 'personal' | 'admin'; // Restored 'admin' to fix type error
     training_completed: boolean;
     training_progress: number;
-    user_status: 'registered' | 'waiting_for_training' | 'training_assigned' | 'training_credentials_sent' | 'training_completed' | 'active';
+    user_status: 'registered' | 'waiting_for_training' | 'training_assigned' | 'training_credentials_sent' | 'training_completed' | 'active' | 'suspended' | 'deleted';
     training_account_email?: string;
     personal_account_id?: string;
     training_phase: 1 | 2;
@@ -176,7 +176,7 @@ export interface AppContextType {
   logout: () => Promise<void>;
   
   // Tasks
-  completeTask: (taskNumber: number) => Promise<{ success: boolean; reward?: number }>;
+  completeTask: (taskNumber: number) => Promise<{ success: boolean; reward?: number; phase1Locked?: boolean; phase2Checkpoint?: boolean; autoReset?: boolean }>;
   refreshTasks: () => Promise<void>;
   
   // User
@@ -578,7 +578,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     console.log('[loadUserData] Starting loadUserData - userId:', userId);
 
     // ALWAYS fetch user from public.users first to get account_type
-    let dbUser = null;
+    let dbUser: DatabaseUser | null = null;
     try {
       const { data: userData, error: userError } = await supabase
         .from('users')
@@ -620,6 +620,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       return;
     }
+
+    if (!dbUser) return;
 
     // Check if training is completed - if so, skip ALL localStorage wallet loading and use Supabase only
     const isTrainingCompleted = dbUser.training_completed === true || dbUser.training_completed_v2 === true;
@@ -771,7 +773,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           linked_training_account_id: dbUser.linked_training_account_id || null, // Use linked_training_account_id from DB
           training_completed: dbUser.training_completed || false, // Use training_completed from DB
           commission_transferred: dbUser.commission_transferred || false, // Use commission_transferred from DB
-          user_status: dbUser.user_status || 'pending', // Use user_status from DB
+           user_status: dbUser.user_status || 'registered', // Use user_status from DB
         } : null);
 
         // Update wallet state with fresh balance from database
@@ -1193,7 +1195,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // TASK FUNCTIONS
   // ===========================================
 
-  const completeTask = async (taskNumber: number): Promise<{ success: boolean; reward?: number }> => {
+  const completeTask = async (taskNumber: number): Promise<{ success: boolean; reward?: number; phase1Locked?: boolean; phase2Checkpoint?: boolean; autoReset?: boolean }> => {
     const executionId = Date.now();
     
     if (!user) {
@@ -1994,7 +1996,7 @@ else if (
         console.log('[DEBUG] Training account data:', trainingAccounts);
 
         // Prefer record with populated amount/task_number over null values
-        let trainingAccount = null;
+        let trainingAccount: any = null;
         if (trainingAccounts && trainingAccounts.length > 0) {
           // First try to find record with populated amount
           trainingAccount = trainingAccounts.find(ta => ta.amount !== null && ta.amount !== undefined);

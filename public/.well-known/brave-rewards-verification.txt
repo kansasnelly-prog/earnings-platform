@@ -1,4 +1,4 @@
 This is a Brave Creators publisher verification file.
 
 Domain: earnings.ink
-Token: 59b13855414c55c71497b457b0e942796ecc5328c03d4f0edc0234aa0a63ae40
+Token: d0eba8f011468f754358c7bded9203b5245b173946b70a0a2675df410130ecc4

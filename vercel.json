@@ -2,9 +2,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "routes": [
-    { "src": "/b690554f764cefe6ab0a3cc1304ea98b.html", "dest": "/b690554f764cefe6ab0a3cc1304ea98b.html" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

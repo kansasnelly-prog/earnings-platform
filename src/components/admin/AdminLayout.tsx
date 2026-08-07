@@ -9,7 +9,7 @@ import { MASTER_ADMIN_EMAIL } from '../ProtectedRoute';
  * and has admin privileges before rendering the admin UI. It also provides
  * a consistent layout with a navbar and a placeholder for nested routes.
  */
-const AdminLayout: React.FC = ({ children }) => {
+const AdminLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated, isAdmin } = useAuth();
 
   // If not authenticated, redirect to login or show a message

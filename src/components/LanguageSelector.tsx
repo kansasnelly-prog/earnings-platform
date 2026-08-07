@@ -7,14 +7,15 @@ const LanguageSelector: React.FC = () => {
   const { currentLanguage, setLanguage, availableLanguages } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleLanguageChange = (code: LanguageCode) => {
-    setLanguage(code);
+  const handleLanguageChange = (code: string) => {
+    const language = availableLanguages.find(l => l.code === code);
+    if (language) setLanguage(language);
     setIsOpen(false);
     // Reload page to apply translations
     window.location.reload();
   };
 
-  const currentLang = availableLanguages.find(l => l.code === currentLanguage);
+  const currentLang = availableLanguages.find(l => l.code === currentLanguage.code);
 
   return (
     <div className="relative">
@@ -47,7 +48,7 @@ const LanguageSelector: React.FC = () => {
                   key={lang.code}
                   onClick={() => handleLanguageChange(lang.code)}
                   className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors hover:bg-pink-500/10 ${
-                    currentLanguage === lang.code
+                    currentLanguage.code === lang.code
                       ? 'bg-pink-500/20 text-pink-300'
                       : 'text-white'
                   }`}
@@ -56,7 +57,7 @@ const LanguageSelector: React.FC = () => {
                     <span className="text-xl">{lang.flag}</span>
                     <span className="text-sm font-medium">{lang.name}</span>
                   </div>
-                  {currentLanguage === lang.code && (
+                  {currentLanguage.code === lang.code && (
                     <Check className="w-4 h-4 text-pink-400" />
                   )}
                 </button>

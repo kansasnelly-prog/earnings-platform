@@ -1,6 +1,6 @@
 import React from 'react';
 // v2.0 - Added reset and delete functionality
-import { X, RefreshCw, Trash2, Mail, Phone, Hash, GraduationCap, Crown, Wallet, TrendingUp, Calendar, Unlock, Trophy } from 'lucide-react';
+import { X, RefreshCw, Trash2, Mail, Phone, Hash, GraduationCap, Crown, Wallet, TrendingUp, Calendar, Unlock, Trophy, Lock } from 'lucide-react';
 import { AdminUser } from './AdminUsersTable';
 
 interface UserDetailsModalProps {

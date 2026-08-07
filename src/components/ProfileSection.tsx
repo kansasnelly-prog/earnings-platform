@@ -84,12 +84,12 @@ const ProfileSection: React.FC = () => {
         
         // Send Telegram notification
         await sendTelegramNotification({
-          type: 'pwa_install',
+          type: 'user_login',
           email: user?.email,
           platform: platform,
           rewardAmount: rewardAmount,
           timestamp: new Date().toISOString()
-        });
+        } as any);
       }
       
       setDeferredPrompt(null);

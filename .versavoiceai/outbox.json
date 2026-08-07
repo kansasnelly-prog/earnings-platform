@@ -1,0 +1,14 @@
+{
+  "formatGuide": "Write messages with status 'pending' for the extension to send. The extension ignores entries with status 'example', 'sent', or 'error'. See the SKILL file for full details.",
+  "messages": [
+    {
+      "id": "example-1",
+      "subAccountId": "<your-sub-account-id>",
+      "recipientId": "<recipient-uid>",
+      "text": "Hello from the AI agent!",
+      "mode": "typed",
+      "sourceLanguage": "en",
+      "status": "example"
+    }
+  ]
+}

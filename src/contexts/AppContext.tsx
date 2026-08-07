@@ -25,7 +25,7 @@ import { TelegramService } from '@/services/telegramService';
     total_earned: number;
     referral_code: string;
     created_at: string;
-    account_type: 'training' | 'personal' | 'admin'; // Restored 'admin' to fix type error
+    account_type: 'training' | 'personal' | 'admin';
     training_completed: boolean;
     training_progress: number;
     user_status: 'registered' | 'waiting_for_training' | 'training_assigned' | 'training_credentials_sent' | 'training_completed' | 'active' | 'suspended' | 'deleted';
@@ -35,6 +35,7 @@ import { TelegramService } from '@/services/telegramService';
     tasks_completed: number;
     total_tasks: number;
     task_number?: number;
+    wallet_address?: string;
     current_task_set?: number;
     set_1_completed_at?: string | null;
     set_2_completed_at?: string | null;
@@ -197,6 +198,11 @@ export interface AppContextType {
   requestWithdrawal: (amount: number, walletAddress: string, walletType: string) => Promise<{ success: boolean; error?: string }>;
   getWithdrawalHistory: () => Promise<any[]>;
   hasPendingWithdrawal: () => Promise<boolean>;
+
+  // Admin
+  resetTrainingProgress: (userId?: string) => Promise<boolean>;
+  upgradeAccount: (vipLevel: 1 | 2) => Promise<boolean>;
+  createPersonalAccount: (email: string, displayName: string, vipLevel: 1 | 2) => Promise<boolean>;
 }
 
 // ===========================================
@@ -1309,22 +1315,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   task.task_number > existingCheckpoint.task_number
 ) {
 
-  setUser(prevUser => ({
-    ...prevUser,
-    phase2_checkpoint: null,
-    has_pending_checkpoint: false
-  }));
+  setUser(prevUser => {
+    if (!prevUser) return prevUser;
+    return {
+      ...prevUser,
+      phase2_checkpoint: null,
+      has_pending_checkpoint: false
+    };
+  });
 
   // continue to normal task completion below
 }
 
 else if (existingCheckpoint.status === 'pending_review') {
   console.error('[completeTask FAIL] Line 1099 - Checkpoint pending review (blocks submission)', { taskNumber, existingCheckpoint });
-  setUser(prevUser => ({
-    ...prevUser,
-    phase2_checkpoint: existingCheckpoint,
-    has_pending_checkpoint: true
-  }));
+  setUser(prevUser => {
+    if (!prevUser) return prevUser;
+    return {
+      ...prevUser,
+      phase2_checkpoint: existingCheckpoint,
+      has_pending_checkpoint: true
+    };
+  });
 
   isCheckingAuth.current = false;
   setIsLoading(false);
@@ -1336,11 +1348,14 @@ else if (
   task.task_number <= existingCheckpoint.task_number
 ) {
   console.error('[completeTask FAIL] Line 1116 - Approved checkpoint requires premium submit', { taskNumber, existingCheckpoint });
-  setUser(prevUser => ({
-    ...prevUser,
-    phase2_checkpoint: existingCheckpoint,
-    has_pending_checkpoint: true
-  }));
+  setUser(prevUser => {
+    if (!prevUser) return prevUser;
+    return {
+      ...prevUser,
+      phase2_checkpoint: existingCheckpoint,
+      has_pending_checkpoint: true
+    };
+  });
 
   isCheckingAuth.current = false;
   setIsLoading(false);
@@ -1375,10 +1390,13 @@ else if (
             console.error('[completeTask FAIL] Line 1157 - Checkpoint created successfully (blocks submission until premium product submitted)', { taskNumber, checkpoint });
             
             // Store checkpoint in user state for UI detection
-            setUser(prevUser => ({
-              ...prevUser,
-              phase2_checkpoint: checkpoint
-            }));
+            setUser(prevUser => {
+              if (!prevUser) return prevUser;
+              return {
+                ...prevUser,
+                phase2_checkpoint: checkpoint
+              };
+            });
             
             // DO NOT complete the task - block submission
             isCheckingAuth.current = false;
@@ -1501,13 +1519,16 @@ else if (
 
       // Update user state with functional update to avoid stale values
       // Preserve existing total_earned - do NOT recalculate from balance
-      setUser(prevUser => ({
-        ...prevUser,
-        tasks_completed: updatedCompleted,
-        training_progress: updatedCompleted,
-        balance: newBalance, // Update balance locally
-        total_earned: prevUser.total_earned + commission // Add commission to existing total_earned
-      }));
+      setUser(prevUser => {
+        if (!prevUser) return prevUser;
+        return {
+          ...prevUser,
+          tasks_completed: updatedCompleted,
+          training_progress: updatedCompleted,
+          balance: newBalance, // Update balance locally
+          total_earned: prevUser.total_earned + commission // Add commission to existing total_earned
+        };
+      });
 
       // Update wallet state with new balance
       setWalletState(prev => ({
@@ -2483,7 +2504,7 @@ else if (
         description: text || 'Failed to submit withdrawal request',
         variant: 'destructive'
       });
-      return;
+      return { success: false, error: text || 'Failed to submit withdrawal request' };
     }
 
     const contentType = response.headers.get('content-type');
@@ -2495,7 +2516,7 @@ else if (
         description: 'Server returned invalid response format',
         variant: 'destructive'
       });
-      return;
+      return { success: false, error: 'Server returned invalid response format' };
     }
 
     const result = await response.json();
@@ -2531,6 +2552,42 @@ else if (
   const hasPendingWithdrawal = async (): Promise<boolean> => {
     if (!user) return false;
     return await SupabaseService.hasPendingWithdrawal(user.id);
+  };
+
+  const resetTrainingProgress = async (userId?: string): Promise<boolean> => {
+    const targetUserId = userId || user?.id;
+    if (!targetUserId) return false;
+    return await SupabaseService.resetUserProgress(targetUserId);
+  };
+
+  const upgradeAccount = async (vipLevel: 1 | 2): Promise<boolean> => {
+    if (!user) return false;
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ vip_level: vipLevel, updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+      if (error) return false;
+      await refreshUser();
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const createPersonalAccount = async (email: string, displayName: string, vipLevel: 1 | 2): Promise<boolean> => {
+    try {
+      const result = await SupabaseService.signUp(email, Math.random().toString(36).slice(-8), displayName, undefined, undefined);
+      if (result.error || !result.user) return false;
+      const { error } = await supabase
+        .from('users')
+        .update({ vip_level: vipLevel, updated_at: new Date().toISOString() })
+        .eq('id', result.user.id);
+      if (error) return false;
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   // ===========================================
@@ -2583,7 +2640,12 @@ else if (
     // Withdrawals
     requestWithdrawal,
     getWithdrawalHistory,
-    hasPendingWithdrawal
+    hasPendingWithdrawal,
+    
+    // Admin
+    resetTrainingProgress,
+    upgradeAccount,
+    createPersonalAccount
   };
 
   // Render the provider regardless of loading state to avoid a permanent blank screen.

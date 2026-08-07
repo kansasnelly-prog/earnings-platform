@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { TELEGRAM_CONFIG } from '@/config/telegram';
+import { supabase } from '@/lib/supabase';
 import { Shield, Users, DollarSign, RefreshCw, Settings, AlertTriangle, CheckCircle, X, UserPlus, Send } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 

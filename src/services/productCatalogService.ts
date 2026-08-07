@@ -600,11 +600,8 @@ export const ProductCatalogService = {
       )
       .subscribe((status) => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          if (status !== 'CLOSED' && status !== 'SUBSCRIBED') {
-            console.error('[ProductCatalog] Training products subscription error:', status);
-          }
+          console.error('[ProductCatalog] Training products subscription error:', status);
         }
-        // CLOSED is expected when unsubscribing, so we don't log it as an error
       });
   },
 
@@ -635,11 +632,8 @@ export const ProductCatalogService = {
       )
       .subscribe((status) => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          if (status !== 'CLOSED' && status !== 'SUBSCRIBED') {
-            console.error('[ProductCatalog] Personal products subscription error:', status);
-          }
+          console.error('[ProductCatalog] Personal products subscription error:', status);
         }
-        // CLOSED is expected when unsubscribing, so we don't log it as an error
       });
   },
 

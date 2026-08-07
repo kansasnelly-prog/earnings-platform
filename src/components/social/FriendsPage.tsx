@@ -251,7 +251,7 @@ const FriendsPage: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setFollowing(data?.map(f => f.profiles).filter(Boolean) || []);
+      setFollowing((data?.map(f => f.profiles).filter(Boolean) || []).flat());
     } catch (error) {
       console.error('Error loading following:', error);
     } finally {
@@ -281,7 +281,7 @@ const FriendsPage: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setFollowers(data?.map(f => f.profiles).filter(Boolean) || []);
+      setFollowers((data?.map(f => f.profiles).filter(Boolean) || []).flat());
     } catch (error) {
       console.error('Error loading followers:', error);
     } finally {

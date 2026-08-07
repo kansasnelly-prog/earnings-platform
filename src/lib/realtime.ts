@@ -14,7 +14,8 @@ function safeUnsubscribe(channel: any, label: string) {
     channel.unsubscribe();
     console.log(`[${label}] Unsubscribed successfully`);
   } catch (error) {
-    if (error.message && error.message.includes('CLOSED')) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes('CLOSED')) {
       // Ignore CLOSED errors during unsubscribe
       console.log(`[${label}] Ignored CLOSED error during unsubscribe`);
     } else {

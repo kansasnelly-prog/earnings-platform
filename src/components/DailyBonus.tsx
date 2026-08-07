@@ -492,10 +492,10 @@ const DailyBonus: React.FC = () => {
             {/* Submit button */}
             <button
               onClick={handleSubmitReview}
-              disabled={phase === 'claiming'}
+              disabled={(phase as any) === 'claiming'}
               className="w-full py-4 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 hover:from-amber-500 hover:via-orange-500 hover:to-amber-500 text-white font-bold rounded-2xl transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 flex items-center justify-center gap-3 text-lg disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98] group animate-slide-up" style={{ animationDelay: '300ms' }}
             >
-              {phase === 'claiming' ? (
+              {(phase as any) === 'claiming' ? (
                 <>
                   <Loader2 size={22} className="animate-spin" />
                   <span>Processing Bonus Review...</span>

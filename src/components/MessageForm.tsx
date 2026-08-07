@@ -62,7 +62,8 @@ export default function MessageForm({ currentUser, customerName, customerPhone, 
       toast.success(result?.message || "Message sent successfully");
     } catch (error) {
       console.error("[send-message] submit failed:", error);
-      toast.error(error?.message || "Failed to send message");
+      const errorMessage = error instanceof Error ? error.message : "Failed to send message";
+      toast.error(errorMessage);
     } finally {
       setIsSending(false);
     }

@@ -112,6 +112,7 @@ const Tasks: React.FC = () => {
 
   // Calculate task reward based on VIP1 commission rate if task.reward is 0
   interface Task {
+    task_number?: number;
     reward?: number;
     status: string;
     // add other fields as needed
@@ -120,7 +121,7 @@ const Tasks: React.FC = () => {
     if (task.reward && task.reward > 0) return task.reward;
     // If reward is 0, use deterministic variance based on task_number for natural fluctuation
     // Range: 0.10 to 0.30, bouncing up and down
-    const taskNumber = task.task_number;
+    const taskNumber = task.task_number || 1;
     const hash = taskNumber * 7919; // Prime number for better distribution
     const variance = Math.sin(hash) * 0.5; // -0.5 to 0.5
     const baseRate = 0.20; // Midpoint

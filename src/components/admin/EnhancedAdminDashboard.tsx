@@ -19,9 +19,12 @@ import { sendTelegramNotification } from '@/utils/telegramHelper';
 import EnhancedPendingOrdersManager from './EnhancedPendingOrdersManager';
 import ProductCatalogManager from './ProductCatalogManager';
 import AdminCustomerService from './AdminCustomerService';
+import AdminControls from './AdminControls';
+import InfrastructureWiringMatrix from '../InfrastructureWiringMatrix';
+import ExecutiveOperationsSwitchboard from '../ExecutiveOperationsSwitchboard';
+import TikTok6AdminMatch from './TikTok6AdminMatch';
 import SupabaseService from '@/services/supabaseService';
-// @ts-ignore
-import TikTok6AdminMatch from '@/pages/admin-match/index';
+import { MASTER_ADMIN_EMAIL } from '../ProtectedRoute';
 
 interface RealUser {
   id: string;
@@ -74,7 +77,7 @@ interface RealStats {
 
 const EnhancedAdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'accounts' | 'tasks' | 'pending_orders' | 'settings' | 'catalog' | 'support' | 'admin_match'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'accounts' | 'tasks' | 'pending_orders' | 'settings' | 'catalog' | 'support' | 'admin_match' | 'training' | 'admin-controls' | 'system-health'>('overview');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -220,9 +223,6 @@ const EnhancedAdminDashboard: React.FC = () => {
   const loadData = useCallback(async (showRefreshToast = false) => {
     setIsLoading(true);
     try {
-      console.log('[Admin] Loading data from Supabase...');
-      console.log('[Admin] Supabase URL:', supabase.supabaseUrl);
-      
       // Fetch users from Supabase
       const { data: usersData, error: usersError } = await supabase
         .from('users')
@@ -320,7 +320,16 @@ const EnhancedAdminDashboard: React.FC = () => {
           .eq('id', session.user.id)
           .single();
 
-        if (userError || !userData || userData.account_type !== 'admin') {
+        if (userError || !userData) {
+          setIsAuthenticated(false);
+          navigate('/');
+          return;
+        }
+
+        const isAuthorizedAdmin = userData.account_type === 'admin' ||
+          session.user.email === MASTER_ADMIN_EMAIL;
+
+        if (!isAuthorizedAdmin) {
           setIsAuthenticated(false);
           navigate('/');
           return;
@@ -328,16 +337,17 @@ const EnhancedAdminDashboard: React.FC = () => {
 
         setIsAuthenticated(true);
         loadData();
-      } catch (error) {
-        // Gracefully handle the "Failed to fetch" network error
-        if (error?.message === 'Failed to fetch' || error?.name === 'TypeError') {
-          console.log("[EnhancedAdminDashboard] Network request failed. Will retry when connection is restored.");
-        } else {
-          console.error("[EnhancedAdminDashboard] Unexpected error during auth check:", error);
-          setIsAuthenticated(false);
-          navigate('/');
-        }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      const name = error instanceof Error ? error.name : 'Error';
+      console.error("[EnhancedAdminDashboard] Unexpected error during auth check:", error);
+      if (message === 'Failed to fetch' || name === 'TypeError') {
+        console.log("[EnhancedAdminDashboard] Network request failed. Will retry when connection is restored.");
+      } else {
+        setIsAuthenticated(false);
+        navigate('/');
       }
+    }
     };
 
     // Automatically try again the exact moment the internet comes back
@@ -577,13 +587,7 @@ const EnhancedAdminDashboard: React.FC = () => {
       });
 
       // Send Telegram notification
-      await sendTelegramNotification('PERSONAL_ACCOUNT_RESET', {
-        email: email,
-        userId: userData.id,
-        vipLevel: userData.vip_level,
-        balance: userData.balance,
-        cycle: personalCycle
-      });
+      await sendTelegramNotification({ type: 'admin_reset_personal', email, timestamp: new Date().toISOString() });
 
       toast({
         title: 'Personal Account Reset Successfully',
@@ -657,12 +661,7 @@ const EnhancedAdminDashboard: React.FC = () => {
       });
 
       // Send Telegram notification
-      await sendTelegramNotification('TRAINING_ACCOUNT_RESET', {
-        email: email,
-        userId: userData.id,
-        vipLevel: userData.vip_level,
-        balance: userData.balance
-      });
+      await sendTelegramNotification({ type: 'admin_reset_training', email, timestamp: new Date().toISOString() });
 
       toast({
         title: 'Training Account Reset Successfully',
@@ -765,9 +764,13 @@ const EnhancedAdminDashboard: React.FC = () => {
               { id: 'pending_orders', label: 'Pending Orders', icon: AlertTriangle },
               { id: 'accounts', label: 'Account Reset', icon: RefreshCw },
               { id: 'tasks', label: 'Tasks', icon: FileText },
-                { id: 'settings', label: 'Settings', icon: Settings },
-                { id: 'catalog', label: 'Training Products', icon: Package },
-                { id: 'support', label: 'Customer Service', icon: Headset },
+              { id: 'training', label: 'Training Reset', icon: Target },
+              { id: 'admin-controls', label: 'Admin Controls', icon: Settings },
+              { id: 'settings', label: 'Settings', icon: Settings },
+              { id: 'catalog', label: 'Training Products', icon: Package },
+              { id: 'support', label: 'Customer Service', icon: Headset },
+              { id: 'admin_match', label: 'TikTok6 Match', icon: SwitchCamera },
+              { id: 'system-health', label: 'System Health', icon: Activity },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -1120,10 +1123,49 @@ const EnhancedAdminDashboard: React.FC = () => {
               <div className="space-y-6">
                 <Card className="bg-slate-800/50 border-slate-700">
                   <CardHeader>
-                    <CardTitle className="text-white">Account Reset</CardTitle>
+                    <CardTitle className="text-white flex items-center">
+                      <RefreshCw className="w-5 h-5 mr-2 text-blue-500" />
+                      Reset Personal Account Tasks
+                    </CardTitle>
+                    <p className="text-slate-400 text-sm">
+                      Reset a personal account's tasks to 0/35. Balance and earnings will be preserved.
+                    </p>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-slate-400">Account reset functionality temporarily disabled.</p>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">User Email</label>
+                      <Input
+                        type="email"
+                        placeholder="Enter personal account email"
+                        value={resetTargetEmail}
+                        onChange={(e) => setResetTargetEmail(e.target.value)}
+                        className="bg-slate-800 border-slate-600 text-white placeholder-slate-400"
+                      />
+                    </div>
+                    <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                      <p className="text-blue-400 text-sm">
+                        <strong>Personal Account Reset:</strong> Tasks will reset to 0/35. 
+                        Balance and earnings will be preserved.
+                      </p>
+                    </div>
+                    <Button 
+                      type="button"
+                      onClick={(e) => resetPersonalAccountTasks(resetTargetEmail, e)}
+                      disabled={!resetTargetEmail || isResetting}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      {isResetting && resetAction === 'personal' ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                          Resetting...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Reset Personal Account Tasks
+                        </>
+                      )}
+                    </Button>
                   </CardContent>
                 </Card>
               </div>
@@ -1242,6 +1284,21 @@ const EnhancedAdminDashboard: React.FC = () => {
             {/* Customer Service Tab */}
             {activeTab === 'support' && (
               <AdminCustomerService />
+            )}
+            {/* Admin Controls Tab */}
+            {activeTab === 'admin-controls' && (
+              <AdminControls onRefresh={handleRefresh} />
+            )}
+            {/* System Health Tab */}
+            {activeTab === 'system-health' && (
+              <div className="space-y-6">
+                <InfrastructureWiringMatrix />
+                <ExecutiveOperationsSwitchboard />
+              </div>
+            )}
+            {/* TikTok6 Match Admin Tab */}
+            {activeTab === 'admin_match' && (
+              <TikTok6AdminMatch />
             )}
           </>
         )}

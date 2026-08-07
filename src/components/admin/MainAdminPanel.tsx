@@ -39,6 +39,15 @@ const MainAdminPanel: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  const tabs = [
+    { id: 'overview' as const, label: 'Overview', icon: LayoutDashboard },
+    { id: 'users' as const, label: 'Users', icon: Users },
+    { id: 'withdrawals' as const, label: 'Withdrawals', icon: ArrowDownToLine },
+    { id: 'admin-controls' as const, label: 'Admin Controls', icon: Settings },
+    { id: 'password-reset' as const, label: 'Password Reset', icon: Key },
+    { id: 'match-admin' as const, label: 'Match Admin', icon: Users },
+  ];
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();

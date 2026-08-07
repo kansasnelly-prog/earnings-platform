@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Switch, LayoutDashboard, Heart } from 'lucide-react';
+import { LayoutDashboard, Heart } from 'lucide-react';
 
 const MASTER_ADMIN_EMAIL = 'kansasnelly@gmail.com';
 

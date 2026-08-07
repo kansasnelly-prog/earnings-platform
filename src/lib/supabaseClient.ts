@@ -117,12 +117,22 @@ export type Database = {
       training_accounts: {
         Row: {
           id: string
+          auth_user_id: string
           email: string
           password: string
+          display_name: string
+          status: string
+          progress: number
+          total_tasks: number
+          task_number: number
+          amount: number
+          product_name: string
+          commission: number
+          completed: boolean
           assigned_to: string
           created_by: string
-          status: string
           created_at: string
+          updated_at: string
         }
       }
       admin_logs: {
@@ -130,7 +140,9 @@ export type Database = {
           id: string
           action: string
           user_id: string
-          details: any
+          admin_id?: string
+          details?: any
+          ip_address?: string
           created_at: string
         }
       }
@@ -147,6 +159,114 @@ export type Database = {
           comments_count: number
           is_premium: boolean
           unlock_cost: number
+          created_at: string
+        }
+      }
+      phase2_checkpoints: {
+        Row: {
+          id: string
+          user_id: string
+          auth_user_id: string
+          email: string
+          phase: number
+          task_number: number
+          status: 'pending' | 'pending_review' | 'approved' | 'rejected' | 'completed' | 'submitted' | 'bonus_paid'
+          product1_name: string
+          product1_image: string
+          product1_price: number
+          product2_name: string
+          product2_image: string
+          product2_price: number
+          combination_value: number
+          bonus_amount: number
+          reviewed_by?: string
+          reviewed_at?: string
+          notes?: string
+          created_at: string
+          updated_at: string
+        }
+      }
+      personal_day2_checkpoints: {
+        Row: {
+          id: string
+          user_id: string
+          auth_user_id: string
+          email: string
+          cycle: number
+          task_number: number
+          status: 'pending' | 'pending_review' | 'approved' | 'rejected' | 'completed' | 'submitted' | 'bonus_paid'
+          product1_name: string
+          product1_image: string
+          product1_price: number
+          product2_name: string
+          product2_image: string
+          product2_price: number
+          combination_value: number
+          bonus_amount: number
+          reviewed_by?: string
+          reviewed_at?: string
+          submitted_at?: string
+          approved_at?: string
+          notes?: string
+          created_at: string
+          updated_at: string
+        }
+      }
+      withdrawals: {
+        Row: {
+          id: string
+          user_id: string
+          user_email: string
+          amount: number
+          wallet_address: string
+          wallet_type: string
+          status: 'pending' | 'approved' | 'rejected' | 'completed'
+          balance_snapshot: number
+          reviewed_by?: string
+          processed_at?: string
+          notes?: string
+          created_at: string
+          updated_at: string
+        }
+      }
+      wallet_transactions: {
+        Row: {
+          id: string
+          user_id: string
+          amount: number
+          status: 'pending' | 'approved' | 'rejected'
+          created_at: string
+        }
+      }
+      influencer_referrals: {
+        Row: {
+          id: string
+          user_id: string
+          referral_code: string
+          referred_user_id?: string
+          revenue: number
+          status: string
+          created_at: string
+        }
+      }
+      training_settings: {
+        Row: {
+          id: string
+          checkpoint_multiplier: number
+          training_completion_percentage: number
+          phase2_target_final_balance: number
+          checkpoint_bonus_mode: string
+          updated_at: string
+        }
+      }
+      tiktok_referrals: {
+        Row: {
+          id: string
+          user_id: string
+          referral_code: string
+          referred_user_id?: string
+          source: string
+          status: string
           created_at: string
         }
       }

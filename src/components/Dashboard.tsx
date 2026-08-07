@@ -8,8 +8,6 @@ import CombinationOrderModal from './CombinationOrderModal';
 import CustomerService from './CustomerService';
 import CSSelectionModal from './CSSelectionModal';
 import ExecutiveTVPanel from './ExecutiveTVPanel';
-import InfrastructureWiringMatrix from './InfrastructureWiringMatrix';
-import ExecutiveOperationsSwitchboard from './ExecutiveOperationsSwitchboard';
 
 const Dashboard: React.FC = () => {
   const context = useAppContext();
@@ -716,13 +714,9 @@ const Dashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Right Column: Executive TV Panel, Infrastructure Wiring Matrix, Executive Operations Switchboard */}
+        {/* Right Column: Executive TV Panel */}
         <div className="w-full lg:w-1/2 space-y-4">
           <ExecutiveTVPanel />
-          <div className="grid grid-cols-2 gap-4">
-            <InfrastructureWiringMatrix />
-            <ExecutiveOperationsSwitchboard />
-          </div>
         </div>
       </div>
 

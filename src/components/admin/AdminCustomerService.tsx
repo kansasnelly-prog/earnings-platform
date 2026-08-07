@@ -602,8 +602,9 @@ Response:`;
       setNewMessage('');
       toast.success(attachmentData ? 'Reply with attachment sent successfully' : 'Reply sent successfully');
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send reply';
       console.error('[AdminCustomerService] Error in sendReply:', err);
-      toast.error(err.message || 'Failed to send reply');
+      toast.error(errorMessage);
     } finally {
       setIsSending(false);
     }

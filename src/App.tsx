@@ -1,5 +1,5 @@
-﻿import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, Outlet } from 'react-router-dom';
+﻿import React, { useEffect, useState, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, useLocation, Outlet, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from './components/ui/tooltip';
 import { Toaster } from './components/ui/toaster';
@@ -8,35 +8,38 @@ import { ThemeProvider } from './components/theme-provider';
 import { CSNotificationProvider } from './contexts/CSNotificationContext';
 import { AuthProvider } from './contexts/SafeAuthProvider';
 import { AppProvider } from './contexts/AppContext';
-import ErrorBoundary from './components/ErrorBoundary';
-import AdminLayout from './components/admin/AdminLayout';
-import ProtectedRoute, { MasterAdminRoute } from './components/ProtectedRoute';
-import PlatformSwitch from './components/PlatformSwitch';
-import Index from './pages/Index';
-import TikTokGate from './pages/TikTokGate';
-import AdminCommandDeck from './components/admin/AdminCommandDeck';
-import AIAssistantWorkspace from './pages/AIAssistantWorkspace';
-import DigitalHome from './pages/admin/index';
-import EnhancedAdminDashboard from './components/admin/EnhancedAdminDashboard';
-import AdminMatchDigitalHome from './pages/admin-match/index';
-import TikTok6SoulmateHub from './pages/TikTok6SoulmateHub';
-import TikTok6DatingCockpit from './pages/TikTok6DatingCockpit';
-import { TikTok6MonetizationCockpit } from './pages/TikTok6MonetizationCockpit';
-import MatchDashboard from './components/matchmaking/MatchDashboard';
-import MatchingFeed from './components/social/MatchingFeed';
-import AudioMatchRoom from './components/social/AudioMatchRoom';
-import PremiumChatView from './components/social/PremiumChatView';
-import Inbox from './components/social/Inbox';
-import MessageConversation from './components/social/MessageConversation';
-import StoryViewer from './components/social/StoryViewer';
-import ExplorePage from './components/social/ExplorePage';
-import CreatorProfile from './components/social/CreatorProfile';
-import FriendsPage from './components/social/FriendsPage';
-import NotFound from './pages/NotFound';
-import UserProfilePage from './pages/TikTok6MeProfile';
+
+const ErrorBoundary = React.lazy(() => import('./components/ErrorBoundary'));
+const AdminLayout = React.lazy(() => import('./components/admin/AdminLayout'));
+const ProtectedRoute = React.lazy(() => import('./components/ProtectedRoute').then(m => ({ default: (m as any).default })));
+const MasterAdminRoute = React.lazy(() => import('./components/ProtectedRoute').then(m => ({ default: m.MasterAdminRoute })));
+const PlatformSwitch = React.lazy(() => import('./components/PlatformSwitch'));
+const Index = React.lazy(() => import('./pages/Index'));
+const TikTokGate = React.lazy(() => import('./pages/TikTokGate'));
+
+const AdminCommandDeck = React.lazy(() => import('./components/admin/AdminCommandDeck'));
+const AIAssistantWorkspace = React.lazy(() => import('./pages/AIAssistantWorkspace'));
+const DigitalHome = React.lazy(() => import('./pages/admin/index'));
+const EnhancedAdminDashboard = React.lazy(() => import('./components/admin/EnhancedAdminDashboard'));
+const AdminMatchDigitalHome = React.lazy(() => import('./pages/admin-match/index'));
+const TikTok6SoulmateHub = React.lazy(() => import('./pages/TikTok6SoulmateHub'));
+const TikTok6DatingCockpit = React.lazy(() => import('./pages/TikTok6DatingCockpit'));
+const TikTok6MonetizationCockpit = React.lazy(() => import('./pages/TikTok6MonetizationCockpit').then(m => ({ default: m.TikTok6MonetizationCockpit })));
+const MatchDashboard = React.lazy(() => import('./components/matchmaking/MatchDashboard'));
+const MatchingFeed = React.lazy(() => import('./components/social/MatchingFeed'));
+const AudioMatchRoom = React.lazy(() => import('./components/social/AudioMatchRoom'));
+const PremiumChatView = React.lazy(() => import('./components/social/PremiumChatView'));
+const Inbox = React.lazy(() => import('./components/social/Inbox'));
+const MessageConversation = React.lazy(() => import('./components/social/MessageConversation'));
+const StoryViewer = React.lazy(() => import('./components/social/StoryViewer'));
+const ExplorePage = React.lazy(() => import('./components/social/ExplorePage'));
+const CreatorProfile = React.lazy(() => import('./components/social/CreatorProfile'));
+const FriendsPage = React.lazy(() => import('./components/social/FriendsPage'));
+const NotFound = React.lazy(() => import('./pages/NotFound'));
+const UserProfilePage = React.lazy(() => import('./pages/TikTok6MeProfile'));
+const TelegramMiniView = React.lazy(() => import('./components/telegram/TelegramMiniView'));
 import { supabase } from './lib/supabase';
 import { useAuth } from './contexts/SafeAuthProvider';
-import TelegramMiniView from './components/telegram/TelegramMiniView';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -201,49 +204,60 @@ const AppContent: React.FC = () => {
   useURLParameterCleaner();
   useMetaTags();
 
+  const lazyFallback = (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="text-slate-400">Loading...</div>
+    </div>
+  );
+
   return (
     <>
       <PlatformSwitch />
       <Routes>
         {/* Strict Admin Routes - Top Priority */}
         <Route element={<MasterAdminRoute><Outlet /></MasterAdminRoute>}>
-          <Route path="/admin" element={<AIAssistantWorkspace />} />
-          <Route path="/admin-match" element={<AdminMatchDigitalHome />} />
-          <Route path="/admin/command-deck" element={<AdminCommandDeck />} />
-          <Route path="/admin/ai" element={<AIAssistantWorkspace />} />
+          <Route path="/admin" element={<Suspense fallback={lazyFallback}><EnhancedAdminDashboard /></Suspense>} />
+          <Route path="/admin-match" element={<Suspense fallback={lazyFallback}><AdminMatchDigitalHome /></Suspense>} />
+          <Route path="/admin/command-deck" element={<Suspense fallback={lazyFallback}><AdminCommandDeck /></Suspense>} />
+          <Route path="/admin/ai" element={<Suspense fallback={lazyFallback}><AIAssistantWorkspace /></Suspense>} />
+          {/* Ghost routes - render within main /admin shell */}
+          <Route path="/admin/users" element={<Suspense fallback={lazyFallback}><EnhancedAdminDashboard /></Suspense>} />
+          <Route path="/admin/payouts" element={<Suspense fallback={lazyFallback}><EnhancedAdminDashboard /></Suspense>} />
+          <Route path="/admin/tasks" element={<Suspense fallback={lazyFallback}><EnhancedAdminDashboard /></Suspense>} />
+          <Route path="/admin/settings" element={<Suspense fallback={lazyFallback}><EnhancedAdminDashboard /></Suspense>} />
         </Route>
         
         {/* Public Routes */}
         <Route path="/" element={<Index />} />
         <Route path="/tiktok6" element={<TikTokGate />} />
-        <Route path="/soulmate" element={<TikTok6SoulmateHub />} />
-          <Route path="/dating-cockpit" element={<TikTok6DatingCockpit />} />
-          <Route path="/monetization-cockpit" element={<TikTok6MonetizationCockpit />} />
-          <Route path="/telegram-mini" element={<TelegramMiniView />} />
+        <Route path="/soulmate" element={<Suspense fallback={lazyFallback}><TikTok6SoulmateHub /></Suspense>} />
+          <Route path="/dating-cockpit" element={<Suspense fallback={lazyFallback}><TikTok6DatingCockpit /></Suspense>} />
+          <Route path="/monetization-cockpit" element={<Suspense fallback={lazyFallback}><TikTok6MonetizationCockpit /></Suspense>} />
+          <Route path="/telegram-mini" element={<Suspense fallback={lazyFallback}><TelegramMiniView /></Suspense>} />
         
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/ai-assistant" element={<AIAssistantWorkspace />} />
+          <Route path="/ai-assistant" element={<Suspense fallback={lazyFallback}><AIAssistantWorkspace /></Suspense>} />
         </Route>
         
         {/* Profile Routes */}
-        <Route path="/me" element={<UserProfilePage />} />
+        <Route path="/me" element={<Suspense fallback={lazyFallback}><UserProfilePage /></Suspense>} />
         
         {/* Social Routes */}
-        <Route path="/match-feed" element={<MatchingFeed />} />
-        <Route path="/voice-match" element={<AudioMatchRoom />} />
-        <Route path="/premium-chat" element={<PremiumChatView />} />
-        <Route path="/inbox" element={<Inbox />} />
-        <Route path="/friends" element={<FriendsPage />} />
+        <Route path="/match-feed" element={<Suspense fallback={lazyFallback}><MatchingFeed /></Suspense>} />
+        <Route path="/voice-match" element={<Suspense fallback={lazyFallback}><AudioMatchRoom /></Suspense>} />
+        <Route path="/premium-chat" element={<Suspense fallback={lazyFallback}><PremiumChatView /></Suspense>} />
+        <Route path="/inbox" element={<Suspense fallback={lazyFallback}><Inbox /></Suspense>} />
+        <Route path="/friends" element={<Suspense fallback={lazyFallback}><FriendsPage /></Suspense>} />
         
         {/* Dynamic User Parameter Routes - Lower Priority */}
-        <Route path="/messages/:conversationId" element={<MessageConversation />} />
-        <Route path="/story/:storyId" element={<StoryViewer />} />
-        <Route path="/profile/:userId" element={<CreatorProfile />} />
+        <Route path="/messages/:conversationId" element={<Suspense fallback={lazyFallback}><MessageConversation /></Suspense>} />
+        <Route path="/story/:storyId" element={<Suspense fallback={lazyFallback}><StoryViewer /></Suspense>} />
+        <Route path="/profile/:userId" element={<Suspense fallback={lazyFallback}><CreatorProfile /></Suspense>} />
         
         {/* Catch-all Fallback - Lowest Priority */}
-        <Route path="/explore" element={<ExplorePage />} />
-        <Route path="*" element={<NotFound />} />
+        <Route path="/explore" element={<Suspense fallback={lazyFallback}><ExplorePage /></Suspense>} />
+        <Route path="*" element={<Suspense fallback={lazyFallback}><NotFound /></Suspense>} />
       </Routes>
     </>
   );

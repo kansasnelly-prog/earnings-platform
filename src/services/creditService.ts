@@ -17,7 +17,7 @@ if (supabaseUrl && supabaseAnonKey) {
         }),
       }),
     }),
-  };
+  } as unknown as SupabaseClient;
 }
 
 /**

@@ -3,10 +3,10 @@ import { useSafeAuth } from '../contexts/SafeAuthProvider';
 import { supabase } from '../lib/supabase';
 import { logCore, logSupabase, logNellyCoin } from '../utils/logger';
 // Tabs UI component for modular navigation
-import AdminUsers from '../components/admin/AdminUsers.tsx';
-import ProductCatalogManager from '../components/admin/ProductCatalogManager.tsx';
-import TikTok6AdminMatch from '../components/admin/TikTok6AdminMatch.tsx';
-import AdminControls from '../components/admin/AdminControls.tsx';
+import AdminUsers from '../components/admin/AdminUsers';
+import ProductCatalogManager from '../components/admin/ProductCatalogManager';
+import TikTok6AdminMatch from '../components/admin/TikTok6AdminMatch';
+import AdminControls from '../components/admin/AdminControls';
 import PlatformSwitch from '../components/PlatformSwitch';
 import { Button } from '@/components/ui/button';
 import { LayoutDashboard, Users, Settings, Key, ArrowDownToLine, Package, Heart } from 'lucide-react';

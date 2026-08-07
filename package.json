@@ -57,6 +57,7 @@
     "embla-carousel-react": "^8.3.0",
     "fluent-ffmpeg": "^2.1.3",
     "highlight.js": "^11.9.0",
+    "hls.js": "^1.6.17",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "marked": "^12.0.1",

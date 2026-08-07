@@ -22,6 +22,7 @@ import AdminCustomerService from './AdminCustomerService';
 import AdminControls from './AdminControls';
 import InfrastructureWiringMatrix from '../InfrastructureWiringMatrix';
 import ExecutiveOperationsSwitchboard from '../ExecutiveOperationsSwitchboard';
+import CinemaTelemetryPanel from './CinemaTelemetryPanel';
 import TikTok6AdminMatch from './TikTok6AdminMatch';
 import SupabaseService from '@/services/supabaseService';
 import { MASTER_ADMIN_EMAIL } from '../ProtectedRoute';
@@ -1292,6 +1293,7 @@ const EnhancedAdminDashboard: React.FC = () => {
             {/* System Health Tab */}
             {activeTab === 'system-health' && (
               <div className="space-y-6">
+                <CinemaTelemetryPanel title="Cinema Stream Telemetry" />
                 <InfrastructureWiringMatrix />
                 <ExecutiveOperationsSwitchboard />
               </div>

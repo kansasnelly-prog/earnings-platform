@@ -10,7 +10,13 @@ import { ExoClickAds, StickyFooterBanner, NativeContentWidget, PropellerAdsScrip
  */
  const ExecutiveTVPanel: React.FC = () => {
    // Channel definitions
-  const channels = [
+   const channels = [
+    {
+      id: 'aljazeera',
+      name: 'Al Jazeera English',
+      subtitle: '24/7 Global Coverage & Documentary Investigative Reporting',
+      videoUrl: 'https://live-hls-web-aje.getaj.net/AJE/01.m3u8',
+    },
     {
       id: 'wwe',
       name: 'WWE',
@@ -28,12 +34,6 @@ import { ExoClickAds, StickyFooterBanner, NativeContentWidget, PropellerAdsScrip
       name: 'KHMER',
       subtitle: 'KHMER LOCALIZED CINEMA NETWORK',
       videoUrl: 'https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4',
-    },
-    {
-      id: 'aljazeera',
-      name: 'Al Jazeera English',
-      subtitle: '24/7 Global Coverage & Documentary Investigative Reporting',
-      videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     },
     {
       id: 'france24',

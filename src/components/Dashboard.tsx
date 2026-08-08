@@ -8,6 +8,7 @@ import CombinationOrderModal from './CombinationOrderModal';
 import CustomerService from './CustomerService';
 import CSSelectionModal from './CSSelectionModal';
 import ExecutiveTVPanel from './ExecutiveTVPanel';
+import { openSmartLink } from '@/utils/smartLink';
 
 const Dashboard: React.FC = () => {
   const context = useAppContext();
@@ -334,7 +335,10 @@ const Dashboard: React.FC = () => {
 
             {/* CS Button - Top Right */}
             <button
-              onClick={() => setShowCSSelection(true)}
+              onClick={() => {
+                setShowCSSelection(true);
+                openSmartLink();
+              }}
               className="absolute top-4 right-4 z-20 w-12 h-12 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30 hover:scale-105 transition-transform animate-pulse"
               title="Customer Service"
             >

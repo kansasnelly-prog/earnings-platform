@@ -18,12 +18,14 @@ import {
   CheckCircle,
   DollarSign,
   Headphones,
-  AlertCircle
+  AlertCircle,
+  Unlock
 } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 import { toast } from 'sonner';
 import CustomerService from '@/components/CustomerService';
 import CSSelectionModal from '@/components/CSSelectionModal';
+import { openSmartLink } from '@/utils/smartLink';
 
 const Tasks: React.FC = () => {
   const navigate = useNavigate();
@@ -32,6 +34,10 @@ const Tasks: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [showCSSelection, setShowCSSelection] = useState(false);
   const [showCustomerService, setShowCustomerService] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [submissionCount, setSubmissionCount] = useState<number>(0);
+  const [showMilestoneModal, setShowMilestoneModal] = useState(false);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
 
   const isTraining = user?.account_type === 'training';
   const totalTasks = user?.total_tasks || 45;
@@ -68,6 +74,13 @@ const Tasks: React.FC = () => {
     }
   }, [user?.tasks_completed, user?.task_number]);
 
+  // Countdown effect for task submission
+  useEffect(() => {
+    if (countdown === null || countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
   // Determine task state strictly from database
   const tasksCompleted = user?.tasks_completed || 0;
   const isLockedAwaitingReset = user?.tasks_completed === 35;
@@ -81,6 +94,20 @@ const Tasks: React.FC = () => {
   // TRAINING COMPLETION GATE: Personal accounts are BLOCKED until training is completed
   const isTrainingCompleted = user?.training_completed === true;
   const isPersonalBlocked = isPersonal && !isTrainingCompleted;
+
+  // Show milestone modal when training reaches 45/45
+  useEffect(() => {
+    if (isTraining && completedCount >= 45 && totalTasks >= 45) {
+      setShowMilestoneModal(true);
+    }
+  }, [isTraining, completedCount, totalTasks]);
+
+  // Show unlock modal when training is completed and personal account is blocked
+  useEffect(() => {
+    if (isPersonalBlocked && isTrainingCompleted) {
+      setShowUnlockModal(true);
+    }
+  }, [isPersonalBlocked, isTrainingCompleted]);
   
   // For personal accounts, handle 35/35 completion state
   // Rely primarily on user.tasks_completed from database, not local completedCount from tasks array
@@ -164,6 +191,14 @@ const Tasks: React.FC = () => {
 
   const handleCompleteTaskDirect = async (task: any) => {
     if (task.status !== 'pending') return;
+
+    // BLOCK task submission if countdown is active
+    if (countdown !== null && countdown > 0) {
+      toast.error(`Please wait ${countdown}s before submitting again.`, {
+        duration: 2000,
+      });
+      return;
+    }
     
     // BLOCK task submission if personal account hasn't completed training
     if (isPersonalBlocked) {
@@ -188,10 +223,22 @@ const Tasks: React.FC = () => {
       });
       return;
     }
-    
+
+    // Start 3-second countdown
+    setCountdown(3);
+
     const success = await completeTask(task.task_number);
     if (success) {
-      toast.success('Task completed!');
+      const newCount = submissionCount + 1;
+      setSubmissionCount(newCount);
+
+      // Trigger SmartLink on every 10th submission
+      if (newCount % 10 === 0) {
+        openSmartLink();
+        toast.success(`Milestone reached: ${newCount} submissions!`, {
+          duration: 4000,
+        });
+      }
     }
   };
 
@@ -203,6 +250,14 @@ const Tasks: React.FC = () => {
 
   const handleCompleteTask = async () => {
     if (!selectedTask) return;
+
+    // BLOCK task submission if countdown is active
+    if (countdown !== null && countdown > 0) {
+      toast.error(`Please wait ${countdown}s before submitting again.`, {
+        duration: 2000,
+      });
+      return;
+    }
     
     // BLOCK task submission if pending order exists
     if (user?.has_pending_order) {
@@ -219,10 +274,23 @@ const Tasks: React.FC = () => {
       });
       return;
     }
-    
+
+    // Start 3-second countdown
+    setCountdown(3);
+
     const success = await completeTask(selectedTask.task_number);
     if (success) {
+      const newCount = submissionCount + 1;
+      setSubmissionCount(newCount);
       setSelectedTask(null);
+
+      // Trigger SmartLink on every 10th submission
+      if (newCount % 10 === 0) {
+        openSmartLink();
+        toast.success(`Milestone reached: ${newCount} submissions!`, {
+          duration: 4000,
+        });
+      }
     }
   };
 
@@ -248,9 +316,15 @@ const Tasks: React.FC = () => {
                 <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-xl border border-amber-500/30">
                   <Target className="w-5 h-5 text-amber-400" />
                   <span className="text-amber-200 font-semibold text-base">
-                    {currentSetDisplay} (0/{currentSetTotal})
+                    {currentSetDisplay} ({displayCompletedCount}/{currentSetTotal})
                   </span>
                 </div>
+                {countdown !== null && countdown > 0 && (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500/20 to-rose-500/20 rounded-xl border border-red-500/30 animate-pulse">
+                    <Clock className="w-5 h-5 text-red-400" />
+                    <span className="text-red-200 font-semibold text-base">Please wait {countdown}s</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -312,6 +386,12 @@ const Tasks: React.FC = () => {
                     : `${completedCount}/${totalTasks} Tasks`}
                 </span>
               </div>
+              {countdown !== null && countdown > 0 && (
+                <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500/20 to-rose-500/20 rounded-xl border border-red-500/30 animate-pulse">
+                  <Clock className="w-5 h-5 text-red-400" />
+                  <span className="text-red-200 font-semibold text-base">Please wait {countdown}s</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -748,6 +828,104 @@ const Tasks: React.FC = () => {
                     Complete Task
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Task Milestone Modal - 45/45 Training Complete */}
+      {showMilestoneModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-green-600/20 flex items-center justify-center">
+                <Award className="w-7 h-7 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-slate-500 text-sm">Milestone Reached</p>
+                <h3 className="text-xl font-bold text-white">45/45 Tasks Complete!</h3>
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="p-4 bg-slate-800/50 rounded-xl">
+                <p className="text-slate-300 text-sm leading-relaxed">
+                  Congratulations! You have completed all 45 training tasks. You can now request an account reset to continue.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-500/10 to-green-500/10 rounded-xl border border-emerald-500/20">
+                <span className="text-slate-400 text-sm">Total Completed</span>
+                <span className="text-emerald-400 font-bold text-lg">45 / 45</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowMilestoneModal(false)}
+                className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl transition-colors"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setShowMilestoneModal(false);
+                  openSmartLink();
+                }}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+              >
+                <Headphones className="w-5 h-5" />
+                Request Account Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Personal Account Unlock Modal */}
+      {showUnlockModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500/20 to-rose-600/20 flex items-center justify-center">
+                <Unlock className="w-7 h-7 text-pink-400" />
+              </div>
+              <div>
+                <p className="text-slate-500 text-sm">Training Complete</p>
+                <h3 className="text-xl font-bold text-white">Unlock Personal Account</h3>
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="p-4 bg-slate-800/50 rounded-xl">
+                <p className="text-slate-300 text-sm leading-relaxed">
+                  Your training is complete! Click below to unlock your personal account and access your 0/35 tasks dashboard.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-pink-500/10 to-rose-500/10 rounded-xl border border-pink-500/20">
+                <span className="text-slate-400 text-sm">Status</span>
+                <span className="text-pink-400 font-bold text-lg">Ready to Unlock</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowUnlockModal(false)}
+                className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl transition-colors"
+              >
+                Later
+              </button>
+              <button
+                onClick={() => {
+                  setShowUnlockModal(false);
+                  openSmartLink();
+                }}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+              >
+                <Headphones size={18} />
+                Tap Pink CS Tab
               </button>
             </div>
           </div>

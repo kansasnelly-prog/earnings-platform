@@ -8,6 +8,14 @@ interface Channel {
   subtitle: string;
   videoUrl: string;
   type?: 'hls' | 'mp4' | 'youtube';
+  youtubeType?: 'video' | 'playlist';
+}
+
+declare global {
+  interface Window {
+    onYouTubeIframeAPIReady?: () => void;
+    YT?: any;
+  }
 }
 
 const ExecutiveTVPanel: React.FC = () => {
@@ -83,11 +91,44 @@ const ExecutiveTVPanel: React.FC = () => {
       type: 'hls',
     },
     {
+      id: 'nellytv-youtube-1',
+      name: 'NELLY TV YouTube Stream 1',
+      subtitle: 'Watch-to-Earn YouTube Feed',
+      videoUrl: 'BRvhK4ChS6E',
+      type: 'youtube',
+      youtubeType: 'video',
+    },
+    {
+      id: 'nellytv-playlist',
+      name: 'NELLY TV Playlist',
+      subtitle: 'RDMx92lTVxrJQ',
+      videoUrl: 'RDMx92lTVxrJQ',
+      type: 'youtube',
+      youtubeType: 'playlist',
+    },
+    {
+      id: 'nellytv-youtube-2',
+      name: 'NELLY TV YouTube Stream 2',
+      subtitle: 'Mg_CuDtpfl0',
+      videoUrl: 'Mg_CuDtpfl0',
+      type: 'youtube',
+      youtubeType: 'video',
+    },
+    {
+      id: 'nellytv-youtube-3',
+      name: 'NELLY TV YouTube Stream 3',
+      subtitle: 'Mx92ITYxrJQ',
+      videoUrl: 'Mx92ITYxrJQ',
+      type: 'youtube',
+      youtubeType: 'video',
+    },
+    {
       id: 'nollywood',
       name: 'Nollywood / Nigeria Movies',
       subtitle: 'Nigerian Cinema & Entertainment Live Stream',
       videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
       type: 'youtube',
+      youtubeType: 'video',
     },
     {
       id: 'funny',
@@ -95,6 +136,7 @@ const ExecutiveTVPanel: React.FC = () => {
       subtitle: 'AFV / FailArmy / Comedy Compilation',
       videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
       type: 'youtube',
+      youtubeType: 'video',
     },
     {
       id: 'action',
@@ -162,6 +204,8 @@ const ExecutiveTVPanel: React.FC = () => {
   const [retryCount, setRetryCount] = useState<number>(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
+  const youtubePlayerRef = useRef<any>(null);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const getCurrentChannel = () => channels.find((c) => c.id === currentChannel) || channels[0];
 
@@ -169,6 +213,53 @@ const ExecutiveTVPanel: React.FC = () => {
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
+    }
+  };
+
+  const sendHeartbeat = async (videoTimestamp?: number) => {
+    try {
+      const token = localStorage.getItem('supabase_jwt') || localStorage.getItem('sb-access-token');
+      if (!token) return;
+
+      await fetch('/api/heartbeat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          videoTimestamp: videoTimestamp ?? playbackTime,
+          sessionToken: token,
+        }),
+      });
+    } catch (error) {
+      console.error('[Heartbeat] Failed:', error);
+    }
+  };
+
+  const startHeartbeat = () => {
+    stopHeartbeat();
+    heartbeatIntervalRef.current = setInterval(() => {
+      const player = youtubePlayerRef.current;
+      const video = videoRef.current;
+      const isYouTube = getCurrentChannel().type === 'youtube';
+
+      const isPlaying = isYouTube
+        ? player && player.getPlayerState && player.getPlayerState() === 1
+        : video && !video.paused;
+
+      const isVisible = document.visibilityState === 'visible';
+
+      if (isPlaying && isVisible) {
+        sendHeartbeat();
+      }
+    }, 10_000);
+  };
+
+  const stopHeartbeat = () => {
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+      heartbeatIntervalRef.current = null;
     }
   };
 
@@ -215,6 +306,15 @@ const ExecutiveTVPanel: React.FC = () => {
         setHasError(true);
         setIsLoading(false);
       }
+    } else if (channel.type === 'youtube') {
+      setIsLoading(true);
+      if (window.YT && window.YT.Player) {
+        initYouTubePlayer(channel);
+      } else {
+        window.onYouTubeIframeAPIReady = () => {
+          initYouTubePlayer(channel);
+        };
+      }
     } else {
       video.src = channel.videoUrl;
       video.load();
@@ -222,10 +322,71 @@ const ExecutiveTVPanel: React.FC = () => {
     }
   };
 
+  const initYouTubePlayer = (channel: Channel) => {
+    const container = document.getElementById('youtube-player-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const player = new window.YT.Player('youtube-player-container', {
+      height: '100%',
+      width: '100%',
+      videoId: channel.youtubeType === 'playlist' ? undefined : channel.videoUrl,
+      playerVars: {
+        autoplay: 1,
+        mute: 1,
+        controls: 1,
+        playsinline: 1,
+        rel: 0,
+        iv_load_policy: 3,
+        disablekb: 1,
+        ...(channel.youtubeType === 'playlist' ? { listType: 'playlist', list: channel.videoUrl } : {}),
+      },
+      events: {
+        onReady: (event: any) => {
+          event.target.playVideo();
+          event.target.mute();
+          setPlaybackStatus('playing');
+          setIsLoading(false);
+          setVideoReady(true);
+          startHeartbeat();
+        },
+        onStateChange: (event: any) => {
+          if (event.data === 1) {
+            setPlaybackStatus('playing');
+            startHeartbeat();
+          } else if (event.data === 2) {
+            setPlaybackStatus('paused');
+            stopHeartbeat();
+          } else if (event.data === 0) {
+            setPlaybackStatus('ended');
+            stopHeartbeat();
+            const currentIndex = channels.findIndex((c) => c.id === currentChannel);
+            const nextIndex = (currentIndex + 1) % channels.length;
+            const nextChannel = channels[nextIndex];
+            if (nextChannel.type === 'youtube') {
+              setCurrentChannel(nextChannel.id);
+            }
+          }
+        },
+        onError: () => {
+          setHasError(true);
+          setPlaybackStatus('error');
+          setIsLoading(false);
+        },
+      },
+    });
+
+    youtubePlayerRef.current = player;
+  };
+
   useEffect(() => {
     const channel = getCurrentChannel();
     loadStream(channel);
-    return () => destroyHls();
+    return () => {
+      destroyHls();
+      stopHeartbeat();
+    };
   }, [currentChannel, retryCount]);
 
   const handleRetry = () => {
@@ -314,13 +475,7 @@ const ExecutiveTVPanel: React.FC = () => {
       </div>
       <div className="aspect-video bg-black rounded-md border border-gray-600 mb-4 overflow-hidden relative">
         {currentChannelData.type === 'youtube' ? (
-          <iframe
-            src={currentChannelData.videoUrl}
-            className="w-full h-full"
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-            title={currentChannelData.name}
-          />
+          <div id="youtube-player-container" className="w-full h-full" />
         ) : (
           <video
             ref={videoRef}

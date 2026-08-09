@@ -15,17 +15,81 @@ if (supabaseUrl && supabaseKey) {
   supabase = createClient(supabaseUrl, supabaseKey);
 }
 
+const MASTER_SOL_WALLET = process.env.MASTER_SOL_WALLET || '5uYJ3iVSCnCTVA7Nfr25JTCmE8LPyaAziCNGi1P55DRL';
+const TELEGRAM_MINI_APP_URL = process.env.TELEGRAM_MINI_APP_URL || 'https://earnings-ink.vercel.app';
+
 // 🔒 MASTER IDENTITY IDENTITY LOCK (6STARS AUTHENTICATION CORE)
 const MASTER_ADMIN_ID = 7683177085;
-// 🔒 DUAL-ADMIN TELEGRAM ID (Secondary monitoring account)
-// Set DUAL_ADMIN_TELEGRAM_ID env var to enable; falls back to master-only if unset
 const DUAL_ADMIN_ID = process.env.DUAL_ADMIN_TELEGRAM_ID ? parseInt(process.env.DUAL_ADMIN_TELEGRAM_ID, 10) : null;
 
-/** Check if a Telegram user ID is authorized (master or dual-admin) */
 function isAuthorizedAdmin(userId) {
   if (userId === MASTER_ADMIN_ID) return true;
   if (DUAL_ADMIN_ID && userId === DUAL_ADMIN_ID) return true;
   return false;
+}
+
+function getMonetizedInlineKeyboard() {
+  const tipPayload = encodeURIComponent(JSON.stringify({
+    asset: { chain: 'SOL', amount: 0.01, mint: 'SOL' },
+    to: MASTER_SOL_WALLET,
+    label: 'Tip Admin 0.01 SOL',
+  }));
+
+  return {
+    inline_keyboard: [
+      [
+        {
+          text: '⚡ Tip Admin (0.01 SOL)',
+          url: `https://phantom.to/tx?${tipPayload}`,
+        },
+        {
+          text: '📺 Watch & Earn (App)',
+          url: TELEGRAM_MINI_APP_URL,
+        },
+      ],
+    ],
+  };
+}
+
+async function getUserWatchBalance(userId) {
+  if (!supabase) return 0;
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('watch_balance')
+      .eq('telegram_id', userId)
+      .single();
+
+    if (error || !data) return 0;
+    return data.watch_balance || 0;
+  } catch (error) {
+    console.error('[Webhook] Failed to fetch watch balance:', error);
+    return 0;
+  }
+}
+
+async function isPremiumAlertUser(userId) {
+  const watchBalance = await getUserWatchBalance(userId);
+  return watchBalance >= 100;
+}
+
+async function logRevenueTransaction({ userId, amountSol, transactionType, txHash, metadata = {} }) {
+  if (!supabase) return;
+  try {
+    await supabase.from('revenue_transactions').insert({
+      user_id: userId || null,
+      amount_sol: amountSol,
+      transaction_type: transactionType,
+      tx_hash: txHash || null,
+      metadata: {
+        ...metadata,
+        platform: 'telegram',
+        master_wallet: MASTER_SOL_WALLET,
+      },
+    });
+  } catch (error) {
+    console.error('[RevenueTransaction] Exception:', error);
+  }
 }
 
 // 💰 CRYPTO INTELLIGENCE ENGINE - CoinGecko API Integration
@@ -124,6 +188,121 @@ bot.use(async (ctx, next) => {
   }
 
   return next();
+});
+
+// 🚀 MONETIZED START COMMAND
+bot.command('start', async (ctx) => {
+  const userId = ctx.from?.id;
+  const chatId = ctx.chat?.id;
+  const username = ctx.from?.username || 'User';
+
+  if (!chatId) return;
+
+  const welcomeMessage = `🎉 <b>Welcome to SREYMARA / Nelly TV</b>\n\n` +
+    `👤 User: @${username}\n` +
+    `🆔 ID: ${userId}\n` +
+    `🌐 Platform: earnings.ink\n\n` +
+    `⚡ <b>Earn while you watch!</b>\n` +
+    `Start watching videos and earn SOL rewards automatically.`;
+
+  await ctx.telegram.sendMessage(chatId, welcomeMessage, {
+    parse_mode: 'HTML',
+    reply_markup: getMonetizedInlineKeyboard(),
+  });
+
+  await logRevenueTransaction({
+    userId,
+    amountSol: 0,
+    transactionType: 'alert_sponsor',
+    txHash: null,
+    metadata: { chatId, messageType: 'start', username },
+  });
+});
+
+// 💰 EARNINGS COMMAND
+bot.command('earnings', async (ctx) => {
+  const userId = ctx.from?.id;
+  const chatId = ctx.chat?.id;
+  const username = ctx.from?.username || 'User';
+
+  if (!chatId) return;
+
+  const watchBalance = await getUserWatchBalance(userId);
+  const isPremium = watchBalance >= 100;
+
+  const earningsMessage = `📊 <b>Your Nelly TV Earnings</b>\n\n` +
+    `👤 User: @${username}\n` +
+    `🆔 ID: ${userId}\n` +
+    `💰 Watch Balance: ${watchBalance} PTS\n` +
+    `🎯 Status: ${isPremium ? '⭐ VIP Watch Signal' : 'Standard Viewer'}\n\n` +
+    `${isPremium ? '🔓 You have access to premium whale movement alerts!' : '🔒 Reach 100 PTS to unlock premium alerts.'}\n\n` +
+    `📺 Keep watching to earn more!`;
+
+  await ctx.telegram.sendMessage(chatId, earningsMessage, {
+    parse_mode: 'HTML',
+    reply_markup: getMonetizedInlineKeyboard(),
+  });
+
+  await logRevenueTransaction({
+    userId,
+    amountSol: 0,
+    transactionType: 'alert_sponsor',
+    txHash: null,
+    metadata: { chatId, messageType: 'earnings', watchBalance, isPremium },
+  });
+});
+
+// 📢 GROUP MENTION / SPONSORED ALERT HANDLER
+bot.on('channel_post', async (ctx) => {
+  const chatId = ctx.chat?.id;
+  const text = ctx.message?.text || ctx.message?.caption || '';
+
+  if (!chatId || !text) return;
+
+  const sponsoredAlert = await getSponsoredAlert('group');
+  const fullMessage = sponsoredAlert ? `${sponsoredAlert}\n\n${text}` : text;
+
+  await ctx.telegram.sendMessage(chatId, fullMessage, {
+    parse_mode: 'HTML',
+    reply_markup: getMonetizedInlineKeyboard(),
+  });
+
+  await logRevenueTransaction({
+    userId: ctx.from?.id || null,
+    amountSol: 0,
+    transactionType: 'alert_sponsor',
+    txHash: null,
+    metadata: { chatId, messageType: 'group_mention', text: text.substring(0, 200) },
+  });
+});
+
+// 🎯 GROUP MENTION WITH @BOT_USERNAME
+bot.hears(/@\w+/i, async (ctx) => {
+  const chatId = ctx.chat?.id;
+  const text = ctx.message?.text || '';
+  const botUsername = ctx.botInfo?.username;
+
+  if (!chatId || !botUsername || !text.includes(`@${botUsername}`)) return;
+
+  const isPremium = ctx.from?.id ? await isPremiumAlertUser(ctx.from.id) : false;
+
+  let alertMessage = `📢 <b>Group Alert</b>\n\n${text}`;
+  if (!isPremium) {
+    alertMessage += `\n\n🔒 <i>Upgrade to VIP to unlock premium whale movement alerts.</i>`;
+  }
+
+  await ctx.telegram.sendMessage(chatId, alertMessage, {
+    parse_mode: 'HTML',
+    reply_markup: getMonetizedInlineKeyboard(),
+  });
+
+  await logRevenueTransaction({
+    userId: ctx.from?.id || null,
+    amountSol: 0,
+    transactionType: 'alert_sponsor',
+    txHash: null,
+    metadata: { chatId, messageType: 'group_mention', text: text.substring(0, 200), isPremium },
+  });
 });
 
 // 📊 SYSTEM STATUS & EXECUTIVE ENVIRONMENT CONTROL

@@ -2,15 +2,20 @@
 // This function can be called directly from API routes without going through the client
 
 interface TelegramNotificationOptions {
-  type: 'admin_reset_personal' | 'admin_reset_training' | 'user_login' | 'wallet_bind' | 'wallet_unbind';
+  type: 'admin_reset_personal' | 'admin_reset_training' | 'user_login' | 'wallet_bind' | 'wallet_unbind' | 'monetized_alert';
   email?: string;
-  accountType?: string; // Changed to string to support 'admin' and other types
+  accountType?: string;
   deviceName?: string;
   browser?: string;
   os?: string;
   ipAddress?: string;
   timestamp?: string;
   walletAddress?: string;
+  chatId?: string;
+  message?: string;
+  messageType?: string;
+  userId?: string;
+  inlineKeyboard?: any;
 }
 
 export async function sendTelegramNotification(options: TelegramNotificationOptions): Promise<boolean> {
@@ -66,8 +71,43 @@ export async function sendTelegramNotification(options: TelegramNotificationOpti
                  `• Timestamp: ${options.timestamp || new Date().toISOString()}`;
         break;
 
+      case 'monetized_alert':
+        message = options.message || '📢 [Monetized Alert]';
+        break;
+
       default:
         message = `📢 [Notification]\n${JSON.stringify(options)}`;
+    }
+
+    if (options.type === 'monetized_alert' && options.chatId) {
+      const response = await fetch('/api/telegram/monetized-alert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chatId: options.chatId,
+          message: options.message,
+          messageType: options.messageType || 'default',
+          userId: options.userId,
+          inlineKeyboard: options.inlineKeyboard,
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[TelegramHelper] Monetized alert failed:', text);
+        return false;
+      }
+
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        console.error('[TelegramHelper] Monetized alert failed:', result);
+        return false;
+      }
+
+      console.log('[TelegramHelper] Monetized alert sent successfully');
+      return true;
     }
 
     const url = `https://api.telegram.org/bot${token}/sendMessage`;

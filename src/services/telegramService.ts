@@ -4,12 +4,16 @@
 import { logTelegram } from '../utils/logger.js';
 
 export interface TelegramNotificationData {
-  type: 'signup' | 'login' | 'withdrawal' | 'admin_action' | 'new_account';
+  type: 'signup' | 'login' | 'withdrawal' | 'admin_action' | 'new_account' | 'monetized_alert';
   userEmail?: string;
   userName?: string;
   amount?: number;
   action?: string;
   details?: string;
+  chatId?: string;
+  messageType?: string;
+  userId?: string;
+  inlineKeyboard?: any;
 }
 
 export interface NewAccountNotificationData {
@@ -425,6 +429,54 @@ export class TelegramService {
 
     } catch (error) {
       console.error('[Telegram] Training completion transfer notification failed:', error);
+      return false;
+    }
+  }
+
+  static async sendMonetizedAlert(data: {
+    chatId: string;
+    message: string;
+    messageType?: string;
+    userId?: string;
+    inlineKeyboard?: any;
+  }): Promise<boolean> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const response = await fetch('/api/telegram/monetized-alert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chatId: data.chatId,
+          message: data.message,
+          messageType: data.messageType || 'default',
+          userId: data.userId,
+          inlineKeyboard: data.inlineKeyboard,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[Telegram] Monetized alert failed:', text);
+        return false;
+      }
+
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        console.error('[Telegram] Monetized alert failed:', result);
+        return false;
+      }
+
+      logTelegram('[Telegram] Monetized alert sent');
+      return true;
+    } catch (error) {
+      console.error('[Telegram] Monetized alert exception:', error);
       return false;
     }
   }

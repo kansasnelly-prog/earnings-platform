@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Connection, Keypair, Transaction, SystemProgram, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { sendPayoutConfirmationEmail } from '../../src/utils/email';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -102,7 +103,7 @@ export default async function handler(req, res) {
 
     const { data: profile, error: profileError } = await supabase
       .from('users')
-      .select('id, watch_balance, wallet_address')
+      .select('id, watch_balance, wallet_address, email')
       .eq('id', user.id)
       .single();
 
@@ -142,6 +143,19 @@ export default async function handler(req, res) {
       .from('users')
       .update({ watch_balance: 0 })
       .eq('id', user.id);
+
+    const userEmail = profile.email || user.email;
+    if (userEmail) {
+      void sendPayoutConfirmationEmail({
+        to: userEmail,
+        txHash: signature,
+        watchBalanceRedeemed: userBalance,
+        platformFee: ownerAmount,
+        netPayoutSol: workerAmount,
+        userWalletAddress: userWalletAddress,
+        masterWalletAddress: settings.master_wallet,
+      });
+    }
 
     return res.status(200).json({
       success: true,

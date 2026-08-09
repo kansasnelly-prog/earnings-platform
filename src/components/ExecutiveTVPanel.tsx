@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useAppContext } from '@/contexts/AppContext';
 import './ExecutiveVisuals.css';
 import { ExoClickAds, StickyFooterBanner, NativeContentWidget, PropellerAdsScript, PPVModal, AffiliateBanner } from '../components/monetization/CinemaMonetization';
 
@@ -202,10 +203,12 @@ const ExecutiveTVPanel: React.FC = () => {
   const [volume, setVolume] = useState<number>(0.5);
   const [isChannelOpen, setIsChannelOpen] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [watchBalance, setWatchBalance] = useState<number>(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const youtubePlayerRef = useRef<any>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { user, refreshUser } = useAppContext();
 
   const getCurrentChannel = () => channels.find((c) => c.id === currentChannel) || channels[0];
 
@@ -216,12 +219,35 @@ const ExecutiveTVPanel: React.FC = () => {
     }
   };
 
+  const fetchWatchBalance = async () => {
+    try {
+      const token = localStorage.getItem('supabase_jwt') || localStorage.getItem('sb-access-token');
+      if (!token) return;
+      const { supabase } = await import('@/lib/supabase');
+      const { data, error } = await supabase
+        .from('users')
+        .select('watch_balance')
+        .eq('id', user?.id)
+        .single();
+      if (error || !data) return;
+      setWatchBalance(data.watch_balance || 0);
+    } catch (error) {
+      console.error('[WatchBalance] Failed to fetch:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchWatchBalance();
+    }
+  }, [user?.id]);
+
   const sendHeartbeat = async (videoTimestamp?: number) => {
     try {
       const token = localStorage.getItem('supabase_jwt') || localStorage.getItem('sb-access-token');
       if (!token) return;
 
-      await fetch('/api/heartbeat', {
+      const response = await fetch('/api/heartbeat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -232,6 +258,18 @@ const ExecutiveTVPanel: React.FC = () => {
           sessionToken: token,
         }),
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data?.watchBalance !== undefined) {
+          setWatchBalance(data.watchBalance);
+        } else {
+          fetchWatchBalance();
+        }
+        if (typeof refreshUser === 'function') {
+          refreshUser();
+        }
+      }
     } catch (error) {
       console.error('[Heartbeat] Failed:', error);
     }
@@ -435,6 +473,16 @@ const ExecutiveTVPanel: React.FC = () => {
         <p className="text-xs text-gray-400 tracking-widest uppercase mt-1">
           Executive Optimized Cinema Suites Globally
         </p>
+      </div>
+      {/* Watch Balance Badge */}
+      <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/20 rounded-full">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+        </span>
+        <span className="text-sm text-emerald-300 font-medium">
+          Current Watch Earnings: {watchBalance} PTS (80/20 Split Active)
+        </span>
       </div>
       {/* Collapsible Channel Selector */}
       <div className="mb-4">

@@ -69,6 +69,7 @@ import { TelegramService } from '@/services/telegramService';
     personal_day2_checkpoint?: any;
     personal_cycle?: number;
     personal_cycle_completed?: boolean;
+    watch_balance?: number;
   }
 
 export interface Product {

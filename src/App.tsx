@@ -18,6 +18,8 @@ const Index = React.lazy(() => import('./pages/Index'));
 const TikTokGate = React.lazy(() => import('./pages/TikTokGate'));
 
 const AdminCommandDeck = React.lazy(() => import('./components/admin/AdminCommandDeck'));
+const GeminiStudioCommand = React.lazy(() => import('./components/admin/GeminiStudioCommand'));
+
 const AIAssistantWorkspace = React.lazy(() => import('./pages/AIAssistantWorkspace'));
 const DigitalHome = React.lazy(() => import('./pages/admin/index'));
 const EnhancedAdminDashboard = React.lazy(() => import('./components/admin/EnhancedAdminDashboard'));
@@ -217,6 +219,8 @@ const AppContent: React.FC = () => {
         {/* Strict Admin Routes - Top Priority */}
         <Route element={<MasterAdminRoute><Outlet /></MasterAdminRoute>}>
           <Route path="/admin" element={<Suspense fallback={lazyFallback}><EnhancedAdminDashboard /></Suspense>} />
+          <Route path="/admin/command-center" element={<Suspense fallback={lazyFallback}><GeminiStudioCommand /></Suspense>} />
+
           <Route path="/admin-match" element={<Suspense fallback={lazyFallback}><AdminMatchDigitalHome /></Suspense>} />
           <Route path="/admin/command-deck" element={<Suspense fallback={lazyFallback}><AdminCommandDeck /></Suspense>} />
           <Route path="/admin/ai" element={<Suspense fallback={lazyFallback}><AIAssistantWorkspace /></Suspense>} />

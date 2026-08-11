@@ -99,15 +99,16 @@ const AdminPasswordReset: React.FC = () => {
         return;
       }
 
-      const response = await fetch('/api/admin-user-password-reset', {
+      const response = await fetch('/api/admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
+          action: 'resetUserPassword',
           email: searchResult.email,
-          newPassword: newPassword,
+          password: newPassword,
         }),
       });
 

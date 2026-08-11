@@ -155,8 +155,6 @@ export default defineConfig(({ mode }) => ({
           'vendor-3d': ['@react-three/drei', '@react-three/fiber', '@react-three/postprocessing', 'three'],
           'vendor-query': ['@tanstack/react-query'],
           'vendor-supabase': ['@supabase/supabase-js'],
-          'vendor-stripe': ['stripe'],
-          'vendor-telegram': ['telegraf'],
         },
       },
     },

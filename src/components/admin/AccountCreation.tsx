@@ -37,12 +37,12 @@ const AccountCreation: React.FC<AccountCreationProps> = ({ onAccountCreated }) =
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-      const response = await fetch('/api/send-telegram-notification', {
+      const response = await fetch('/api/webhook', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ action: 'sendNotification', message }),
         signal: controller.signal
       });
 

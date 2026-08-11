@@ -140,10 +140,11 @@ const SupabaseAccountCreation: React.FC<SupabaseAccountCreationProps> = ({
       // Send detailed Telegram notification (don't block on failure)
       console.log('[Telegram] New account notification started');
       try {
-        const response = await fetch('/api/send-telegram-notification', {
+        const response = await fetch('/api/webhook', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            action: 'sendNotification',
             message: `🎉 <b>New Account Created</b>\n\n` +
               `👤 <b>User Details:</b>\n` +
               `🆔 ID: <code>${authUserId}</code>\n` +
@@ -309,10 +310,11 @@ const SupabaseAccountCreation: React.FC<SupabaseAccountCreationProps> = ({
       // Send detailed Telegram notification (don't block on failure)
       console.log('[Telegram] New account notification started');
       try {
-        const response = await fetch('/api/send-telegram-notification', {
+        const response = await fetch('/api/webhook', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            action: 'sendNotification',
             message: `🎉 <b>New Account Created</b>\n\n` +
               `👤 <b>User Details:</b>\n` +
               `🆔 ID: <code>${authUserId}</code>\n` +

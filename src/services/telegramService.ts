@@ -34,7 +34,7 @@ export interface NewAccountNotificationData {
 }
 
 export class TelegramService {
-  private static API_URL = '/api/send-telegram-notification';
+  private static API_URL = '/api/webhook';
 
   private static getNotificationName(type: string): string {
     const names: Record<string, string> = {
@@ -93,13 +93,12 @@ export class TelegramService {
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
       try {
-        const name = this.getNotificationName(data.type);
         const response = await fetch(this.API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ name, message }),
+          body: JSON.stringify({ action: 'sendNotification', message }),
           signal: controller.signal
         });
 
@@ -207,10 +206,7 @@ export class TelegramService {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
-          name: 'System Withdrawal Approved Notification', 
-          message 
-        })
+        body: JSON.stringify({ action: 'sendNotification', message })
       });
 
       if (!response.ok) {
@@ -285,10 +281,7 @@ export class TelegramService {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
-          name: 'System New Account Notification', 
-          message 
-        })
+        body: JSON.stringify({ action: 'sendNotification', message })
       });
 
       if (!response.ok) {
@@ -336,10 +329,7 @@ export class TelegramService {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
-          name: 'System Checkpoint Approved Notification', 
-          message 
-        })
+        body: JSON.stringify({ action: 'sendNotification', message })
       });
 
       if (!response.ok) {
@@ -398,10 +388,7 @@ export class TelegramService {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
-          name: 'System Transfer Completed Notification', 
-          message 
-        })
+        body: JSON.stringify({ action: 'sendNotification', message })
       });
 
       if (!response.ok) {

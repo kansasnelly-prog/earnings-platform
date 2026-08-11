@@ -4,7 +4,7 @@
  * Run this after deploying to set up the Telegram webhook
  * 
  * Usage: node setup-telegram-webhook.cjs <your-bot-token> <your-webhook-url>
- * Example: node setup-telegram-webhook.cjs 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11 https://www.earnings.ink/api/telegram-webhook
+ * Example: node setup-telegram-webhook.cjs 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11 https://www.earnings.ink/api/webhook
  */
 
 const https = require('https');
@@ -19,7 +19,7 @@ if (!botToken || !webhookUrl) {
   console.log('Usage: node setup-telegram-webhook.cjs <bot-token> <webhook-url>');
   console.log('');
   console.log('Example:');
-  console.log('  node setup-telegram-webhook.cjs 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11 https://www.earnings.ink/api/telegram-webhook');
+    console.log('  node setup-telegram-webhook.cjs 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11 https://www.earnings.ink/api/webhook');
   console.log('');
   process.exit(1);
 }

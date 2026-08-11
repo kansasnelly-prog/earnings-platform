@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const PROXY_URL = '/api/tiktok-proxy';
+const PROXY_URL = '/api/monetization';
 const MASTER_ADMIN_EMAIL = 'kansasnelly@gmail.com';
 
 const TIKTOK_APP_KEY = import.meta.env.VITE_TIKTOK_SHOP_APP_KEY || import.meta.env.TIKTOK_SHOP_APP_KEY || '';
@@ -28,6 +28,7 @@ export class TikTokShopPurifiedEngine {
     }
     try {
       const response = await axios.post(PROXY_URL, {
+        action: 'proxyTikTok',
         endpoint: '/api/v202309/conversations',
         method: 'GET'
       });
@@ -53,6 +54,7 @@ export class TikTokShopPurifiedEngine {
     }
     try {
       const response = await axios.post(PROXY_URL, {
+        action: 'proxyTikTok',
         endpoint: '/api/v202309/shop/roles',
         method: 'GET'
       });

@@ -6,7 +6,6 @@ if (!token) throw new Error('CRITICAL ERROR: TELEGRAM_BOT_TOKEN is missing from 
 
 const bot = new Telegraf(token);
 
-// Initialize Supabase client for status checks
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 let supabase = null;
@@ -17,8 +16,6 @@ if (supabaseUrl && supabaseKey) {
 
 const MASTER_SOL_WALLET = process.env.MASTER_SOL_WALLET || '5uYJ3iVSCnCTVA7Nfr25JTCmE8LPyaAziCNGi1P55DRL';
 const TELEGRAM_MINI_APP_URL = process.env.TELEGRAM_MINI_APP_URL || 'https://earnings-ink.vercel.app';
-
-// 🔒 MASTER IDENTITY IDENTITY LOCK (6STARS AUTHENTICATION CORE)
 const MASTER_ADMIN_ID = 7683177085;
 const DUAL_ADMIN_ID = process.env.DUAL_ADMIN_TELEGRAM_ID ? parseInt(process.env.DUAL_ADMIN_TELEGRAM_ID, 10) : null;
 
@@ -92,10 +89,8 @@ async function logRevenueTransaction({ userId, amountSol, transactionType, txHas
   }
 }
 
-// 💰 CRYPTO INTELLIGENCE ENGINE - CoinGecko API Integration
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 
-// Symbol to CoinGecko ID mapping for common cryptocurrencies
 const SYMBOL_MAP = {
   'btc': 'bitcoin',
   'eth': 'ethereum',
@@ -117,7 +112,6 @@ const SYMBOL_MAP = {
   'fil': 'filecoin',
 };
 
-// Safe fetch with timeout and error handling
 async function safeFetch(url, timeoutMs = 5000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -146,13 +140,11 @@ async function safeFetch(url, timeoutMs = 5000) {
   }
 }
 
-// Normalize symbol to CoinGecko ID
 function normalizeSymbol(symbol) {
   const lowerSymbol = symbol.toLowerCase().trim();
   return SYMBOL_MAP[lowerSymbol] || lowerSymbol;
 }
 
-// Format number with commas and fixed decimals
 function formatNumber(num, decimals = 2) {
   return num.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
@@ -160,26 +152,46 @@ function formatNumber(num, decimals = 2) {
   });
 }
 
-// Format percentage with sign
 function formatPercentage(num) {
   const sign = num >= 0 ? '+' : '';
   return `${sign}${num.toFixed(2)}%`;
 }
 
-// 👁️ MASTER EYES INTERCEPTOR (Background Surveillance Layer)
+async function sendMonetizedAlert(chatId, message, userId) {
+  try {
+    const replyMarkup = getMonetizedInlineKeyboard();
+
+    await bot.telegram.sendMessage(chatId, message, {
+      parse_mode: 'HTML',
+      reply_markup: replyMarkup,
+    });
+
+    if (supabase && userId) {
+      await supabase.from('revenue_transactions').insert({
+        user_id: userId,
+        amount_sol: 0,
+        transaction_type: 'alert_sponsor',
+        tx_hash: null,
+        metadata: { chatId, platform: 'telegram', master_wallet: MASTER_SOL_WALLET },
+      });
+    }
+  } catch (error) {
+    console.error('[MonetizedAlert] Failed:', error);
+  }
+}
+
 bot.use(async (ctx, next) => {
   const userId = ctx.from?.id;
   const username = ctx.from?.username || 'Unknown Node';
   const incomingText = ctx.message && 'text' in ctx.message ? ctx.message.text : 'Non-text event';
-  
+
   console.log(`[MASTER EYES MONITOR] Time: ${new Date().toISOString()} | User: @${username} (${userId}) | Input: "${incomingText}"`);
 
   if (!isAuthorizedAdmin(userId)) {
     console.log(`[SECURITY INTERCEPTION]: Unauthorized system breach attempt dropped silently from ID: ${userId}`);
-    return; 
+    return;
   }
 
-  // Instant Admin Login Notification Hook
   if (incomingText === '/login' || incomingText === '/start') {
     await ctx.telegram.sendMessage(MASTER_ADMIN_ID, '🔒 Security Alert: Master Admin Account Session Initialized Live.');
     if (DUAL_ADMIN_ID) {
@@ -190,7 +202,6 @@ bot.use(async (ctx, next) => {
   return next();
 });
 
-// 🚀 MONETIZED START COMMAND
 bot.command('start', async (ctx) => {
   const userId = ctx.from?.id;
   const chatId = ctx.chat?.id;
@@ -205,21 +216,9 @@ bot.command('start', async (ctx) => {
     `⚡ <b>Earn while you watch!</b>\n` +
     `Start watching videos and earn SOL rewards automatically.`;
 
-  await ctx.telegram.sendMessage(chatId, welcomeMessage, {
-    parse_mode: 'HTML',
-    reply_markup: getMonetizedInlineKeyboard(),
-  });
-
-  await logRevenueTransaction({
-    userId,
-    amountSol: 0,
-    transactionType: 'alert_sponsor',
-    txHash: null,
-    metadata: { chatId, messageType: 'start', username },
-  });
+  await sendMonetizedAlert(chatId, welcomeMessage, userId);
 });
 
-// 💰 EARNINGS COMMAND
 bot.command('earnings', async (ctx) => {
   const userId = ctx.from?.id;
   const chatId = ctx.chat?.id;
@@ -238,76 +237,10 @@ bot.command('earnings', async (ctx) => {
     `${isPremium ? '🔓 You have access to premium whale movement alerts!' : '🔒 Reach 100 PTS to unlock premium alerts.'}\n\n` +
     `📺 Keep watching to earn more!`;
 
-  await ctx.telegram.sendMessage(chatId, earningsMessage, {
-    parse_mode: 'HTML',
-    reply_markup: getMonetizedInlineKeyboard(),
-  });
-
-  await logRevenueTransaction({
-    userId,
-    amountSol: 0,
-    transactionType: 'alert_sponsor',
-    txHash: null,
-    metadata: { chatId, messageType: 'earnings', watchBalance, isPremium },
-  });
+  await sendMonetizedAlert(chatId, earningsMessage, userId);
 });
 
-// 📢 GROUP MENTION / SPONSORED ALERT HANDLER
-bot.on('channel_post', async (ctx) => {
-  const chatId = ctx.chat?.id;
-  const text = ctx.message?.text || ctx.message?.caption || '';
-
-  if (!chatId || !text) return;
-
-  const sponsoredAlert = await getSponsoredAlert('group');
-  const fullMessage = sponsoredAlert ? `${sponsoredAlert}\n\n${text}` : text;
-
-  await ctx.telegram.sendMessage(chatId, fullMessage, {
-    parse_mode: 'HTML',
-    reply_markup: getMonetizedInlineKeyboard(),
-  });
-
-  await logRevenueTransaction({
-    userId: ctx.from?.id || null,
-    amountSol: 0,
-    transactionType: 'alert_sponsor',
-    txHash: null,
-    metadata: { chatId, messageType: 'group_mention', text: text.substring(0, 200) },
-  });
-});
-
-// 🎯 GROUP MENTION WITH @BOT_USERNAME
-bot.hears(/@\w+/i, async (ctx) => {
-  const chatId = ctx.chat?.id;
-  const text = ctx.message?.text || '';
-  const botUsername = ctx.botInfo?.username;
-
-  if (!chatId || !botUsername || !text.includes(`@${botUsername}`)) return;
-
-  const isPremium = ctx.from?.id ? await isPremiumAlertUser(ctx.from.id) : false;
-
-  let alertMessage = `📢 <b>Group Alert</b>\n\n${text}`;
-  if (!isPremium) {
-    alertMessage += `\n\n🔒 <i>Upgrade to VIP to unlock premium whale movement alerts.</i>`;
-  }
-
-  await ctx.telegram.sendMessage(chatId, alertMessage, {
-    parse_mode: 'HTML',
-    reply_markup: getMonetizedInlineKeyboard(),
-  });
-
-  await logRevenueTransaction({
-    userId: ctx.from?.id || null,
-    amountSol: 0,
-    transactionType: 'alert_sponsor',
-    txHash: null,
-    metadata: { chatId, messageType: 'group_mention', text: text.substring(0, 200), isPremium },
-  });
-});
-
-// 📊 SYSTEM STATUS & EXECUTIVE ENVIRONMENT CONTROL
 bot.command('status', async (ctx) => {
-  // Check database connection
   let dbStatus = 'Inactive';
   if (supabase) {
     try {
@@ -318,49 +251,44 @@ bot.command('status', async (ctx) => {
     }
   }
 
-  // Check AI integration (OpenAI/Gemini)
   const openaiKey = process.env.OPENAI_API_KEY;
   const geminiKey = process.env.GEMINI_API_KEY;
   let aiStatus = 'Not Configured';
-  
+
   if (openaiKey) {
     aiStatus = 'Active [OpenAI GPT-4]';
   } else if (geminiKey) {
     aiStatus = 'Active [Google Gemini]';
   }
 
-  // 6STARS GLOBAL PARADISE LEDGER Metrics - Live Financial Aggregation
   let usdtPool = 0;
   let ncCoinsPot = 0;
-  
+
   if (supabase) {
     try {
-      // Aggregate USDT Pool from user balances
       const { data: usdtData, error: usdtError } = await supabase
         .from('users')
         .select('total_balance');
-      
+
       if (!usdtError && usdtData) {
         usdtPool = usdtData.reduce((sum, user) => sum + (user.total_balance || 0), 0);
       }
-      
-      // Aggregate NC COINS Pot from user nc_coins
+
       const { data: ncData, error: ncError } = await supabase
         .from('users')
         .select('nc_coins');
-      
+
       if (!ncError && ncData) {
         ncCoinsPot = ncData.reduce((sum, user) => sum + (user.nc_coins || 0), 0);
       }
     } catch (err) {
       console.error('[FINANCIAL AGGREGATION ERROR]', err);
-      // Keep default values on error
     }
   }
-  
+
   const dualPipelineFlow = 'Active (30-sec intervals)';
 
-  const report = 
+  const report =
     `📊 System Status: Online\n` +
     `🗄️ Database Connection: ${dbStatus}\n` +
     `🤖 AI Engine: ${aiStatus}\n\n` +
@@ -380,7 +308,6 @@ bot.command('status', async (ctx) => {
   await ctx.replyWithMarkdown(report);
 });
 
-// 🪙 NC COINS TRANSACTION SELLING DEPARTMENT
 bot.command('sell', async (ctx) => {
   const args = ctx.message.text.split(' ');
   if (args.length < 3) {
@@ -407,7 +334,6 @@ bot.command('sell', async (ctx) => {
   );
 });
 
-// 📊 CALCULATION ENGINE - Handles /calculate command and messages containing "check"
 bot.command('calculate', async (ctx) => {
   const messageText = ctx.message.text;
   const numbers = messageText.match(/\d+(\.\d+)?/g);
@@ -432,7 +358,6 @@ bot.command('calculate', async (ctx) => {
   }
 });
 
-// 📢 Listen for any text containing "check" and trigger the same calculation logic
 bot.hears(/check/i, async (ctx) => {
   const messageText = ctx.message.text;
   const numbers = messageText.match(/\d+(\.\d+)?/g);
@@ -457,7 +382,6 @@ bot.hears(/check/i, async (ctx) => {
   }
 });
 
-// 📱 MAIN TIKTOK API DATA ENVIRONMENT INTEGRATION
 bot.command('tiktok', async (ctx) => {
   const args = ctx.message.text.split(' ');
   if (args.length < 2) {
@@ -473,7 +397,6 @@ bot.command('tiktok', async (ctx) => {
   );
 });
 
-// 📱 TIKTOK6 OFFICIAL DOCUMENTED EARNING NODE
 bot.command('tiktok6', async (ctx) => {
   const args = ctx.message.text.split(' ');
   if (args.length < 2) {
@@ -490,7 +413,6 @@ bot.command('tiktok6', async (ctx) => {
   );
 });
 
-// ❤️ DATING PLATFORM CROSS-OVER REGIONAL MODULE
 bot.command('dating', async (ctx) => {
   await ctx.reply(
     `❤️ **6STARS GLOBAL MATCH PLATFORM NODE (12vtg)**\n` +
@@ -501,7 +423,6 @@ bot.command('dating', async (ctx) => {
   );
 });
 
-// 💰 HIGH-AUTHORITY CRYPTO INTELLIGENCE (/price)
 bot.command('price', async (ctx) => {
   const args = ctx.message.text.split(' ');
   if (args.length < 2) {
@@ -541,7 +462,6 @@ bot.command('price', async (ctx) => {
   }
 });
 
-// 🔄 UNIVERSAL CONVERSION ENGINE (/convert)
 bot.command('convert', async (ctx) => {
   const args = ctx.message.text.split(' ');
   if (args.length < 4) {
@@ -552,7 +472,6 @@ bot.command('convert', async (ctx) => {
   const fromCrypto = args[2];
   const toTarget = args[3];
 
-  // Validate amount
   const amount = parseFloat(amountStr);
   if (isNaN(amount) || amount <= 0) {
     return await ctx.reply('⚠️ Error: Amount must be a positive number.\nExample: /convert 2.5 btc usd');
@@ -562,7 +481,6 @@ bot.command('convert', async (ctx) => {
   const toId = normalizeSymbol(toTarget);
 
   try {
-    // Fetch prices for both assets
     const [fromData, toData] = await Promise.all([
       safeFetch(`${COINGECKO_API_BASE}/coins/markets?vs_currency=usd&ids=${fromId}`),
       safeFetch(`${COINGECKO_API_BASE}/coins/markets?vs_currency=usd&ids=${toId}`)
@@ -583,7 +501,6 @@ bot.command('convert', async (ctx) => {
       return await ctx.reply('⚠️ Unable to retrieve price data. Please try again.');
     }
 
-    // Calculate conversion with high precision
     const fromValueUSD = amount * fromPrice;
     const convertedAmount = fromValueUSD / toPrice;
 
@@ -603,9 +520,125 @@ bot.command('convert', async (ctx) => {
   }
 });
 
-// Vercel Serverless Function Handler
+bot.on('channel_post', async (ctx) => {
+  const chatId = ctx.chat?.id;
+  const text = ctx.message?.text || ctx.message?.caption || '';
+
+  if (!chatId || !text) return;
+
+  const alertMessage = `📢 <b>Group Alert</b>\n\n${text}`;
+  await sendMonetizedAlert(chatId, alertMessage, ctx.from?.id || null);
+});
+
+bot.on('text', async (ctx) => {
+  const chatId = ctx.chat?.id;
+  const text = ctx.message?.text || '';
+  const senderName = ctx.from?.first_name || ctx.from?.username || 'Unknown';
+  const userId = ctx.from?.id;
+
+  if (!chatId || !text) return;
+
+  try {
+    let conversationId = null;
+    let useDatabase = false;
+
+    if (supabase) {
+      const { data: existingConvs } = await supabase
+        .from('customer_conversations')
+        .select('*')
+        .eq('telegram_chat_id', chatId.toString())
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
+      if (existingConvs && existingConvs.length > 0) {
+        conversationId = existingConvs[0].id;
+        useDatabase = true;
+      } else {
+        const { data: newConv } = await supabase
+          .from('customer_conversations')
+          .insert({
+            user_id: 'telegram_user',
+            username: senderName,
+            telegram_chat_id: chatId.toString(),
+            status: 'open'
+          })
+          .select()
+          .single();
+
+        if (newConv) {
+          conversationId = newConv.id;
+          useDatabase = true;
+        }
+      }
+
+      if (conversationId) {
+        await supabase.from('customer_messages').insert({
+          conversation_id: conversationId,
+          sender_role: 'telegram_admin',
+          message: text,
+          source: 'telegram'
+        });
+      }
+    }
+
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (botToken) {
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: `WELCOME DEAR VALID CUSTOMER\n\nWe received your message: "${text}"\n\nCustomer service will assist you shortly.`,
+        }),
+      });
+    }
+  } catch (error) {
+    console.error('[CustomerSupport] Error:', error);
+  }
+});
+
 export default async function handler(req, res) {
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return res.status(200).json({ success: true });
+  }
+
   if (req.method === 'POST') {
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+
+    if (body?.action === 'sendNotification') {
+      const { name, message } = body;
+      if (!message) {
+        return res.status(400).json({ error: 'Message is required' });
+      }
+
+      try {
+        const chatId = process.env.TELEGRAM_CHAT_ID;
+        const botToken = process.env.TELEGRAM_BOT_TOKEN;
+
+        if (!chatId || !botToken) {
+          return res.status(500).json({ error: 'Telegram configuration missing' });
+        }
+
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message,
+            parse_mode: 'HTML',
+          }),
+        });
+
+        return res.status(200).json({ success: true });
+      } catch (error) {
+        console.error('[SendNotification] Error:', error);
+        return res.status(500).json({ error: 'Failed to send notification' });
+      }
+    }
+
     try {
       await bot.handleUpdate(req.body);
       return res.status(200).json({ success: true });
@@ -613,7 +646,7 @@ export default async function handler(req, res) {
       console.error(err);
       return res.status(500).send('Internal Processing Error');
     }
-  } else {
-    return res.status(200).send('6STARS Enterprise Router Online.');
   }
+
+  return res.status(200).send('6STARS Enterprise Router Online.');
 }

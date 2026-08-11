@@ -86,7 +86,7 @@ After deployment, set up Telegram webhook:
 node setup-telegram-webhook.cjs <BOT_TOKEN> <WEBHOOK_URL>
 
 # Example:
-node setup-telegram-webhook.cjs 123456:ABC-DEF... https://yourdomain.com/api/telegram-webhook
+node setup-telegram-webhook.cjs 123456:ABC-DEF... https://yourdomain.com/api/webhook
 ```
 
 ---

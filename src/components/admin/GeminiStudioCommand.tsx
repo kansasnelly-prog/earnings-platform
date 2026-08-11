@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 
 type ActiveTab = 'chat' | 'video' | 'image' | 'sora';
 
@@ -45,7 +45,7 @@ export const GeminiCommandCenter: React.FC = () => {
         const ai = new GoogleGenAI({ apiKey: geminiKey });
         const response = await ai.models.generateContent({
           model: selectedModel,
-          config: { systemInstruction: `Auto-Approve: ${autoApprove}.`, thinkingConfig: { thinkingLevel: 'HIGH' } },
+          config: { systemInstruction: `Auto-Approve: ${autoApprove}.`, thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH } },
           contents: [inputMessage],
         });
         setMessages((prev) => [...prev, { id: Date.now().toString(), sender: 'gemini', text: response.text || 'Command executed.', timestamp: new Date().toLocaleTimeString(), approved: autoApprove }]);
@@ -118,3 +118,5 @@ export const GeminiCommandCenter: React.FC = () => {
     </div>
   );
 };
+
+export default GeminiCommandCenter;

@@ -92,24 +92,24 @@ export const GeminiCommandCenter: React.FC = () => {
   return (
     <div style={{ padding: '24px', backgroundColor: '#090d16', color: '#e2e8f0', fontFamily: 'sans-serif', minHeight: '100vh' }}>
       <div style={{ borderBottom: '1px solid #1e293b', paddingBottom: '16px', marginBottom: '20px' }}>
-        <h2 style={{ margin: 0, color: '#38bdf8' }}>Gemini 3.6 Commandant & Media Engine</h2>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: '#38bdf8' }}>Gemini 3.6 Commandant & Media Engine</h2>
         <div style={{ marginBottom: '10px' }}>
-            <button onClick={() => setShowKeys(!showKeys)} style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+            <button onClick={() => setShowKeys(!showKeys)} style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 'bold' }}>
                 {showKeys ? 'Hide ⚙️ API Credentials Configuration' : 'Show ⚙️ API Credentials Configuration'}
             </button>
             {showKeys && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', backgroundColor: '#0f172a', padding: '12px', borderRadius: '8px', border: '1px solid #1e293b', marginTop: '8px' }}>
                 <div>
-                    <label style={{ fontSize: '11px', color: '#38bdf8' }}>GEMINI API KEY</label>
-                    <input type="password" value={geminiKey} onChange={(e) => saveKeys(e.target.value, openRouterKey, soraKey)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff' }}/>
+                    <label style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#38bdf8' }}>GEMINI API KEY</label>
+                    <input type="password" value={geminiKey} onChange={(e) => saveKeys(e.target.value, openRouterKey, soraKey)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', fontSize: '1rem' }}/>
                 </div>
                 <div>
-                    <label style={{ fontSize: '11px', color: '#a855f7' }}>OPENROUTER KEY</label>
-                    <input type="password" value={openRouterKey} onChange={(e) => saveKeys(geminiKey, e.target.value, soraKey)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff' }}/>
+                    <label style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#a855f7' }}>OPENROUTER KEY</label>
+                    <input type="password" value={openRouterKey} onChange={(e) => saveKeys(geminiKey, e.target.value, soraKey)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', fontSize: '1rem' }}/>
                 </div>
                 <div>
-                    <label style={{ fontSize: '11px', color: '#10b981' }}>SORA 2 KEY</label>
-                    <input type="password" value={soraKey} onChange={(e) => saveKeys(geminiKey, openRouterKey, e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff' }}/>
+                    <label style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#10b981' }}>SORA 2 KEY</label>
+                    <input type="password" value={soraKey} onChange={(e) => saveKeys(geminiKey, openRouterKey, e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', fontSize: '1rem' }}/>
                 </div>
                 </div>
             )}

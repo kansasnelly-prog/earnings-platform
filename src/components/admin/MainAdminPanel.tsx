@@ -17,7 +17,7 @@ import AdminControls from './AdminControls';
 import ProductCatalogManager from './ProductCatalogManager';
 import AdminUsers from './AdminUsers';
 import AdminPasswordReset from './AdminPasswordReset';
-import AdBanner from '../AdBanner';
+
 
 interface RealUser {
   id: string;
@@ -65,7 +65,6 @@ const MainAdminPanel: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <AdBanner />
       <header className="sticky top-0 z-50 bg-[#0a0e1a]/95 border-b border-slate-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">

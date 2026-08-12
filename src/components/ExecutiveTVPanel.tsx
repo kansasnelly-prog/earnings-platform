@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import './ExecutiveVisuals.css';
-import { ExoClickAds, StickyFooterBanner, NativeContentWidget, PropellerAdsScript, PPVModal, AffiliateBanner } from '../components/monetization/CinemaMonetization';
+
 
 interface Channel {
   id: string;
@@ -454,14 +454,6 @@ const ExecutiveTVPanel: React.FC = () => {
   const handleDurationChange = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     setDuration(e.currentTarget.duration);
   };
-  const triggerPropellerAds = () => {
-    const now = Date.now();
-    if (now - lastAdTrigger.current < AD_COOLDOWN) return;
-    
-    lastAdTrigger.current = now;
-    const event = new Event('propellerads-interaction');
-    window.dispatchEvent(event);
-  };
 
   const currentChannelData = getCurrentChannel();
 
@@ -496,7 +488,6 @@ const ExecutiveTVPanel: React.FC = () => {
         <button
           onClick={() => {
             setIsChannelOpen(!isChannelOpen);
-            if (!isChannelOpen) triggerPropellerAds();
           }}
           className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-gray-300 rounded hover:bg-gray-700 transition w-full justify-between"
           aria-expanded={isChannelOpen}
@@ -577,7 +568,6 @@ const ExecutiveTVPanel: React.FC = () => {
         <button
           onClick={() => {
             setIsMuted(!isMuted);
-            if (!isMuted) triggerPropellerAds();
           }}
           className="px-2 py-1 bg-gray-800 rounded hover:bg-gray-700"
         >
@@ -602,12 +592,7 @@ const ExecutiveTVPanel: React.FC = () => {
         ))}
       </div>
       {/* Audio Sub-Bar End */}
-      <ExoClickAds />
-      <StickyFooterBanner />
-      <NativeContentWidget />
-      <PropellerAdsScript />
-      <PPVModal />
-      <AffiliateBanner />
+      {/* Ads removed */}
     </section>
   );
 };

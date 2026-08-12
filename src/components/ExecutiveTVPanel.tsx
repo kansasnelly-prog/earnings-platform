@@ -427,6 +427,9 @@ const ExecutiveTVPanel: React.FC = () => {
     };
   }, [currentChannel, retryCount]);
 
+  const lastAdTrigger = useRef<number>(0);
+  const AD_COOLDOWN = 30000; // 30 seconds
+
   const handleRetry = () => {
     setRetryCount((prev) => prev + 1);
   };
@@ -452,6 +455,10 @@ const ExecutiveTVPanel: React.FC = () => {
     setDuration(e.currentTarget.duration);
   };
   const triggerPropellerAds = () => {
+    const now = Date.now();
+    if (now - lastAdTrigger.current < AD_COOLDOWN) return;
+    
+    lastAdTrigger.current = now;
     const event = new Event('propellerads-interaction');
     window.dispatchEvent(event);
   };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
+import { soraQueue, SoraJob } from '@/services/cinema/soraQueue';
 
 type ActiveTab = 'chat' | 'video' | 'image' | 'sora';
 
@@ -219,17 +220,39 @@ export const GeminiCommandCenter: React.FC = () => {
     if (!mediaPrompt.trim() || isProcessing) return;
     setIsProcessing(true);
     setGeneratedMediaUrl(null);
+
     try {
       if (isSoraEngine && soraKey) {
-        const res = await fetch('https://api.openai.com/v1/sora/videos', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${soraKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: mediaPrompt, seconds: 5, resolution: '720p', style: 'cinematic' }),
+        const job = soraQueue.enqueue({
+          prompt: mediaPrompt,
+          seconds: 5,
+          resolution: '720p',
+          style: 'cinematic',
+          metadata: { source: 'gemini_studio_command' },
         });
-        const data = await res.json();
-        const url = data.video_url || 'https://assets.mixkit.co/videos/preview/mixkit-abstract-fast-lines-of-light-31704-large.mp4';
-        setGeneratedMediaUrl(url);
-        addMemoryEntry('execution', `SORA VIDEO GENERATED`, { prompt: mediaPrompt, url });
+
+        const pollInterval = setInterval(() => {
+          const updatedJob = soraQueue.getJob(job.id);
+          if (!updatedJob || updatedJob.status === 'completed' || updatedJob.status === 'failed') {
+            clearInterval(pollInterval);
+            if (updatedJob?.video_url) {
+              setGeneratedMediaUrl(updatedJob.video_url);
+              addMemoryEntry('execution', 'SORA VIDEO GENERATED', { prompt: mediaPrompt, url: updatedJob.video_url, jobId: job.id });
+            } else if (updatedJob?.error) {
+              setGeneratedMediaUrl('https://assets.mixkit.co/videos/preview/mixkit-technological-circuit-board-background-43187-large.mp4');
+            }
+            setIsProcessing(false);
+          }
+        }, 2000);
+
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          if (isProcessing) {
+            setGeneratedMediaUrl('https://assets.mixkit.co/videos/preview/mixkit-abstract-fast-lines-of-light-31704-large.mp4');
+            setIsProcessing(false);
+          }
+        }, 30000);
+        return;
       } else {
         setTimeout(() => {
           setGeneratedMediaUrl('https://assets.mixkit.co/videos/preview/mixkit-technological-circuit-board-background-43187-large.mp4');
@@ -239,7 +262,6 @@ export const GeminiCommandCenter: React.FC = () => {
       }
     } catch (e: any) {
       alert(`Video Generation Status: ${e.message || 'API request processed.'}`);
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -474,7 +496,7 @@ export const GeminiCommandCenter: React.FC = () => {
                 rows={4}
                 style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', fontSize: '1rem', fontWeight: 'bold', marginBottom: '12px', resize: 'vertical' }}
               />
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value as any)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', fontWeight: 'bold', fontSize: '1rem' }}>
                   <option value="16:9">16:9</option>
                   <option value="9:16">9:16</option>
@@ -493,6 +515,31 @@ export const GeminiCommandCenter: React.FC = () => {
                   style={{ padding: '12px 24px', borderRadius: '6px', border: '1px solid #1e293b', backgroundColor: '#0f172a', color: '#fff', fontWeight: 'bold', fontSize: '1rem', cursor: isProcessing ? 'not-allowed' : 'pointer' }}
                 >
                   Simulate Video
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!generatedMediaUrl) return;
+                    try {
+                      await fetch('/api/cinema/stream-reward', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          userId: 'executive_user',
+                          videoId: `sora_${Date.now()}`,
+                          watchDurationSeconds: 5,
+                          rewardAmount: 0.01,
+                          sessionId: `session_${Date.now()}`,
+                          metadata: { source: 'gemini_studio_command', generatedMediaUrl },
+                        }),
+                      });
+                    } catch (e) {
+                      console.error('[StreamReward] Failed to claim reward:', e);
+                    }
+                  }}
+                  disabled={!generatedMediaUrl}
+                  style={{ padding: '12px 24px', borderRadius: '6px', border: '1px solid #10b981', backgroundColor: '#0f172a', color: '#10b981', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer' }}
+                >
+                  🎁 Claim Stream Reward
                 </button>
               </div>
               {generatedMediaUrl && (

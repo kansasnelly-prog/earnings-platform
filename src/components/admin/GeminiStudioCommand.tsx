@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import { soraQueue, SoraJob } from '@/services/cinema/soraQueue';
+import { LivePhantomSyncWidget } from './LivePhantomSyncWidget';
 
 type ActiveTab = 'chat' | 'video' | 'image' | 'sora' | 'control-center';
 
@@ -119,7 +120,7 @@ export const GeminiCommandCenter: React.FC = () => {
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
 
-  const [ccMainTab, setCcMainTab] = useState<'decoder' | 'solvault' | 'stream'>('decoder');
+  const [ccMainTab, setCcMainTab] = useState<'decoder' | 'solvault' | 'stream' | 'video-vast'>('decoder');
   const [decoderSubTab, setDecoderSubTab] = useState<'concepts' | 'examples'>('concepts');
   const [solAmount, setSolAmount] = useState<number>(50);
   const [vaultTier, setVaultTier] = useState<string>('1.5');
@@ -550,6 +551,25 @@ export const GeminiCommandCenter: React.FC = () => {
   return (
     <div style={{ padding: '24px', backgroundColor: '#090d16', color: '#e2e8f0', fontFamily: 'sans-serif', minHeight: '100vh' }}>
       <style>{`
+        /* Enhanced Rainbow Keyframes for High-Vibrancy Glow */
+        @keyframes rainbowShift {
+          0%   { color: #ff0055; text-shadow: 0 0 18px #ff0055, 0 0 30px #ff0055; }
+          20%  { color: #ff8800; text-shadow: 0 0 18px #ff8800, 0 0 30px #ff8800; }
+          40%  { color: #00ff66; text-shadow: 0 0 18px #00ff66, 0 0 30px #00ff66; }
+          60%  { color: #00ccff; text-shadow: 0 0 18px #00ccff, 0 0 30px #00ccff; }
+          80%  { color: #9900ff; text-shadow: 0 0 18px #9900ff, 0 0 30px #9900ff; }
+          100% { color: #ff0055; text-shadow: 0 0 18px #ff0055, 0 0 30px #ff0055; }
+        }
+
+        @keyframes rainbowBorder {
+          0%   { border-color: #ff0055; box-shadow: 0 0 25px rgba(255, 0, 85, 0.6); }
+          20%  { border-color: #ff8800; box-shadow: 0 0 25px rgba(255, 136, 0, 0.6); }
+          40%  { border-color: #00ff66; box-shadow: 0 0 25px rgba(0, 255, 102, 0.6); }
+          60%  { border-color: #00ccff; box-shadow: 0 0 25px rgba(0, 204, 255, 0.6); }
+          80%  { border-color: #9900ff; box-shadow: 0 0 25px rgba(153, 0, 255, 0.6); }
+          100% { border-color: #ff0055; box-shadow: 0 0 25px rgba(255, 0, 85, 0.6); }
+        }
+
         @keyframes rainbowShift {
           0% { color: #ff0000; textShadow: 0 0 10px #ff0000; }
           14% { color: #ff8800; textShadow: 0 0 10px #ff8800; }
@@ -1132,6 +1152,12 @@ export const GeminiCommandCenter: React.FC = () => {
                 >
                   ⚡ Token Active Stream
                 </button>
+                <button
+                  className={`nav-btn ${ccMainTab === 'video-vast' ? 'active' : ''}`}
+                  onClick={() => setCcMainTab('video-vast')}
+                >
+                  📺 Video / VAST
+                </button>
               </nav>
 
               <div className="glass-main-card">
@@ -1244,10 +1270,11 @@ export const GeminiCommandCenter: React.FC = () => {
                         <strong>{totalTokens.toFixed(4)} SOL</strong>
                       </div>
                     </div>
+                    </div>
+                    <LivePhantomSyncWidget />
                   </div>
-                </div>
 
-                <div id="tab-stream" className={`main-tab-content ${ccMainTab === 'stream' ? 'active' : ''}`}>
+                  <div id="tab-stream" className={`main-tab-content ${ccMainTab === 'stream' ? 'active' : ''}`}>
                   <div className="section-title-wrapper">
                     <h3>Real Earnings Tokens Active Stream</h3>
                     <p>Live stream of incoming token distributions, commissions, and network executions.</p>
@@ -1289,6 +1316,18 @@ export const GeminiCommandCenter: React.FC = () => {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                </div>
+
+                <div id="tab-video-vast" className={`main-tab-content ${ccMainTab === 'video-vast' ? 'active' : ''}`}>
+                  <div className="section-title-wrapper">
+                    <h3>Video / VAST Integration</h3>
+                    <p>Live ad player slot and VAST tag integration for video monetization.</p>
+                  </div>
+                  <div className="glass-main-card" style={{ marginTop: 0 }}>
+                    <div id="video-ad-container">
+                      <script type="text/javascript" src="https://faithfuloccasion.com/dJmgF.zwdOGrNrv-ZcGIUJ/IeVmw9zuGZMUYlckSPHTacvzmM/TYYK1TMJjgUKtHN-zgMFx_NejHUMyzO/SlZ/sRaGWk1VpwdOD/0Zxi"></script>
+                    </div>
                   </div>
                 </div>
               </div>

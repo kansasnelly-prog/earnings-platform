@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
+const getPhantomProvider = () => {
+  if ('phantom' in window) {
+    const provider = (window as any).phantom?.solana;
+    if (provider?.isPhantom) return provider;
+  }
+  if ('solana' in window) {
+    const provider = (window as any).solana;
+    if (provider?.isPhantom) return provider;
+  }
+  return null;
+};
+
 export const LivePhantomSyncWidget: React.FC = () => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
@@ -9,18 +21,16 @@ export const LivePhantomSyncWidget: React.FC = () => {
   const connection = new Connection('https://api.mainnet-beta.solana.com');
 
   const connectPhantom = async () => {
-    if ('solana' in window) {
-      const provider = (window as any).solana;
-      if (provider.isPhantom) {
-        try {
-          const resp = await provider.connect();
-          const pubKey = resp.publicKey.toString();
-          setWalletAddress(pubKey);
-          setIsConnected(true);
-          fetchBalance(resp.publicKey);
-        } catch (err) {
-          console.error("User rejected wallet connection", err);
-        }
+    const provider = getPhantomProvider();
+    if (provider) {
+      try {
+        const resp = await provider.connect();
+        const pubKey = resp.publicKey.toString();
+        setWalletAddress(pubKey);
+        setIsConnected(true);
+        fetchBalance(resp.publicKey);
+      } catch (err) {
+        console.error("User rejected wallet connection", err);
       }
     } else {
       alert("Phantom Wallet is not installed. Please install it to bind your Web3 address.");
@@ -37,14 +47,37 @@ export const LivePhantomSyncWidget: React.FC = () => {
   };
 
   useEffect(() => {
-    if ('solana' in window) {
-      const provider = (window as any).solana;
-      if (provider.isPhantom && provider.isConnected) {
-        setWalletAddress(provider.publicKey.toString());
-        setIsConnected(true);
-        fetchBalance(provider.publicKey);
+    let mounted = true;
+
+    const tryConnect = () => {
+      const provider = getPhantomProvider();
+      if (!provider) return false;
+      if (provider.isConnected && provider.publicKey) {
+        if (mounted) {
+          setWalletAddress(provider.publicKey.toString());
+          setIsConnected(true);
+          fetchBalance(provider.publicKey);
+        }
+        return true;
       }
-    }
+      return false;
+    };
+
+    const onInitialized = () => {
+      tryConnect();
+    };
+
+    window.addEventListener('phantom#initialized', onInitialized, { once: true });
+
+    const timeout = setTimeout(() => {
+      tryConnect();
+    }, 500);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('phantom#initialized', onInitialized);
+      clearTimeout(timeout);
+    };
   }, []);
 
   return (

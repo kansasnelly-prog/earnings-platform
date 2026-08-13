@@ -10,6 +10,7 @@ interface Message {
   text: string;
   timestamp: string;
   approved?: boolean;
+  images?: string[];
 }
 
 interface MemoryEntry {
@@ -20,8 +21,19 @@ interface MemoryEntry {
   metadata?: any;
 }
 
+interface AttachedImage {
+  id: string;
+  base64: string;
+  mimeType: string;
+  name: string;
+  size: number;
+}
+
 const MEMORY_KEY = 'gemini_studio_memory_v1';
 const MEMORY_CAPACITY = '100 GB';
+const MAX_IMAGES_PER_MESSAGE = 100;
+const MAX_FILE_SIZE_MB = 20;
+const MAX_TOTAL_PAYLOAD_MB = 100;
 
 const DEFAULT_SYSTEM_INSTRUCTION = `// SREYMARA ECOSYSTEM MASTER ARCHITECTURAL SYSTEM INSTRUCTIONS
 You act as the Principal Full-Stack Co-Pilot and Systems Architect for earnings.ink.
@@ -38,6 +50,38 @@ const MODEL_OPTIONS = [
   { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro Preview' },
   { value: 'gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash Lite' },
 ] as const;
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function resizeImage(base64: string, maxWidth = 1024, maxHeight = 1024): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width = Math.floor(width * ratio);
+        height = Math.floor(height * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('Canvas context unavailable'));
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => reject(new Error('Failed to load image for resizing'));
+    img.src = base64;
+  });
+}
 
 export const GeminiCommandCenter: React.FC = () => {
   const [geminiKey, setGeminiKey] = useState<string>(localStorage.getItem('GEMINI_API_KEY') || '');
@@ -61,9 +105,14 @@ export const GeminiCommandCenter: React.FC = () => {
     timestamp: new Date().toLocaleTimeString(),
   }]);
   const [memoryEntries, setMemoryEntries] = useState<MemoryEntry[]>([]);
+  const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
+  const [isDragOver, setIsDragOver] = useState<boolean>(false);
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -123,27 +172,154 @@ export const GeminiCommandCenter: React.FC = () => {
     localStorage.setItem('SORA_API_KEY', sKey);
   };
 
-  const appendMessage = (msg: Message) => {
-    setMessages((prev) => [...prev, msg]);
-    if (msg.sender === 'user') {
-      addMemoryEntry('conversation', `USER: ${msg.text}`);
-    } else if (msg.sender === 'gemini' || msg.sender === 'openrouter') {
-      addMemoryEntry('conversation', `${msg.sender.toUpperCase()}: ${msg.text}`);
+  const processFiles = async (files: FileList | File[]): Promise<AttachedImage[]> => {
+    const fileArray = Array.from(files);
+    const imageFiles = fileArray.filter((f) => f.type.startsWith('image/'));
+    const results: AttachedImage[] = [];
+    let totalSizeMB = 0;
+
+    setBatchProgress({ current: 0, total: imageFiles.length });
+
+    for (let i = 0; i < imageFiles.length; i++) {
+      const file = imageFiles[i];
+      const sizeMB = file.size / (1024 * 1024);
+      if (sizeMB > MAX_FILE_SIZE_MB) {
+        console.warn(`[ImageUpload] Skipping ${file.name}: ${sizeMB.toFixed(1)}MB exceeds ${MAX_FILE_SIZE_MB}MB limit`);
+        continue;
+      }
+
+      totalSizeMB += sizeMB;
+      if (totalSizeMB > MAX_TOTAL_PAYLOAD_MB) {
+        console.warn(`[ImageUpload] Total payload exceeds ${MAX_TOTAL_PAYLOAD_MB}MB, stopping at ${results.length} images`);
+        break;
+      }
+
+      try {
+        let base64 = await fileToBase64(file);
+        base64 = await resizeImage(base64);
+        const mimeMatch = base64.match(/^data:([^;]+);/);
+        const mimeType = mimeMatch ? mimeMatch[1] : file.type || 'image/jpeg';
+
+        results.push({
+          id: `img_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 9)}`,
+          base64,
+          mimeType,
+          name: file.name,
+          size: file.size,
+        });
+      } catch (e) {
+        console.error(`[ImageUpload] Failed to process ${file.name}:`, e);
+      }
+
+      setBatchProgress({ current: i + 1, total: imageFiles.length });
+      await new Promise((r) => setTimeout(r, 0));
+    }
+
+    setBatchProgress(null);
+    return results;
+  };
+
+  const handleFileSelect = async (files: FileList | File[]) => {
+    const processed = await processFiles(files);
+    setAttachedImages((prev) => {
+      const combined = [...prev, ...processed];
+      return combined.slice(0, MAX_IMAGES_PER_MESSAGE);
+    });
+  };
+
+  const removeImage = (id: string) => {
+    setAttachedImages((prev) => prev.filter((img) => img.id !== id));
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      await handleFileSelect(e.dataTransfer.files);
     }
   };
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imageFiles: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        const file = items[i].getAsFile();
+        if (file) imageFiles.push(file);
+      }
+    }
+
+    if (imageFiles.length > 0) {
+      e.preventDefault();
+      await handleFileSelect(imageFiles);
+    }
+  };
+
+  useEffect(() => {
+    const chatContainer = dropZoneRef.current;
+    if (!chatContainer) return;
+
+    const handlePasteEvent = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const imageFiles: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          const file = items[i].getAsFile();
+          if (file) imageFiles.push(file);
+        }
+      }
+      if (imageFiles.length > 0) {
+        e.preventDefault();
+        handleFileSelect(imageFiles);
+      }
+    };
+
+    chatContainer.addEventListener('paste', handlePasteEvent);
+    return () => chatContainer.removeEventListener('paste', handlePasteEvent);
+  }, []);
+
+  const buildImageParts = (images: AttachedImage[]) => {
+    return images.map((img) => ({
+      inlineData: {
+        mimeType: img.mimeType,
+        data: img.base64.split(',')[1],
+      },
+    }));
+  };
+
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isProcessing) return;
+    const hasText = inputMessage.trim().length > 0;
+    const hasImages = attachedImages.length > 0;
+    if ((!hasText && !hasImages) || isProcessing) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
       sender: 'user',
-      text: inputMessage,
+      text: inputMessage || (hasImages ? 'Sent images for analysis.' : ''),
       timestamp: new Date().toLocaleTimeString(),
+      images: hasImages ? attachedImages.map((img) => img.base64) : undefined,
     };
 
     appendMessage(userMsg);
     setInputMessage('');
+    const imagesToSend = [...attachedImages];
+    setAttachedImages([]);
     setIsProcessing(true);
 
     const assistantMsgId = Date.now().toString() + '_assistant';
@@ -156,7 +332,7 @@ export const GeminiCommandCenter: React.FC = () => {
     setMessages((prev) => [...prev, assistantMsg]);
 
     const memoryContext = buildMemoryContext();
-    const enrichedInput = memoryContext ? `${inputMessage}${memoryContext}` : inputMessage;
+    const enrichedInput = hasText ? `${inputMessage}${memoryContext}` : `Analyze these images and provide detailed feedback.${memoryContext}`;
 
     try {
       if (geminiKey) {
@@ -164,13 +340,17 @@ export const GeminiCommandCenter: React.FC = () => {
         const ai = new GoogleGenAI({ apiKey: geminiKey });
 
         try {
+          const imageParts = buildImageParts(imagesToSend);
+          const textPart = { text: enrichedInput };
+          const parts = imageParts.length > 0 ? [...imageParts, textPart] : [textPart];
+
           const result = await ai.models.generateContentStream({
             model: selectedModel,
             config: {
               systemInstruction: `${systemInstruction}\n\nAuto-Approve: ${autoApprove}.`,
               thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
             },
-            contents: [{ role: 'user', parts: [{ text: enrichedInput }] }],
+            contents: [{ role: 'user', parts }],
             signal: abortControllerRef.current.signal,
           });
 
@@ -184,13 +364,17 @@ export const GeminiCommandCenter: React.FC = () => {
           addMemoryEntry('conversation', `GEMINI: ${fullText}`);
         } catch (streamError: any) {
           if (streamError.name !== 'AbortError') {
+            const imageParts = buildImageParts(imagesToSend);
+            const textPart = { text: enrichedInput };
+            const parts = imageParts.length > 0 ? [...imageParts, textPart] : [textPart];
+
             const fallback = await ai.models.generateContent({
               model: selectedModel,
               config: {
                 systemInstruction: `${systemInstruction}\n\nAuto-Approve: ${autoApprove}.`,
                 thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
               },
-              contents: [enrichedInput],
+              contents: [{ role: 'user', parts }],
             });
             const text = fallback.text || 'Command executed.';
             setMessages((prev) => prev.map((msg) => msg.id === assistantMsgId ? { ...msg, text, sender: 'gemini', approved: autoApprove } : msg));
@@ -198,10 +382,21 @@ export const GeminiCommandCenter: React.FC = () => {
           }
         }
       } else if (openRouterKey) {
+        const content: any[] = [];
+        if (hasText) {
+          content.push({ type: 'text', text: enrichedInput });
+        }
+        for (const img of imagesToSend) {
+          content.push({
+            type: 'image_url',
+            image_url: { url: img.base64 },
+          });
+        }
+
         const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: { Authorization: `Bearer ${openRouterKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: 'google/gemini-2.5-flash:free', messages: [{ role: 'user', content: enrichedInput }] }),
+          body: JSON.stringify({ model: 'google/gemini-2.5-flash:free', messages: [{ role: 'user', content }] }),
         });
         const data = await res.json();
         const text = data.choices?.[0]?.message?.content || 'Execution complete.';
@@ -428,8 +623,31 @@ export const GeminiCommandCenter: React.FC = () => {
           </div>
 
           {activeTab === 'chat' && (
-            <div style={{ backgroundColor: '#0f172a', borderRadius: '8px', border: '1px solid #1e293b', padding: '16px' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#fff', marginBottom: '12px' }}>Executive Chat Console</h3>
+            <div
+              ref={dropZoneRef}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onPaste={handlePaste}
+              style={{
+                backgroundColor: isDragOver ? '#1e293b' : '#0f172a',
+                borderRadius: '8px',
+                border: `2px dashed ${isDragOver ? '#38bdf8' : '#1e293b'}`,
+                padding: '16px',
+                transition: 'border-color 0.2s',
+              }}
+            >
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#fff', marginBottom: '12px' }}>
+                Executive Chat Console
+                {isDragOver && <span style={{ marginLeft: '12px', color: '#38bdf8', fontSize: '0.875rem' }}>Drop images here...</span>}
+              </h3>
+
+              {batchProgress && (
+                <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: '#1e293b', borderRadius: '4px', color: '#38bdf8', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                  Processing images: {batchProgress.current} / {batchProgress.total}
+                </div>
+              )}
+
               <div style={{ height: '400px', overflowY: 'auto', backgroundColor: '#020617', borderRadius: '6px', border: '1px solid #1e293b', padding: '12px', marginBottom: '12px' }}>
                 {messages.map((msg) => (
                   <div key={msg.id} style={{ marginBottom: '12px', textAlign: msg.sender === 'user' ? 'right' : 'left' }}>
@@ -437,6 +655,13 @@ export const GeminiCommandCenter: React.FC = () => {
                       <span style={{ fontWeight: 'bold', color: msg.sender === 'user' ? '#38bdf8' : msg.sender === 'gemini' ? '#10b981' : msg.sender === 'openrouter' ? '#a855f7' : '#fbbf24', fontSize: '0.875rem' }}>
                         {msg.sender.toUpperCase()}
                       </span>
+                      {msg.images && msg.images.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
+                          {msg.images.map((img, idx) => (
+                            <img key={idx} src={img} alt="attached" style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '4px', border: '1px solid #334155' }} />
+                          ))}
+                        </div>
+                      )}
                       <div style={{ backgroundColor: '#1e293b', color: '#fff', padding: '10px', borderRadius: '6px', marginTop: '4px', fontSize: '1rem', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
                         {msg.text}
                         {isProcessing && msg.sender === 'system' && msg.text === '' && (
@@ -451,14 +676,88 @@ export const GeminiCommandCenter: React.FC = () => {
                 ))}
                 <div ref={chatEndRef} />
               </div>
-              <textarea
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Enter executive command or prompt..."
-                rows={3}
-                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', fontSize: '1rem', fontWeight: 'bold', marginBottom: '12px', resize: 'vertical' }}
-              />
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+
+              {attachedImages.length > 0 && (
+                <div style={{ marginBottom: '12px', padding: '12px', backgroundColor: '#020617', borderRadius: '6px', border: '1px solid #1e293b' }}>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#94a3b8', marginBottom: '8px' }}>
+                    Attached Images ({attachedImages.length}/{MAX_IMAGES_PER_MESSAGE})
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {attachedImages.map((img) => (
+                      <div key={img.id} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #334155' }}>
+                        <img src={img.base64} alt={img.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <button
+                          onClick={() => removeImage(img.id)}
+                          style={{
+                            position: 'absolute',
+                            top: '2px',
+                            right: '2px',
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            border: 'none',
+                            backgroundColor: '#ef4444',
+                            color: '#fff',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            lineHeight: 1,
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#64748b' }}>
+                    Total: {(attachedImages.reduce((sum, img) => sum + img.size, 0) / (1024 * 1024)).toFixed(2)} MB
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    padding: '12px',
+                    borderRadius: '6px',
+                    border: '1px solid #334155',
+                    backgroundColor: '#0f172a',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '1.25rem',
+                    cursor: 'pointer',
+                    lineHeight: 1,
+                  }}
+                  title="Attach images"
+                >
+                  📎
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      handleFileSelect(e.target.files);
+                      e.target.value = '';
+                    }
+                  }}
+                  style={{ display: 'none' }}
+                />
+
+                <textarea
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  placeholder="Enter executive command or prompt... (Ctrl+V to paste images)"
+                  rows={3}
+                  style={{ flex: 1, padding: '12px', borderRadius: '6px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', fontSize: '1rem', fontWeight: 'bold', resize: 'vertical' }}
+                />
+
                 <button
                   onClick={handleSendMessage}
                   disabled={isProcessing}
@@ -475,13 +774,10 @@ export const GeminiCommandCenter: React.FC = () => {
                 >
                   {isProcessing ? '⏳ Processing...' : '▶ Send Command'}
                 </button>
-                <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={autoApprove} onChange={(e) => setAutoApprove(e.target.checked)} />
-                  Auto-Approve Execution
-                </label>
-                <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: '#64748b' }}>
-                  Memory: {memoryEntries.length} entries
-                </span>
+              </div>
+
+              <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#64748b' }}>
+                💡 Tip: Paste images from clipboard (Ctrl+V / Cmd+V) or drag & drop into this area. Supports up to {MAX_IMAGES_PER_MESSAGE} images per message.
               </div>
             </div>
           )}

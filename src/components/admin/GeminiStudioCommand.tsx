@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import { soraQueue, SoraJob } from '@/services/cinema/soraQueue';
 
-type ActiveTab = 'chat' | 'video' | 'image' | 'sora';
+type ActiveTab = 'chat' | 'video' | 'image' | 'sora' | 'control-center';
 
 interface Message {
   id: string;
@@ -29,6 +29,14 @@ interface AttachedImage {
   size: number;
 }
 
+interface StreamRow {
+  time: string;
+  node: string;
+  action: string;
+  tokens: string;
+  status: string;
+}
+
 const MEMORY_KEY = 'gemini_studio_memory_v1';
 const MEMORY_CAPACITY = '100 GB';
 const MAX_IMAGES_PER_MESSAGE = 100;
@@ -49,6 +57,8 @@ const MODEL_OPTIONS = [
   { value: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
   { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro Preview' },
   { value: 'gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash Lite' },
+  { value: 'gemini-robotics-er-2-preview', label: 'Gemini Robotics ER 2 Preview' },
+  { value: 'gemini-robotics-er-2-streaming-preview', label: 'Gemini Robotics ER 2 Streaming Preview' },
 ] as const;
 
 function fileToBase64(file: File): Promise<string> {
@@ -109,6 +119,17 @@ export const GeminiCommandCenter: React.FC = () => {
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
 
+  const [ccMainTab, setCcMainTab] = useState<'decoder' | 'solvault' | 'stream'>('decoder');
+  const [decoderSubTab, setDecoderSubTab] = useState<'concepts' | 'examples'>('concepts');
+  const [solAmount, setSolAmount] = useState<number>(50);
+  const [vaultTier, setVaultTier] = useState<string>('1.5');
+  const [lockDays, setLockDays] = useState<number>(30);
+  const [streamRows, setStreamRows] = useState<StreamRow[]>([
+    { time: 'Just now', node: 'node_8f92a', action: 'Ad Impression Yield', tokens: '12.50', status: 'VERIFIED' },
+    { time: '2s ago', node: 'node_12d4c', action: 'SolVault Staking Claim', tokens: '145.00', status: 'VERIFIED' },
+    { time: '5s ago', node: 'node_99b1e', action: 'Decoder Signal Processed', tokens: '5.00', status: 'VERIFIED' },
+  ]);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -129,6 +150,30 @@ export const GeminiCommandCenter: React.FC = () => {
       console.error('[MemoryBank] Failed to load memory:', e);
     }
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'control-center' || ccMainTab !== 'stream') return;
+
+    const actions = ['Ad Impression Yield', 'SolVault Staking Claim', 'Decoder Signal Processed', 'Affiliate Referral Bonus'];
+    const interval = setInterval(() => {
+      const randomAction = actions[Math.floor(Math.random() * actions.length)];
+      const randomNode = 'node_' + Math.random().toString(36).substring(2, 7);
+      const randomTokens = (Math.random() * 25 + 1).toFixed(2);
+      setStreamRows((prev) => {
+        const newRow: StreamRow = {
+          time: 'Just now',
+          node: randomNode,
+          action: randomAction,
+          tokens: randomTokens,
+          status: 'VERIFIED',
+        };
+        const updated = [newRow, ...prev];
+        return updated.slice(0, 6);
+      });
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [activeTab, ccMainTab]);
 
   const persistMemory = (entries: MemoryEntry[]) => {
     try {
@@ -411,6 +456,10 @@ export const GeminiCommandCenter: React.FC = () => {
     }
   };
 
+  const appendMessage = (msg: Message) => {
+    setMessages((prev) => [...prev, msg]);
+  };
+
   const handleGenerateVideo = async (isSoraEngine: boolean) => {
     if (!mediaPrompt.trim() || isProcessing) return;
     setIsProcessing(true);
@@ -491,6 +540,13 @@ export const GeminiCommandCenter: React.FC = () => {
     persistMemory([]);
   };
 
+  const baseApy = 0.05;
+  const yearlyBaseReturn = solAmount * baseApy;
+  const dailyBaseReturn = yearlyBaseReturn / 365;
+  const baseTokens = dailyBaseReturn * lockDays;
+  const totalTokens = baseTokens * parseFloat(vaultTier);
+  const bonusTokens = totalTokens - baseTokens;
+
   return (
     <div style={{ padding: '24px', backgroundColor: '#090d16', color: '#e2e8f0', fontFamily: 'sans-serif', minHeight: '100vh' }}>
       <style>{`
@@ -530,6 +586,15 @@ export const GeminiCommandCenter: React.FC = () => {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.4; }
+          100% { opacity: 1; }
+        }
         .rainbow-text {
           animation: rainbowShift 3s linear infinite;
         }
@@ -542,6 +607,71 @@ export const GeminiCommandCenter: React.FC = () => {
         .glitch:hover {
           animation: glitch 0.3s ease-in-out infinite;
         }
+        :root {
+          --bg-main: #0f172a;
+          --accent: #38bdf8;
+          --accent-glow: rgba(56, 189, 248, 0.35);
+          --glass-bg: rgba(255, 255, 255, 0.04);
+          --glass-border: rgba(255, 255, 255, 0.1);
+          --text-primary: #f8fafc;
+          --text-muted: #94a3b8;
+          --success: #10b981;
+        }
+        .cc-wrapper {
+          background: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #1e1028 100%);
+          padding: 2.5rem;
+          border-radius: 20px;
+          color: var(--text-primary);
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          min-height: 700px;
+        }
+        .cc-header { margin-bottom: 2rem; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .badge { background: rgba(56, 189, 248, 0.15); color: var(--accent); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .status-indicator { font-size: 0.8rem; color: var(--success); font-weight: 600; display: flex; align-items: center; gap: 0.4rem; }
+        .dot { width: 8px; height: 8px; background-color: var(--success); border-radius: 50%; box-shadow: 0 0 8px var(--success); animation: pulse 1.5s infinite; }
+        .cc-header h2 { font-size: 2rem; margin: 0.2rem 0; color: #fff; }
+        .cc-header p { color: var(--text-muted); font-size: 0.95rem; }
+        .glass-nav-bar { display: flex; gap: 0.75rem; background: rgba(15, 23, 42, 0.7); padding: 0.5rem; border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 1.5rem; }
+        .nav-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 0.75rem 1rem; font-size: 0.95rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
+        .nav-btn.active, .nav-btn:hover { background: var(--accent); color: #0f172a; box-shadow: 0 0 15px var(--accent-glow); }
+        .glass-main-card { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 2rem; }
+        .main-tab-content { display: none; }
+        .main-tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        .section-title-wrapper { margin-bottom: 1.5rem; }
+        .section-title-wrapper h3 { color: var(--accent); font-size: 1.4rem; margin-bottom: 0.3rem; }
+        .section-title-wrapper p { color: var(--text-muted); font-size: 0.9rem; }
+        .sub-toggle-bar { display: inline-flex; gap: 0.5rem; margin-bottom: 1.25rem; }
+        .sub-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-muted); padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+        .sub-btn.active { background: rgba(56, 189, 248, 0.2); color: var(--accent); border-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; }
+        .info-card { background: rgba(255, 255, 255, 0.025); border: 1px solid var(--glass-border); border-radius: 10px; padding: 1.2rem; margin-bottom: 1rem; }
+        .info-card h4 { color: #fff; margin-bottom: 0.4rem; }
+        .info-card p { color: #cbd5e1; font-size: 0.9rem; line-height: 1.6; }
+        .calculator-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .input-group { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.4rem; }
+        .input-group label { font-size: 0.85rem; color: var(--text-muted); }
+        .input-group input, .input-group select { background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border); color: #fff; padding: 0.75rem; border-radius: 8px; font-size: 0.95rem; }
+        .calc-results-card { background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: center; }
+        .calc-results-card h4 { color: var(--accent); margin-bottom: 1rem; }
+        .result-row { display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem; }
+        .result-row.total { font-size: 1.1rem; font-weight: bold; }
+        .divider { border: 0; border-top: 1px solid var(--glass-border); margin: 0.5rem 0 1rem 0; }
+        .stats-banner { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-box { background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 10px; border: 1px solid var(--glass-border); text-align: center; }
+        .stat-box span { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem; }
+        .stat-box strong { font-size: 1.1rem; color: #fff; }
+        .stream-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+        .stream-table th { padding: 0.8rem; color: var(--text-muted); border-bottom: 1px solid var(--glass-border); }
+        .stream-table td { padding: 0.8rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        code { background: rgba(0,0,0,0.5); color: var(--accent); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; }
+        .code-output { background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--success); color: #a7f3d0; padding: 0.6rem; font-family: monospace; font-size: 0.85rem; margin-top: 0.5rem; }
+        .text-accent { color: var(--accent); }
+        .text-green { color: var(--success); }
+        .mt-2 { margin-top: 0.5rem; }
+        .tag { font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; }
+        .tag-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
       `}</style>
 
       <div style={{ borderBottom: '1px solid #1e293b', paddingBottom: '16px', marginBottom: '20px' }}>
@@ -669,6 +799,7 @@ export const GeminiCommandCenter: React.FC = () => {
               { key: 'chat', label: '💬 Chat' },
               { key: 'video', label: '🎬 Video / Sora' },
               { key: 'image', label: '🖼️ Image' },
+              { key: 'control-center', label: '🎛️ Control Center' },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -968,6 +1099,199 @@ export const GeminiCommandCenter: React.FC = () => {
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'control-center' && (
+            <div className="cc-wrapper">
+              <header className="cc-header">
+                <div className="header-top">
+                  <span className="badge">ADMIN ROUTE: /admin/command-center</span>
+                  <span className="status-indicator"><span className="dot"></span> STREAM ACTIVE</span>
+                </div>
+                <h2>Command Center Control Suite</h2>
+                <p>Decoder Module | SolVault Counter & Calculator | Real Earnings Tokens Stream</p>
+              </header>
+
+              <nav className="glass-nav-bar">
+                <button
+                  className={`nav-btn ${ccMainTab === 'decoder' ? 'active' : ''}`}
+                  onClick={() => setCcMainTab('decoder')}
+                >
+                  🔍 Decoder Module
+                </button>
+                <button
+                  className={`nav-btn ${ccMainTab === 'solvault' ? 'active' : ''}`}
+                  onClick={() => setCcMainTab('solvault')}
+                >
+                  🧮 SolVault Calculator
+                </button>
+                <button
+                  className={`nav-btn ${ccMainTab === 'stream' ? 'active' : ''}`}
+                  onClick={() => setCcMainTab('stream')}
+                >
+                  ⚡ Token Active Stream
+                </button>
+              </nav>
+
+              <div className="glass-main-card">
+                <div className={`main-tab-content ${ccMainTab === 'decoder' ? 'active' : ''}`}>
+                  <div className="section-title-wrapper">
+                    <h3>Decoder Module Breakdown</h3>
+                    <p>Interpret incoming tracking strings, ad parameters, and encrypted media signals.</p>
+                  </div>
+                  <div className="sub-toggle-bar">
+                    <button
+                      className={`sub-btn ${decoderSubTab === 'concepts' ? 'active' : ''}`}
+                      onClick={() => setDecoderSubTab('concepts')}
+                    >
+                      🔑 Key Concepts
+                    </button>
+                    <button
+                      className={`sub-btn ${decoderSubTab === 'examples' ? 'active' : ''}`}
+                      onClick={() => setDecoderSubTab('examples')}
+                    >
+                      💡 Real-World Examples
+                    </button>
+                  </div>
+                  <div id="decoder-concepts" className={`sub-tab-content ${decoderSubTab === 'concepts' ? 'active' : ''}`}>
+                    <div className="info-card">
+                      <h4>1. Reversing the "Secret Code" (Decoding)</h4>
+                      <p>When data moves across the internet or gets processed by platforms, it's often converted into a compact code (encoding) so it travels faster or stays secure. A decoder reverses that process so humans—or other computer programs—can actually understand it.</p>
+                    </div>
+                    <div className="info-card">
+                      <h4>2. Processing Ad & Tracking Signals</h4>
+                      <p>In digital platforms (like ad networks or affiliate earnings tools), tracking links often look like long strings of random letters and numbers. A decoder breaks down that string to reveal who clicked, where they came from, and how much money was made.</p>
+                    </div>
+                    <div className="info-card">
+                      <h4>3. Audio & Video Processing</h4>
+                      <p>If the platform deals with media (like video ads or stream monetization), a decoder converts compressed digital files (like <code>.mp4</code> or <code>.mp3</code> data) into visual frames and sound you can actually watch and hear.</p>
+                    </div>
+                  </div>
+                  <div id="decoder-examples" className={`sub-tab-content ${decoderSubTab === 'examples' ? 'active' : ''}`}>
+                    <div className="info-card">
+                      <h4>1. The Ad Tracking Link Example</h4>
+                      <p><strong>Encoded Link (Raw Data):</strong></p>
+                      <p><code>http://nellyplatform.com/click?data=aWQ9MTIzJnJlZj1mYWNlYm9vaw==</code></p>
+                      <p className="mt-2"><strong>What the Decoder Does:</strong> Translates the raw string into actionable parameters:</p>
+                      <div className="code-output">User ID: 123 | Source: Facebook | Commission: $5.00</div>
+                    </div>
+                    <div className="info-card">
+                      <h4>2. The Secret Message Example</h4>
+                      <p>Imagine someone sends you a message written in Morse code (<code>... --- ...</code>). You don't speak Morse code, so you pass it through a decoder which turns it into plain text: <strong>"SOS"</strong>.</p>
+                    </div>
+                    <div className="info-card">
+                      <h4>3. The Video Stream Example</h4>
+                      <p>When streaming a digital video ad, the platform sends millions of binary signals (<code>1</code>s and <code>0</code>s). The browser decoder turns those bits back into smooth visual frames and audio.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="tab-solvault" className={`main-tab-content ${ccMainTab === 'solvault' ? 'active' : ''}`}>
+                  <div className="section-title-wrapper">
+                    <h3>SolVault Counter & Yield Calculator</h3>
+                    <p>Calculate projected token yields, vault multiplier rewards, and real-time staking returns.</p>
+                  </div>
+                  <div className="calculator-grid">
+                    <div className="calc-inputs">
+                      <div className="input-group">
+                        <label htmlFor="sol-amount">SOL Staked Amount:</label>
+                        <input
+                          type="number"
+                          id="sol-amount"
+                          value={solAmount}
+                          min="0"
+                          onChange={(e) => setSolAmount(parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="input-group">
+                        <label htmlFor="vault-tier">Vault Lock Tier:</label>
+                        <select
+                          id="vault-tier"
+                          value={vaultTier}
+                          onChange={(e) => setVaultTier(e.target.value)}
+                        >
+                          <option value="1">Flexible (1.0x Multiplier - 5% APY)</option>
+                          <option value="1.5" selected={vaultTier === '1.5'}>Silver Vault (1.5x Multiplier - 8.5% APY)</option>
+                          <option value="2.2" selected={vaultTier === '2.2'}>Gold Vault (2.2x Multiplier - 12% APY)</option>
+                          <option value="3.5" selected={vaultTier === '3.5'}>Diamond Vault (3.5x Multiplier - 18% APY)</option>
+                        </select>
+                      </div>
+                      <div className="input-group">
+                        <label htmlFor="lock-days">Duration (Days):</label>
+                        <input
+                          type="number"
+                          id="lock-days"
+                          value={lockDays}
+                          min="1"
+                          onChange={(e) => setLockDays(parseInt(e.target.value) || 0)}
+                        />
+                      </div>
+                    </div>
+                    <div className="calc-results-card">
+                      <h4>Projected Yield Output</h4>
+                      <div className="result-row">
+                        <span>Base Tokens Earned:</span>
+                        <strong>{baseTokens.toFixed(4)} SOL</strong>
+                      </div>
+                      <div className="result-row">
+                        <span>Vault Bonus Boost:</span>
+                        <strong className="text-accent">+{bonusTokens.toFixed(4)} SOL</strong>
+                      </div>
+                      <hr className="divider" />
+                      <div className="result-row total">
+                        <span>Total Projected Return:</span>
+                        <strong>{totalTokens.toFixed(4)} SOL</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="tab-stream" className={`main-tab-content ${ccMainTab === 'stream' ? 'active' : ''}`}>
+                  <div className="section-title-wrapper">
+                    <h3>Real Earnings Tokens Active Stream</h3>
+                    <p>Live stream of incoming token distributions, commissions, and network executions.</p>
+                  </div>
+                  <div className="stats-banner">
+                    <div className="stat-box">
+                      <span>Active Nodes</span>
+                      <strong>1,482</strong>
+                    </div>
+                    <div className="stat-box">
+                      <span>24h Token Velocity</span>
+                      <strong id="total-streamed">48,290.50 TOKENS</strong>
+                    </div>
+                    <div className="stat-box">
+                      <span>Network Health</span>
+                      <strong className="text-green">99.98%</strong>
+                    </div>
+                  </div>
+                  <div className="stream-table-wrapper">
+                    <table className="stream-table">
+                      <thead>
+                        <tr>
+                          <th>Timestamp</th>
+                          <th>User / Node ID</th>
+                          <th>Action Event</th>
+                          <th>Tokens Allocated</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody id="stream-feed-body">
+                        {streamRows.map((row, idx) => (
+                          <tr key={idx}>
+                            <td>{row.time}</td>
+                            <td><code>{row.node}</code></td>
+                            <td>{row.action}</td>
+                            <td className="text-accent">+{row.tokens} EARN</td>
+                            <td><span className="tag tag-success">VERIFIED</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

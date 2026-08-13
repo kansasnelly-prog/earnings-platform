@@ -493,33 +493,101 @@ export const GeminiCommandCenter: React.FC = () => {
 
   return (
     <div style={{ padding: '24px', backgroundColor: '#090d16', color: '#e2e8f0', fontFamily: 'sans-serif', minHeight: '100vh' }}>
+      <style>{`
+        @keyframes rainbowShift {
+          0% { color: #ff0000; textShadow: 0 0 10px #ff0000; }
+          14% { color: #ff8800; textShadow: 0 0 10px #ff8800; }
+          28% { color: #ffff00; textShadow: 0 0 10px #ffff00; }
+          42% { color: #00ff00; textShadow: 0 0 10px #00ff00; }
+          57% { color: #0088ff; textShadow: 0 0 10px #0088ff; }
+          71% { color: #8800ff; textShadow: 0 0 10px #8800ff; }
+          85% { color: #ff0088; textShadow: 0 0 10px #ff0088; }
+          100% { color: #ff0000; textShadow: 0 0 10px #ff0000; }
+        }
+        @keyframes rainbowBorder {
+          0% { borderColor: #ff0000; boxShadow: 0 0 10px #ff0000; }
+          14% { borderColor: #ff8800; boxShadow: 0 0 10px #ff8800; }
+          28% { borderColor: #ffff00; boxShadow: 0 0 10px #ffff00; }
+          42% { borderColor: #00ff00; boxShadow: 0 0 10px #00ff00; }
+          57% { borderColor: #0088ff; boxShadow: 0 0 10px #0088ff; }
+          71% { borderColor: #8800ff; boxShadow: 0 0 10px #8800ff; }
+          85% { borderColor: #ff0088; boxShadow: 0 0 10px #ff0088; }
+          100% { borderColor: #ff0000; boxShadow: 0 0 10px #ff0000; }
+        }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+        @keyframes glitch {
+          0% { transform: translate(0); }
+          20% { transform: translate(-2px, 2px); }
+          40% { transform: translate(-2px, -2px); }
+          60% { transform: translate(2px, 2px); }
+          80% { transform: translate(2px, -2px); }
+          100% { transform: translate(0); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .rainbow-text {
+          animation: rainbowShift 3s linear infinite;
+        }
+        .rainbow-border {
+          animation: rainbowBorder 3s linear infinite;
+        }
+        .blink {
+          animation: blink 1.5s ease-in-out infinite;
+        }
+        .glitch:hover {
+          animation: glitch 0.3s ease-in-out infinite;
+        }
+      `}</style>
+
       <div style={{ borderBottom: '1px solid #1e293b', paddingBottom: '16px', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: 0, color: '#38bdf8', textShadow: '0 0 10px rgba(56,189,248,0.3)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <h2 className="rainbow-text" style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: 0, textShadow: '0 0 20px currentColor' }}>
               Executive AI Co-Pilot Command Center
             </h2>
-            <div style={{ marginTop: '8px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.875rem', color: '#94a3b8' }}>SREYMARA / Nelly TV</span>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.875rem', color: '#38bdf8', fontWeight: 'bold' }}>SREYMARA / Nelly TV 🎬</span>
               <span style={{ fontSize: '0.875rem', color: '#38bdf8', fontWeight: 'bold' }}>🧠 Memory Bank: {MEMORY_CAPACITY} Allocated</span>
-              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 'bold' }}>● ONLINE</span>
+              <span className="blink" style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 'bold' }}>● ONLINE</span>
             </div>
           </div>
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: '1px solid #1e293b',
-              backgroundColor: showSettings ? '#1d4ed8' : '#0f172a',
-              color: '#fff',
-              fontWeight: 'bold',
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-            }}
-          >
-            ⚙️ Settings
-          </button>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div className="rainbow-border" style={{ padding: '6px 12px', borderRadius: '6px', border: '2px solid', backgroundColor: '#0f172a', color: '#fff', fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center' }}>
+              REAL EARNINGS TOKENS<br/>ACTIVE STREAM
+            </div>
+            <div className="rainbow-border" style={{ padding: '6px 12px', borderRadius: '6px', border: '2px solid', backgroundColor: '#0f172a', color: '#fff', fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center' }}>
+              SOL VAULT COUNTER<br/>CALCULATOR
+            </div>
+            <div className="rainbow-border" style={{ padding: '6px 12px', borderRadius: '6px', border: '2px solid', backgroundColor: '#0f172a', color: '#fff', fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center' }}>
+              MINI VIEW / MOBILE<br/>4K VIDEO RECODING<br/>DECODER
+            </div>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="rainbow-border glitch"
+              style={{
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: '2px solid',
+                backgroundColor: showSettings ? '#1d4ed8' : '#0f172a',
+                color: '#fff',
+                fontWeight: 'bold',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+              }}
+            >
+              ⚙️ Settings
+            </button>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '12px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <span className="rainbow-text" style={{ fontSize: '1.125rem', fontWeight: 'bold' }}>HEAVENLY PARADISESUPRIME SUITES</span>
+          <span className="rainbow-text" style={{ fontSize: '1.125rem', fontWeight: 'bold' }}>NELLYSREYMARA</span>
         </div>
 
         {showSettings && (
@@ -559,7 +627,7 @@ export const GeminiCommandCenter: React.FC = () => {
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={() => setShowKeys(!showKeys)}
                 style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 'bold' }}
@@ -596,7 +664,7 @@ export const GeminiCommandCenter: React.FC = () => {
 
       {hasAnyKey && (
         <div style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
             {[
               { key: 'chat', label: '💬 Chat' },
               { key: 'video', label: '🎬 Video / Sora' },
@@ -605,16 +673,18 @@ export const GeminiCommandCenter: React.FC = () => {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key as ActiveTab)}
+                className={activeTab === tab.key ? 'rainbow-border' : ''}
                 style={{
                   padding: '12px 24px',
                   borderRadius: '8px',
-                  border: '1px solid #1e293b',
+                  border: activeTab === tab.key ? '2px solid' : '1px solid #1e293b',
                   backgroundColor: activeTab === tab.key ? '#1d4ed8' : '#0f172a',
                   color: '#fff',
                   fontWeight: 'bold',
                   fontSize: '1.125rem',
                   cursor: 'pointer',
-                  boxShadow: activeTab === tab.key ? '0 0 10px rgba(29,78,216,0.4)' : 'none',
+                  boxShadow: activeTab === tab.key ? '0 0 15px rgba(29,78,216,0.5)' : 'none',
+                  transition: 'all 0.3s ease',
                 }}
               >
                 {tab.label}
@@ -637,10 +707,15 @@ export const GeminiCommandCenter: React.FC = () => {
                 transition: 'border-color 0.2s',
               }}
             >
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#fff', marginBottom: '12px' }}>
-                Executive Chat Console
-                {isDragOver && <span style={{ marginLeft: '12px', color: '#38bdf8', fontSize: '0.875rem' }}>Drop images here...</span>}
-              </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                <h3 className="rainbow-text" style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>
+                  Executive Chat Console
+                </h3>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <span className="rainbow-text" style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>HEAVENLY PARADISESUPRIME SUITES</span>
+                  <span className="rainbow-text" style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>NELLYSREYMARA</span>
+                </div>
+              </div>
 
               {batchProgress && (
                 <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: '#1e293b', borderRadius: '4px', color: '#38bdf8', fontSize: '0.875rem', fontWeight: 'bold' }}>
@@ -718,13 +793,14 @@ export const GeminiCommandCenter: React.FC = () => {
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => fileInputRef.current?.click()}
+                  className="rainbow-border glitch"
                   style={{
                     padding: '12px',
                     borderRadius: '6px',
-                    border: '1px solid #334155',
+                    border: '2px solid',
                     backgroundColor: '#0f172a',
                     color: '#fff',
                     fontWeight: 'bold',
@@ -755,16 +831,17 @@ export const GeminiCommandCenter: React.FC = () => {
                   onChange={(e) => setInputMessage(e.target.value)}
                   placeholder="Enter executive command or prompt... (Ctrl+V to paste images)"
                   rows={3}
-                  style={{ flex: 1, padding: '12px', borderRadius: '6px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', fontSize: '1rem', fontWeight: 'bold', resize: 'vertical' }}
+                  style={{ flex: 1, minWidth: '200px', padding: '12px', borderRadius: '6px', border: '1px solid #334155', backgroundColor: '#1e293b', color: '#fff', fontSize: '1rem', fontWeight: 'bold', resize: 'vertical' }}
                 />
 
                 <button
                   onClick={handleSendMessage}
                   disabled={isProcessing}
+                  className="rainbow-border glitch"
                   style={{
                     padding: '12px 24px',
                     borderRadius: '6px',
-                    border: 'none',
+                    border: '2px solid',
                     backgroundColor: isProcessing ? '#334155' : '#1d4ed8',
                     color: '#fff',
                     fontWeight: 'bold',
@@ -774,6 +851,11 @@ export const GeminiCommandCenter: React.FC = () => {
                 >
                   {isProcessing ? '⏳ Processing...' : '▶ Send Command'}
                 </button>
+
+                <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  <input type="checkbox" checked={autoApprove} onChange={(e) => setAutoApprove(e.target.checked)} />
+                  Auto-Approve Execution
+                </label>
               </div>
 
               <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#64748b' }}>
@@ -784,7 +866,7 @@ export const GeminiCommandCenter: React.FC = () => {
 
           {activeTab === 'video' && (
             <div style={{ backgroundColor: '#0f172a', borderRadius: '8px', border: '1px solid #1e293b', padding: '16px' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#fff', marginBottom: '12px' }}>Sora 2 Video Generation Engine</h3>
+              <h3 className="rainbow-text" style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#fff', marginBottom: '12px' }}>Sora 2 Video Generation Engine</h3>
               <textarea
                 value={mediaPrompt}
                 onChange={(e) => setMediaPrompt(e.target.value)}
@@ -801,7 +883,8 @@ export const GeminiCommandCenter: React.FC = () => {
                 <button
                   onClick={() => handleGenerateVideo(true)}
                   disabled={isProcessing}
-                  style={{ padding: '12px 24px', borderRadius: '6px', border: 'none', backgroundColor: isProcessing ? '#334155' : '#1d4ed8', color: '#fff', fontWeight: 'bold', fontSize: '1rem', cursor: isProcessing ? 'not-allowed' : 'pointer' }}
+                  className="rainbow-border glitch"
+                  style={{ padding: '12px 24px', borderRadius: '6px', border: '2px solid', backgroundColor: isProcessing ? '#334155' : '#1d4ed8', color: '#fff', fontWeight: 'bold', fontSize: '1rem', cursor: isProcessing ? 'not-allowed' : 'pointer' }}
                 >
                   {isProcessing ? '⏳ Generating...' : '🎬 Generate Sora Video'}
                 </button>
@@ -833,7 +916,8 @@ export const GeminiCommandCenter: React.FC = () => {
                     }
                   }}
                   disabled={!generatedMediaUrl}
-                  style={{ padding: '12px 24px', borderRadius: '6px', border: '1px solid #10b981', backgroundColor: '#0f172a', color: '#10b981', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer' }}
+                  className="rainbow-border glitch"
+                  style={{ padding: '12px 24px', borderRadius: '6px', border: '2px solid', backgroundColor: '#0f172a', color: '#10b981', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer' }}
                 >
                   🎁 Claim Stream Reward
                 </button>
@@ -850,7 +934,7 @@ export const GeminiCommandCenter: React.FC = () => {
 
           {activeTab === 'image' && (
             <div style={{ backgroundColor: '#0f172a', borderRadius: '8px', border: '1px solid #1e293b', padding: '16px' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#fff', marginBottom: '12px' }}>Image Generation Studio</h3>
+              <h3 className="rainbow-text" style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#fff', marginBottom: '12px' }}>Image Generation Studio</h3>
               <textarea
                 value={mediaPrompt}
                 onChange={(e) => setMediaPrompt(e.target.value)}
@@ -867,7 +951,8 @@ export const GeminiCommandCenter: React.FC = () => {
                 <button
                   onClick={handleGenerateImage}
                   disabled={isProcessing}
-                  style={{ padding: '12px 24px', borderRadius: '6px', border: 'none', backgroundColor: isProcessing ? '#334155' : '#1d4ed8', color: '#fff', fontWeight: 'bold', fontSize: '1rem', cursor: isProcessing ? 'not-allowed' : 'pointer' }}
+                  className="rainbow-border glitch"
+                  style={{ padding: '12px 24px', borderRadius: '6px', border: '2px solid', backgroundColor: isProcessing ? '#334155' : '#1d4ed8', color: '#fff', fontWeight: 'bold', fontSize: '1rem', cursor: isProcessing ? 'not-allowed' : 'pointer' }}
                 >
                   {isProcessing ? '⏳ Generating...' : '🖼️ Generate Image'}
                 </button>
@@ -887,13 +972,6 @@ export const GeminiCommandCenter: React.FC = () => {
           )}
         </div>
       )}
-
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 };

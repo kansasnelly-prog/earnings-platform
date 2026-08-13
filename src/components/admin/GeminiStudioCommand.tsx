@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import { soraQueue, SoraJob } from '@/services/cinema/soraQueue';
 import { LivePhantomSyncWidget } from './LivePhantomSyncWidget';
+import { ExecutiveMediaStudio } from './ExecutiveMediaStudio';
+import { LiveVoiceController } from './LiveVoiceController';
+import { ScreenShareWidget } from './ScreenShareWidget';
 
 type ActiveTab = 'chat' | 'video' | 'image' | 'sora' | 'control-center';
 
@@ -570,6 +573,54 @@ export const GeminiCommandCenter: React.FC = () => {
           100% { border-color: #ff0055; box-shadow: 0 0 25px rgba(255, 0, 85, 0.6); }
         }
 
+        /* Global Executive Dynamic Rainbow Glow */
+        @keyframes rainbowTextShift {
+          0%   { color: #ff0055; text-shadow: 0 0 12px #ff0055, 0 0 24px rgba(255, 0, 85, 0.6); }
+          20%  { color: #ff8800; text-shadow: 0 0 12px #ff8800, 0 0 24px rgba(255, 136, 0, 0.6); }
+          40%  { color: #00ff66; text-shadow: 0 0 12px #00ff66, 0 0 24px rgba(0, 255, 102, 0.6); }
+          60%  { color: #00ccff; text-shadow: 0 0 12px #00ccff, 0 0 24px rgba(0, 204, 255, 0.6); }
+          80%  { color: #9900ff; text-shadow: 0 0 12px #9900ff, 0 0 24px rgba(153, 0, 255, 0.6); }
+          100% { color: #ff0055; text-shadow: 0 0 12px #ff0055, 0 0 24px rgba(255, 0, 85, 0.6); }
+        }
+
+        @keyframes rainbowBorderGlow {
+          0%   { border-color: #ff0055; box-shadow: 0 0 18px rgba(255, 0, 85, 0.5), inset 0 0 10px rgba(255, 0, 85, 0.2); }
+          20%  { border-color: #ff8800; box-shadow: 0 0 18px rgba(255, 136, 0, 0.5), inset 0 0 10px rgba(255, 136, 0, 0.2); }
+          40%  { border-color: #00ff66; box-shadow: 0 0 18px rgba(0, 255, 102, 0.5), inset 0 0 10px rgba(0, 255, 102, 0.2); }
+          60%  { border-color: #00ccff; box-shadow: 0 0 18px rgba(0, 204, 255, 0.5), inset 0 0 10px rgba(0, 204, 255, 0.2); }
+          80%  { border-color: #9900ff; box-shadow: 0 0 18px rgba(153, 0, 255, 0.5), inset 0 0 10px rgba(153, 0, 255, 0.2); }
+          100% { border-color: #ff0055; box-shadow: 0 0 18px rgba(255, 0, 85, 0.5), inset 0 0 10px rgba(255, 0, 85, 0.2); }
+        }
+
+        .executive-rainbow-border {
+          background-color: #060913 !important;
+          border: 2px solid #ff0055 !important;
+          animation: rainbowBorderGlow 3s infinite linear !important;
+        }
+
+        .executive-rainbow-text {
+          animation: rainbowTextShift 3s infinite linear !important;
+        }
+
+        /* Enhanced Rainbow Keyframes for High-Vibrancy Glow */
+        @keyframes rainbowShift {
+          0%   { color: #ff0055; text-shadow: 0 0 18px #ff0055, 0 0 30px #ff0055; }
+          20%  { color: #ff8800; text-shadow: 0 0 18px #ff8800, 0 0 30px #ff8800; }
+          40%  { color: #00ff66; text-shadow: 0 0 18px #00ff66, 0 0 30px #00ff66; }
+          60%  { color: #00ccff; text-shadow: 0 0 18px #00ccff, 0 0 30px #00ccff; }
+          80%  { color: #9900ff; text-shadow: 0 0 18px #9900ff, 0 0 30px #9900ff; }
+          100% { color: #ff0055; text-shadow: 0 0 18px #ff0055, 0 0 30px #ff0055; }
+        }
+
+        @keyframes rainbowBorder {
+          0%   { border-color: #ff0055; box-shadow: 0 0 25px rgba(255, 0, 85, 0.6); }
+          20%  { border-color: #ff8800; box-shadow: 0 0 25px rgba(255, 136, 0, 0.6); }
+          40%  { border-color: #00ff66; box-shadow: 0 0 25px rgba(0, 255, 102, 0.6); }
+          60%  { border-color: #00ccff; box-shadow: 0 0 25px rgba(0, 204, 255, 0.6); }
+          80%  { border-color: #9900ff; box-shadow: 0 0 25px rgba(153, 0, 255, 0.6); }
+          100% { border-color: #ff0055; box-shadow: 0 0 25px rgba(255, 0, 85, 0.6); }
+        }
+
         @keyframes rainbowShift {
           0% { color: #ff0000; textShadow: 0 0 10px #ff0000; }
           14% { color: #ff8800; textShadow: 0 0 10px #ff8800; }
@@ -697,28 +748,28 @@ export const GeminiCommandCenter: React.FC = () => {
       <div style={{ borderBottom: '1px solid #1e293b', paddingBottom: '16px', marginBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <h2 className="rainbow-text" style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: 0, textShadow: '0 0 20px currentColor' }}>
+            <h2 className="executive-rainbow-text" style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: 0, textShadow: '0 0 20px currentColor' }}>
               Executive AI Co-Pilot Command Center
             </h2>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.875rem', color: '#38bdf8', fontWeight: 'bold' }}>SREYMARA / Nelly TV 🎬</span>
-              <span style={{ fontSize: '0.875rem', color: '#38bdf8', fontWeight: 'bold' }}>🧠 Memory Bank: {MEMORY_CAPACITY} Allocated</span>
+              <span className="executive-rainbow-text" style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>SREYMARA / Nelly TV 🎬</span>
+              <span className="executive-rainbow-text" style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>🧠 Memory Bank: {MEMORY_CAPACITY} Allocated</span>
               <span className="blink" style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 'bold' }}>● ONLINE</span>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <div className="rainbow-border" style={{ padding: '6px 12px', borderRadius: '6px', border: '2px solid', backgroundColor: '#0f172a', color: '#fff', fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center' }}>
+            <div className="executive-rainbow-border" style={{ padding: '6px 12px', borderRadius: '6px', border: '2px solid', backgroundColor: '#0f172a', color: '#fff', fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center' }}>
               REAL EARNINGS TOKENS<br/>ACTIVE STREAM
             </div>
-            <div className="rainbow-border" style={{ padding: '6px 12px', borderRadius: '6px', border: '2px solid', backgroundColor: '#0f172a', color: '#fff', fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center' }}>
+            <div className="executive-rainbow-border" style={{ padding: '6px 12px', borderRadius: '6px', border: '2px solid', backgroundColor: '#0f172a', color: '#fff', fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center' }}>
               SOL VAULT COUNTER<br/>CALCULATOR
             </div>
-            <div className="rainbow-border" style={{ padding: '6px 12px', borderRadius: '6px', border: '2px solid', backgroundColor: '#0f172a', color: '#fff', fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center' }}>
+            <div className="executive-rainbow-border" style={{ padding: '6px 12px', borderRadius: '6px', border: '2px solid', backgroundColor: '#0f172a', color: '#fff', fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center' }}>
               MINI VIEW / MOBILE<br/>4K VIDEO RECODING<br/>DECODER
             </div>
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="rainbow-border glitch"
+              className="executive-rainbow-border"
               style={{
                 padding: '8px 16px',
                 borderRadius: '6px',
@@ -736,8 +787,8 @@ export const GeminiCommandCenter: React.FC = () => {
         </div>
 
         <div style={{ marginTop: '12px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span className="rainbow-text" style={{ fontSize: '1.125rem', fontWeight: 'bold' }}>HEAVENLY PARADISESUPRIME SUITES</span>
-          <span className="rainbow-text" style={{ fontSize: '1.125rem', fontWeight: 'bold' }}>NELLYSREYMARA</span>
+          <span className="executive-rainbow-text" style={{ fontSize: '1.125rem', fontWeight: 'bold' }}>HEAVENLY PARADISESUPRIME SUITES</span>
+          <span className="executive-rainbow-text" style={{ fontSize: '1.125rem', fontWeight: 'bold' }}>NELLYSREYMARA</span>
         </div>
 
         {showSettings && (
@@ -1012,6 +1063,10 @@ export const GeminiCommandCenter: React.FC = () => {
               <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#64748b' }}>
                 💡 Tip: Paste images from clipboard (Ctrl+V / Cmd+V) or drag & drop into this area. Supports up to {MAX_IMAGES_PER_MESSAGE} images per message.
               </div>
+
+              <LiveVoiceController />
+              <ExecutiveMediaStudio />
+              <ScreenShareWidget />
             </div>
           )}
 
@@ -1133,7 +1188,7 @@ export const GeminiCommandCenter: React.FC = () => {
                 <p>Decoder Module | SolVault Counter & Calculator | Real Earnings Tokens Stream</p>
               </header>
 
-              <nav className="glass-nav-bar">
+              <nav className="executive-rainbow-border glass-nav-bar" style={{ display: 'flex', gap: '0.75rem', background: 'rgba(15, 23, 42, 0.7)', padding: '0.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', marginBottom: '1.5rem' }}>
                 <button
                   className={`nav-btn ${ccMainTab === 'decoder' ? 'active' : ''}`}
                   onClick={() => setCcMainTab('decoder')}
@@ -1160,10 +1215,10 @@ export const GeminiCommandCenter: React.FC = () => {
                 </button>
               </nav>
 
-              <div className="glass-main-card">
+              <div className="glass-main-card executive-rainbow-border">
                 <div className={`main-tab-content ${ccMainTab === 'decoder' ? 'active' : ''}`}>
                   <div className="section-title-wrapper">
-                    <h3>Decoder Module Breakdown</h3>
+                    <h3 className="executive-rainbow-text">Decoder Module Breakdown</h3>
                     <p>Interpret incoming tracking strings, ad parameters, and encrypted media signals.</p>
                   </div>
                   <div className="sub-toggle-bar">
@@ -1215,7 +1270,7 @@ export const GeminiCommandCenter: React.FC = () => {
 
                 <div id="tab-solvault" className={`main-tab-content ${ccMainTab === 'solvault' ? 'active' : ''}`}>
                   <div className="section-title-wrapper">
-                    <h3>SolVault Counter & Yield Calculator</h3>
+                    <h3 className="executive-rainbow-text">SolVault Counter & Yield Calculator</h3>
                     <p>Calculate projected token yields, vault multiplier rewards, and real-time staking returns.</p>
                   </div>
                   <div className="calculator-grid">
@@ -1254,8 +1309,8 @@ export const GeminiCommandCenter: React.FC = () => {
                         />
                       </div>
                     </div>
-                    <div className="calc-results-card">
-                      <h4>Projected Yield Output</h4>
+                    <div className="calc-results-card executive-rainbow-border">
+                      <h4 className="executive-rainbow-text">Projected Yield Output</h4>
                       <div className="result-row">
                         <span>Base Tokens Earned:</span>
                         <strong>{baseTokens.toFixed(4)} SOL</strong>
@@ -1270,25 +1325,25 @@ export const GeminiCommandCenter: React.FC = () => {
                         <strong>{totalTokens.toFixed(4)} SOL</strong>
                       </div>
                     </div>
-                    </div>
-                    <LivePhantomSyncWidget />
                   </div>
+                  <LivePhantomSyncWidget />
+                </div>
 
-                  <div id="tab-stream" className={`main-tab-content ${ccMainTab === 'stream' ? 'active' : ''}`}>
+                <div id="tab-stream" className={`main-tab-content ${ccMainTab === 'stream' ? 'active' : ''}`}>
                   <div className="section-title-wrapper">
-                    <h3>Real Earnings Tokens Active Stream</h3>
+                    <h3 className="executive-rainbow-text">Real Earnings Tokens Active Stream</h3>
                     <p>Live stream of incoming token distributions, commissions, and network executions.</p>
                   </div>
                   <div className="stats-banner">
-                    <div className="stat-box">
+                    <div className="stat-box executive-rainbow-border">
                       <span>Active Nodes</span>
                       <strong>1,482</strong>
                     </div>
-                    <div className="stat-box">
+                    <div className="stat-box executive-rainbow-border">
                       <span>24h Token Velocity</span>
                       <strong id="total-streamed">48,290.50 TOKENS</strong>
                     </div>
-                    <div className="stat-box">
+                    <div className="stat-box executive-rainbow-border">
                       <span>Network Health</span>
                       <strong className="text-green">99.98%</strong>
                     </div>

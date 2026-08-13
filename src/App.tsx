@@ -19,6 +19,7 @@ const TikTokGate = React.lazy(() => import('./pages/TikTokGate'));
 
 const AdminCommandDeck = React.lazy(() => import('./components/admin/AdminCommandDeck'));
 const GeminiStudioCommand = React.lazy(() => import('./components/admin/GeminiStudioCommand'));
+const AudiomackCreator = React.lazy(() => import('./pages/AudiomackCreator'));
 
 const AIAssistantWorkspace = React.lazy(() => import('./pages/AIAssistantWorkspace'));
 const DigitalHome = React.lazy(() => import('./pages/admin/index'));
@@ -242,6 +243,7 @@ const AppContent: React.FC = () => {
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/ai-assistant" element={<Suspense fallback={lazyFallback}><AIAssistantWorkspace /></Suspense>} />
+          <Route path="/audiomack-creator" element={<Suspense fallback={lazyFallback}><AudiomackCreator /></Suspense>} />
         </Route>
         
         {/* Profile Routes */}

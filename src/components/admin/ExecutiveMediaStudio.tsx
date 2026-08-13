@@ -26,19 +26,41 @@ export const ExecutiveMediaStudio: React.FC = () => {
 
   const handleShare = async (title: string, url: string, file?: File) => {
     setShareError(null);
-    if (!navigator.share) {
-      setShareError('Web Share API not supported on this browser.');
-      return;
-    }
-    try {
-      const payload: ShareData = { title, text: 'Executive Media Export', url };
-      if (file) {
-        payload.files = [file];
+    const targetUrl = url || window.location.href;
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ url: targetUrl })) {
+      try {
+        await navigator.share({
+          title,
+          text: 'Executive Media Export from earnings.ink',
+          url: targetUrl,
+          ...(file && { files: [file] }),
+        });
+        return;
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          return;
+        }
+        console.log('Native share dismissed or failed:', err);
       }
-      await navigator.share(payload);
-    } catch (err) {
-      if (err instanceof Error && err.name !== 'AbortError') {
-        setShareError(err.message);
+    }
+
+    const encodedUrl = encodeURIComponent(targetUrl);
+    const shareText = encodeURIComponent('Check out this Executive Media Stream on earnings.ink');
+
+    const platform = prompt(
+      "Choose platform to share:\n1. Telegram\n2. TikTok / Instagram (Copy Link)\n3. Copy Direct Link to Clipboard",
+      '1'
+    );
+
+    if (platform === '1') {
+      window.open(`https://t.me/share/url?url=${encodedUrl}&text=${shareText}`, '_blank');
+    } else if (platform === '2' || platform === '3') {
+      try {
+        await navigator.clipboard.writeText(targetUrl);
+        alert('Link copied to clipboard! You can now paste it directly into TikTok, Instagram, or Bluetooth transfers.');
+      } catch (err) {
+        setShareError('Clipboard access denied. Please copy the URL manually.');
       }
     }
   };

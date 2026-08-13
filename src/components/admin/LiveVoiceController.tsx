@@ -3,41 +3,52 @@ import React, { useState, useEffect, useRef } from 'react';
 export const LiveVoiceController: React.FC = () => {
   const [isLiveVoiceActive, setIsLiveVoiceActive] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState<boolean>(true);
   const recognitionRef = useRef<any | null>(null);
+
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    setSpeechSupported(!!SpeechRecognition);
+  }, []);
 
   const startDictation = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('Speech recognition not supported on this browser.');
+      alert('Speech Recognition is not natively supported in this browser. Please use Google Chrome, Microsoft Edge, or Safari for voice dictation.');
       return;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
 
-    recognition.onresult = (event: any) => {
-      const transcript = Array.from(event.results)
-        .map((result: any) => result[0].transcript)
-        .join('');
-      const inputEl = document.querySelector('input[type="text"], textarea') as HTMLInputElement | null;
-      if (inputEl) {
-        inputEl.value = transcript;
-        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    };
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0].transcript)
+          .join('');
+        const inputEl = document.querySelector('textarea, input[type="text"]') as HTMLInputElement | HTMLTextAreaElement | null;
+        if (inputEl) {
+          inputEl.value = transcript;
+          inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      };
 
-    recognition.onerror = () => {
-      setIsListening(false);
-    };
+      recognition.onerror = (err: any) => {
+        console.error('Speech Recognition Error:', err);
+      };
 
-    recognition.onend = () => {
-      setIsListening(false);
-    };
+      recognition.onend = () => {
+        setIsListening(false);
+      };
 
-    recognition.start();
-    setIsListening(true);
-    recognitionRef.current = recognition;
+      recognition.start();
+      setIsListening(true);
+      recognitionRef.current = recognition;
+    } catch (e) {
+      console.error('Recognition start failed:', e);
+    }
   };
 
   const stopDictation = () => {
@@ -75,9 +86,19 @@ export const LiveVoiceController: React.FC = () => {
 
       <button
         onClick={isListening ? stopDictation : startDictation}
-        style={{ background: '#00ccff', color: '#000', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 'bold' }}
+        disabled={!speechSupported}
+        style={{
+          background: speechSupported ? '#00ccff' : '#334155',
+          color: '#000',
+          padding: '8px 12px',
+          borderRadius: '8px',
+          cursor: speechSupported ? 'pointer' : 'not-allowed',
+          border: 'none',
+          fontWeight: 'bold',
+          opacity: speechSupported ? 1 : 0.7,
+        }}
       >
-        🎤 {isListening ? 'Stop Dictation' : 'Dictate Real-Time'}
+        🎤 {isListening ? 'Stop Dictation' : speechSupported ? 'Dictate Real-Time' : 'Speech Unavailable'}
       </button>
     </div>
   );

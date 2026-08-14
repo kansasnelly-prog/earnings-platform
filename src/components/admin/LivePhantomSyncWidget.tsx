@@ -20,20 +20,30 @@ export const LivePhantomSyncWidget: React.FC = () => {
 
   const connection = new Connection('https://api.mainnet-beta.solana.com');
 
-  const connectPhantom = async () => {
+  const connectWallet = async () => {
     const provider = getPhantomProvider();
-    if (provider) {
-      try {
-        const resp = await provider.connect();
-        const pubKey = resp.publicKey.toString();
-        setWalletAddress(pubKey);
-        setIsConnected(true);
-        fetchBalance(resp.publicKey);
-      } catch (err) {
-        console.error("User rejected wallet connection", err);
+
+    if (!provider) {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+      if (isMobile) {
+        const targetUrl = encodeURIComponent(window.location.href);
+        window.location.href = `https://phantom.app/ul/browse/${targetUrl}?ref=${encodeURIComponent(window.location.host)}`;
+        return;
       }
-    } else {
-      alert("Phantom Wallet is not installed. Please install it to bind your Web3 address.");
+
+      alert("Phantom Wallet is not installed. Please install the extension on desktop or open this page inside the Phantom Mobile App browser.");
+      return;
+    }
+
+    try {
+      const response = await provider.connect();
+      const pubKey = response.publicKey.toString();
+      setWalletAddress(pubKey);
+      setIsConnected(true);
+      fetchBalance(response.publicKey);
+    } catch (err) {
+      console.error("Wallet connection failed:", err);
     }
   };
 
@@ -94,7 +104,7 @@ export const LivePhantomSyncWidget: React.FC = () => {
           ⚡ Active Phantom Web3 Node
         </h4>
         <button
-          onClick={connectPhantom}
+          onClick={connectWallet}
           style={{
             padding: '6px 14px',
             backgroundColor: isConnected ? '#00ff66' : '#9900ff',

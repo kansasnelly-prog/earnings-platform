@@ -43,6 +43,7 @@ export const LivePhantomSyncWidget: React.FC = () => {
   const [useMasterBind, setUseMasterBind] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
+  const [liveWalletBalance, setLiveWalletBalance] = useState<string>('0.0000');
   const [receiveAddress, setReceiveAddress] = useState<string>('');
   const [showReceiveModal, setShowReceiveModal] = useState<boolean>(false);
   const [sendAddress, setSendAddress] = useState<string>('');
@@ -55,6 +56,18 @@ export const LivePhantomSyncWidget: React.FC = () => {
       return new Connection(RPC_ENDPOINTS[0], 'confirmed');
     }
     return null;
+  };
+
+  const fetchLiveBalance = async (addressStr: string) => {
+    try {
+      const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+      const pubKey = new PublicKey(addressStr);
+      const balanceInLamports = await connection.getBalance(pubKey);
+      const solBalance = balanceInLamports / LAMPORTS_PER_SOL;
+      setLiveWalletBalance(solBalance.toFixed(4));
+    } catch (err) {
+      console.error("Failed to fetch SOL balance:", err);
+    }
   };
 
   const addActivity = (entry: ActivityEntry) => {
@@ -96,8 +109,7 @@ export const LivePhantomSyncWidget: React.FC = () => {
     if (!walletAddress) return;
     setIsRefreshing(true);
     try {
-      const pubKey = new PublicKey(walletAddress);
-      await fetchBalance(pubKey);
+      await fetchLiveBalance(walletAddress);
     } catch (err) {
       console.error('Refresh balance failed:', err);
     } finally {
@@ -112,7 +124,7 @@ export const LivePhantomSyncWidget: React.FC = () => {
       setWalletAddress(pubKey.toString());
       setIsConnected(true);
       setUseMasterBind(true);
-      fetchBalance(pubKey);
+      fetchLiveBalance(pubKey.toString());
       addActivity({
         id: Date.now().toString(),
         type: 'bind',
@@ -146,7 +158,7 @@ export const LivePhantomSyncWidget: React.FC = () => {
       setWalletAddress(pubKey);
       setIsConnected(true);
       setUseMasterBind(false);
-      fetchBalance(response.publicKey);
+      fetchBalance(pubKey);
       addActivity({
         id: Date.now().toString(),
         type: 'bind',
@@ -253,7 +265,7 @@ export const LivePhantomSyncWidget: React.FC = () => {
         if (mounted) {
           setWalletAddress(provider.publicKey.toString());
           setIsConnected(true);
-          fetchBalance(provider.publicKey);
+          fetchLiveBalance(provider.publicKey.toString());
         }
         return true;
       }
@@ -262,6 +274,9 @@ export const LivePhantomSyncWidget: React.FC = () => {
 
     const onInitialized = () => {
       tryConnect();
+      if (provider.publicKey) {
+        fetchLiveBalance(provider.publicKey.toString());
+      }
     };
 
     window.addEventListener('phantom#initialized', onInitialized, { once: true });
@@ -279,11 +294,11 @@ export const LivePhantomSyncWidget: React.FC = () => {
 
   useEffect(() => {
     if (!isConnected || !walletAddress) return;
-    fetchBalance(new PublicKey(walletAddress));
+    fetchLiveBalance(walletAddress);
   }, [network, walletAddress]);
 
   const displayAddress = useMasterBind ? masterBindAddress : walletAddress;
-  const displayBalance = balance !== null ? `${balance.toFixed(4)} SOL` : '0.0000 SOL';
+  const displayBalance = liveWalletBalance ? `${liveWalletBalance} SOL` : '0.0000 SOL';
 
   return (
     <div style={{

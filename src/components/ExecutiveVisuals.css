@@ -12,9 +12,8 @@
   border-radius: 24px;
   position: relative;
   overflow: hidden;
-  /* CyberGlow7 animation for the panel border */
-    /* Updated to longer, smoother cyber glow animation */
-    animation: cyberGlow7 25s linear infinite;
+  /* Smooth cinematic glow animation */
+  animation: cyberGlow7 10s ease-in-out infinite;
 }
 
 /* Top glass reflection layer */
@@ -46,13 +45,14 @@
 /* Floating underglow – applied to child elements that need a glow from beneath */
 .under-glow {
   box-shadow: 0 0 12px #FFD700; /* gold */
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.5s ease-in-out;
 }
 
 /* Hover experience – slight elevation and stronger underglow */
 .exec-panel:hover {
   transform: translateY(-4px);
   box-shadow: 0 0 20px rgba(255, 170, 0, 0.5);
+  transition: all 0.8s ease-in-out;
 }
 
 /* Depth layers – use pseudo‑elements for layered visual depth */
@@ -87,21 +87,21 @@
 
 /* Ensure smooth transitions for interactive elements */
 .exec-panel * {
-    transition: all 0.2s ease;
+  transition: all 0.5s ease-in-out;
 }
 
 /* ---------------------------------------------------------------
    Cyber Glow 7-Color Dimming Aura Engine (keyframes)
    --------------------------------------------------------------- */
 @keyframes cyberGlow7 {
-  0%   { box-shadow: 0 0 8px 2px #ffbf00; }   /* Gold */
-  14%  { box-shadow: 0 0 8px 2px #8000ff; }   /* Purple */
-  28%  { box-shadow: 0 0 8px 2px #00e5ff; }   /* Cyan */
-  42%  { box-shadow: 0 0 8px 2px #0066ff; }   /* Blue */
-  56%  { box-shadow: 0 0 8px 2px #00ff7f; }   /* Emerald */
-  70%  { box-shadow: 0 0 8px 2px #ff0033; }   /* Crimson */
-  84%  { box-shadow: 0 0 8px 2px #ff1493; }   /* Pink */
-  100% { box-shadow: 0 0 8px 2px #ffbf00; }
+  0%   { box-shadow: 0 0 10px 2px #ffbf00; }   /* Gold */
+  14%  { box-shadow: 0 0 10px 2px #8000ff; }   /* Purple */
+  28%  { box-shadow: 0 0 10px 2px #00e5ff; }   /* Cyan */
+  42%  { box-shadow: 0 0 10px 2px #0066ff; }   /* Blue */
+  56%  { box-shadow: 0 0 10px 2px #00ff7f; }   /* Emerald */
+  70%  { box-shadow: 0 0 10px 2px #ff0033; }   /* Crimson */
+  84%  { box-shadow: 0 0 10px 2px #ff1493; }   /* Pink */
+  100% { box-shadow: 0 0 10px 2px #ffbf00; }
 }
 
 /* ---------------------------------------------------------------
@@ -116,14 +116,14 @@
    Phase 2 – Morgana's Pulse Target Node
    --------------------------------------------------------------- */
 @keyframes morganaPulseLock {
-  0%   { background: #ffd700; box-shadow: 0 0 8px #ffd700; }
-  14%  { background: #8000ff; box-shadow: 0 0 8px #8000ff; }
-  28%  { background: #00e5ff; box-shadow: 0 0 8px #00e5ff; }
-  42%  { background: #0066ff; box-shadow: 0 0 8px #0066ff; }
-  56%  { background: #00ff7f; box-shadow: 0 0 8px #00ff7f; }
-  70%  { background: #ff0033; box-shadow: 0 0 8px #ff0033; }
-  84%  { background: #ff1493; box-shadow: 0 0 8px #ff1493; }
-  100% { background: #ffd700; box-shadow: 0 0 8px #ffd700; }
+  0%   { background: #ffd700; box-shadow: 0 0 10px #ffd700; }
+  14%  { background: #8000ff; box-shadow: 0 0 10px #8000ff; }
+  28%  { background: #00e5ff; box-shadow: 0 0 10px #00e5ff; }
+  42%  { background: #0066ff; box-shadow: 0 0 10px #0066ff; }
+  56%  { background: #00ff7f; box-shadow: 0 0 10px #00ff7f; }
+  70%  { background: #ff0033; box-shadow: 0 0 10px #ff0033; }
+  84%  { background: #ff1493; box-shadow: 0 0 10px #ff1493; }
+  100% { background: #ffd700; box-shadow: 0 0 10px #ffd700; }
 }
 
 /* ---------------------------------------------------------------
@@ -137,7 +137,7 @@
   pointer-events: none;
   background: linear-gradient(90deg, #ffd700, #8000ff, #00e5ff, #0066ff, #00ff7f, #ff0033, #ff1493);
   background-size: 400% 400%;
-  animation: merlinArcTrace 8s linear infinite;
+  animation: merlinArcTrace 10s ease-in-out infinite;
 }
 
 .exec-panel .morgana-pulse {
@@ -148,9 +148,9 @@
   height: 12px;
   border-radius: 50%;
   background: #ffd700;
-  box-shadow: 0 0 8px #ffd700;
+  box-shadow: 0 0 10px #ffd700;
   pointer-events: none;
-  animation: morganaPulseLock 8s linear infinite;
+  animation: morganaPulseLock 10s ease-in-out infinite;
 }
 
 /* ---------------------------------------------------------------
@@ -161,12 +161,13 @@
   inset: 0;
   background: radial-gradient(circle at center, rgba(255,255,255,0.08), transparent 70%);
   pointer-events: none;
-  animation: atmosphericGlow 20s linear infinite;
+  animation: atmosphericGlow 12s ease-in-out infinite;
 }
 
 @keyframes atmosphericGlow {
-  0%   { background-position: 0% 0%; }
-  100% { background-position: 100% 100%; }
+  0%   { background-position: 0% 0%; opacity: 0.6; }
+  50%  { opacity: 1; }
+  100% { background-position: 100% 100%; opacity: 0.6; }
 }
 
 /* ---------------------------------------------------------------
@@ -210,14 +211,38 @@
    --------------------------------------------------------------- */
 .cyber-card {
   /* Animated border glow using the cyberGlow7 keyframes */
-  animation: cyberGlow7 25s linear infinite;
+  animation: cyberGlow7 10s ease-in-out infinite;
   /* Soft atmospheric underglow */
   box-shadow: 0 0 12px #ffd700;
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
+  transition: box-shadow 0.8s ease-in-out, transform 0.5s ease-in-out;
 }
 
 .cyber-card:hover {
   /* Slight elevation on hover with intensified glow */
   transform: translateY(-2px);
   box-shadow: 0 0 20px #ffd700;
+  transition: all 0.8s ease-in-out;
+}
+
+/* ---------------------------------------------------------------
+   Settings Modal Transitions
+   --------------------------------------------------------------- */
+.exec-panel .settings-overlay {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.exec-panel .settings-overlay.open {
+  opacity: 1;
+}
+
+.exec-panel .settings-drawer {
+  transform: translate(-50%, -48%) scale(0.95);
+  opacity: 0;
+  transition: all 0.5s ease-in-out;
+}
+
+.exec-panel .settings-drawer.open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
 }

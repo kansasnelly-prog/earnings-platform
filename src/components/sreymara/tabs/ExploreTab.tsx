@@ -22,47 +22,44 @@ const ExploreTab: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-4 py-2">
-      {/* Search */}
+    <div className="space-y-4 py-1">
       <div className="relative">
         <input
           type="text"
-          placeholder="Search SREYMARA..."
+          placeholder="SEARCH SREYMARA..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-slate-900/60 border border-rose-500/20 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500/60 transition-colors"
+          className="w-full bg-slate-900/70 border border-rose-500/20 px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-rose-500/60 transition-colors sreymara-mono"
         />
-        <div className="absolute right-3 top-2.5 text-rose-400 text-xs">⌕</div>
+        <div className="absolute right-3 top-3 text-rose-400 text-xs">⌕</div>
       </div>
 
-      {/* Categories */}
       <div>
-        <div className="text-[10px] text-slate-500 tracking-[0.2em] uppercase mb-2">Categories</div>
+        <div className="text-[10px] text-slate-600 tracking-[0.3em] uppercase font-black mb-2">Categories</div>
         <div className="grid grid-cols-2 gap-2">
           {categories.map((cat) => (
             <GlitterBlock key={cat.id} glowColor={cat.color} padding="md">
-              <div className="text-xs font-bold text-slate-200 mb-1">{cat.name}</div>
-              <div className="text-[10px] text-slate-500">{cat.count} active</div>
+              <div className="text-xs font-black text-slate-200 mb-1">{cat.name}</div>
+              <div className="text-[10px] text-slate-600 sreymara-mono">{cat.count} active</div>
             </GlitterBlock>
           ))}
         </div>
       </div>
 
-      {/* Trending */}
       <div>
-        <div className="text-[10px] text-slate-500 tracking-[0.2em] uppercase mb-2">Trending Now</div>
+        <div className="text-[10px] text-slate-600 tracking-[0.3em] uppercase font-black mb-2">Trending Now</div>
         <div className="space-y-2">
           {trending.map((item, idx) => (
             <GlitterBlock key={idx} glowColor={item.hot ? 'crimson' : 'teal'} padding="md">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                  <div className="text-xs font-black text-slate-200 flex items-center gap-2">
                     {item.title}
-                    {item.hot && <span className="text-[8px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 tracking-wider">HOT</span>}
+                    {item.hot && <span className="text-[8px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 tracking-wider font-black">HOT</span>}
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">{item.subtitle}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">{item.subtitle}</div>
                 </div>
-                <div className="text-slate-600 text-lg">›</div>
+                <div className="text-slate-700 text-lg">›</div>
               </div>
             </GlitterBlock>
           ))}

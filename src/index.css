@@ -506,3 +506,112 @@
 .animate-streak-fire {
   animation: streak-fire 1.5s ease-in-out infinite;
 }
+
+/* ===========================================
+   SREYMARA TMA — S23 Ultra Luxury Theme
+   =========================================== */
+
+/* Luxury carbon-fiber dark base */
+:root {
+  --sreymara-bg: #05070a;
+  --sreymara-surface: #0a0d14;
+  --sreymara-border: rgba(220, 20, 60, 0.25);
+  --sreymara-crimson: #dc143c;
+  --sreymara-teal: #008b8b;
+  --sreymara-gold: #ffd700;
+  --sreymara-cyan: #00ffff;
+  --sreymara-text: #e5e7eb;
+  --sreymara-muted: #9ca3af;
+}
+
+/* S23 Ultra sharp luxury utilities */
+.sreymara-block {
+  background:
+    linear-gradient(180deg, rgba(10,13,20,0.95), rgba(5,7,10,0.98)),
+    repeating-linear-gradient(45deg, transparent, transparent 1px, rgba(255,255,255,0.015) 1px, rgba(255,255,255,0.015) 2px);
+  border: 1px solid var(--sreymara-border);
+  border-radius: 0;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.8), 0 20px 40px rgba(0,0,0,0.45);
+}
+
+.sreymara-block-crimson {
+  border-color: rgba(220, 20, 60, 0.45);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.8), 0 0 18px rgba(220, 20, 60, 0.18), 0 20px 40px rgba(0,0,0,0.45);
+}
+
+.sreymara-block-teal {
+  border-color: rgba(0, 139, 139, 0.45);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.8), 0 0 18px rgba(0, 139, 139, 0.18), 0 20px 40px rgba(0,0,0,0.45);
+}
+
+.sreymara-block-gold {
+  border-color: rgba(255, 215, 0, 0.35);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.8), 0 0 18px rgba(255, 215, 0, 0.14), 0 20px 40px rgba(0,0,0,0.45);
+}
+
+.sreymara-block-cyan {
+  border-color: rgba(0, 255, 255, 0.35);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.8), 0 0 18px rgba(0, 255, 255, 0.14), 0 20px 40px rgba(0,0,0,0.45);
+}
+
+/* Animated glitter border sweep */
+@keyframes luxury-border-sweep {
+  0%   { background-position: 0% 0%; }
+  50%  { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+.sreymara-glow-border {
+  position: relative;
+}
+
+.sreymara-glow-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 0;
+  padding: 1px;
+  background: linear-gradient(120deg, transparent 30%, rgba(220,20,60,0.55) 50%, transparent 70%);
+  background-size: 200% 200%;
+  animation: luxury-border-sweep 3.6s linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* TMA lock chrome */
+.sreymara-tma-shell {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(220,20,60,0.12), transparent 55%),
+    linear-gradient(180deg, #05070a, #0a0d14);
+  color: var(--sreymara-text);
+}
+
+/* Sharp typography treatments */
+.sreymara-mono {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  letter-spacing: 0.08em;
+}
+
+.sreymara-executive-title {
+  font-weight: 900;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* Scrollbar */
+.sreymara-scroll::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.sreymara-scroll::-webkit-scrollbar-thumb {
+  background: rgba(220,20,60,0.35);
+  border-radius: 0;
+}
+.sreymara-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(220,20,60,0.35) transparent;
+}

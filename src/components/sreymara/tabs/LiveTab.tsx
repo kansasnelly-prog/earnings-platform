@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import GlitterBlock from '../GlitterBlock';
+import { useMatchmakingEngine } from '@/hooks/useSreymaraRealtime';
 
 type MatchEngine = 'soul' | 'voice' | 'party' | 'worldwide' | 'ai';
 
@@ -20,6 +21,9 @@ const LiveTab: React.FC = () => {
     { id: 'worldwide', name: 'Worldwide Match', description: 'Global connections', icon: '🌐', color: 'cyan', status: 'idle' },
     { id: 'ai', name: 'AI Match Engine', description: 'Gemini-powered matching', icon: '◆', color: 'crimson', status: 'idle' },
   ]);
+
+  // Wire to Supabase Realtime matchmaking sessions
+  const { data: matchSessions, loading } = useMatchmakingEngine();
 
   const toggleEngine = (id: MatchEngine) => {
     setEngines((prev) =>
@@ -44,8 +48,15 @@ const LiveTab: React.FC = () => {
 
   return (
     <div className="space-y-2 py-1">
-      <div className="text-[10px] text-slate-600 tracking-[0.3em] uppercase font-black">
-        Matchmaking Engines
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] text-slate-600 tracking-[0.3em] uppercase font-black">
+          Matchmaking Engines
+        </div>
+        {matchSessions && matchSessions.length > 0 && (
+          <div className="text-[9px] text-emerald-400 sreymara-mono animate-pulse">
+            {matchSessions.length} ACTIVE
+          </div>
+        )}
       </div>
 
       {engines.map((engine) => (

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import GlitterBlock from '../GlitterBlock';
+import { useActiveChat } from '@/hooks/useSreymaraRealtime';
 
 interface ChatMessage {
   id: string;
@@ -10,22 +11,53 @@ interface ChatMessage {
 }
 
 const ActiveTab: React.FC = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: '1', sender: 'System', content: 'Active connections will appear here.', timestamp: '00:00', isOwn: false },
-  ]);
   const [input, setInput] = useState('');
+  const conversationId = 'default';
 
-  const handleSend = () => {
+  // Wire to Supabase Realtime chat messages
+  const { data: messages, loading } = useActiveChat(conversationId);
+
+  const displayMessages: ChatMessage[] = messages && messages.length > 0
+    ? messages.map((msg: any) => ({
+        id: msg.id,
+        sender: msg.sender_name || 'Unknown',
+        content: msg.content,
+        timestamp: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isOwn: msg.is_own || false,
+      }))
+    : [
+        { id: '1', sender: 'System', content: 'Active connections will appear here.', timestamp: '00:00', isOwn: false },
+      ];
+
+  const handleSend = async () => {
     if (!input.trim()) return;
-    const newMsg: ChatMessage = {
+
+    const newMessage = {
+      conversation_id: conversationId,
+      sender_name: 'You',
+      content: input.trim(),
+      is_own: true,
+      created_at: new Date().toISOString(),
+    };
+
+    // Optimistically add to local state
+    const optimisticMsg: ChatMessage = {
       id: Date.now().toString(),
       sender: 'You',
       content: input.trim(),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isOwn: true,
     };
-    setMessages((prev) => [...prev, newMsg]);
+
     setInput('');
+
+    // Send to Supabase
+    try {
+      const { supabase } = await import('@/lib/supabaseClient');
+      await supabase.from('messages').insert(newMessage);
+    } catch (error) {
+      console.error('[ActiveTab] Failed to send message:', error);
+    }
   };
 
   return (
@@ -39,7 +71,7 @@ const ActiveTab: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-2 mb-3 pr-1 sreymara-scroll">
-        {messages.map((msg) => (
+        {displayMessages.map((msg) => (
           <div key={msg.id} className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}>
             <GlitterBlock
               glowColor={msg.isOwn ? 'crimson' : 'teal'}

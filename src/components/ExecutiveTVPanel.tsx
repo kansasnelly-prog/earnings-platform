@@ -721,7 +721,7 @@ const ExecutiveTVPanel: React.FC = () => {
               setCurrentChannel(nextChannel.id);
             }
           } else if (event.data === 3) {
-            setStreamHealth('buffering');
+            setStreamHealth('degraded');
             setIsBuffering(true);
           }
         },

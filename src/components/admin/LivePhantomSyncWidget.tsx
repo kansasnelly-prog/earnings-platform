@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, PublicKey, LAMPORTS_PER_SOL, Transaction, SystemProgram } from '@solana/web3.js';
 
 const MASTER_WALLET = '5uYJ3iVSCnCTVA7Nfr25JTCmE8LPyaAziCNGi1P55DRL';
 
@@ -158,7 +158,7 @@ export const LivePhantomSyncWidget: React.FC = () => {
       setWalletAddress(pubKey);
       setIsConnected(true);
       setUseMasterBind(false);
-      fetchBalance(pubKey);
+      fetchLiveBalance(pubKey);
       addActivity({
         id: Date.now().toString(),
         type: 'bind',
@@ -207,13 +207,13 @@ export const LivePhantomSyncWidget: React.FC = () => {
       const toPubKey = new PublicKey(sendAddress);
       const lamports = Math.floor(parseFloat(sendAmount) * LAMPORTS_PER_SOL);
 
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubKey,
-          toPubKey,
-          lamports,
-        })
-      );
+       const transaction = new Transaction().add(
+         SystemProgram.transfer({
+           fromPubkey: fromPubKey,
+           toPubkey: toPubKey,
+           lamports,
+         })
+       );
 
       const { blockhash } = await resolveConnection()!.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;

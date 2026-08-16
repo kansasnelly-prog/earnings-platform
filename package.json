@@ -10,7 +10,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "electron-dev": "cross-env NODE_ENV=development electron .",
+    "electron-dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "electron-build": "electron-builder"
   },
   "dependencies": {
@@ -101,6 +101,7 @@
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
     "electron": "^32.2.0",
     "electron-builder": "^25.1.8",
@@ -112,7 +113,8 @@
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^5.4.1"
+    "vite": "^5.4.1",
+    "wait-on": "^7.2.0"
   },
   "build": {
     "appId": "com.sreymara.executive",

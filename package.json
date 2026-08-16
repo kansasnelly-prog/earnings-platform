@@ -1,14 +1,17 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "sreymara-desktop",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "electron-dev": "cross-env NODE_ENV=development electron .",
+    "electron-build": "electron-builder"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
@@ -30,11 +33,11 @@
     "@radix-ui/react-navigation-menu": "^1.2.0",
     "@radix-ui/react-popover": "^1.1.1",
     "@radix-ui/react-progress": "^1.1.0",
-    "@radix-ui/react-radio-group": "^1.2.0",
+    "@radix-ui/react-radio-group": "^1.1.0",
     "@radix-ui/react-scroll-area": "^1.1.0",
     "@radix-ui/react-select": "^2.1.1",
     "@radix-ui/react-separator": "^1.1.0",
-    "@radix-ui/react-slider": "^1.2.0",
+    "@radix-ui/react-slider": "^1.1.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-switch": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.0",
@@ -110,5 +113,25 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
+  },
+  "build": {
+    "appId": "com.sreymara.executive",
+    "productName": "SREYMARA Executive Network",
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

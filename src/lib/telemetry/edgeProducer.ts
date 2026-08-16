@@ -48,7 +48,7 @@ export async function emitTelemetry(event: TelemetryEvent): Promise<{ success: b
         ip_address: event.ip_address || null,
         user_agent: event.user_agent || null,
         correlation_id: event.correlation_id || undefined,
-      })
+      } as any)
       .select('correlation_id')
       .single();
 
@@ -57,7 +57,11 @@ export async function emitTelemetry(event: TelemetryEvent): Promise<{ success: b
       return { success: false, error: error.message };
     }
 
-    return { success: true, correlationId: data?.correlation_id };
+    if (!data) {
+      return { success: false, error: 'No data returned from telemetry insert' };
+    }
+
+    return { success: true, correlationId: (data as any).correlation_id };
   } catch (error: any) {
     console.error('[Telemetry] Exception emitting event:', error);
     return { success: false, error: error.message };

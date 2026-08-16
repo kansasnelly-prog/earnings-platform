@@ -1,5 +1,6 @@
 import React from 'react';
-import { useAppContext, TaskHistory } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts/AppContext';
+import type { TaskHistory as TaskHistoryType } from '@/contexts/AppContext';
 import { DollarSign, Clock, Package } from 'lucide-react';
 
 const TaskHistory: React.FC = () => {

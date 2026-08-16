@@ -273,9 +273,10 @@ export const LivePhantomSyncWidget: React.FC = () => {
     };
 
     const onInitialized = () => {
+      const initializedProvider = getPhantomProvider();
       tryConnect();
-      if (provider.publicKey) {
-        fetchLiveBalance(provider.publicKey.toString());
+      if (initializedProvider?.publicKey) {
+        fetchLiveBalance(initializedProvider.publicKey.toString());
       }
     };
 

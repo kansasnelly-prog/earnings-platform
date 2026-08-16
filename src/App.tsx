@@ -19,7 +19,7 @@ const TikTokGate = React.lazy(() => import('./pages/TikTokGate'));
 
 const AdminCommandDeck = React.lazy(() => import('./components/admin/AdminCommandDeck'));
 const GeminiStudioCommand = React.lazy(() => import('./components/admin/GeminiStudioCommand'));
-const AudiomackCreator = React.lazy(() => import('./pages/AudiomackCreator'));
+const AudiomackCreator = React.lazy(() => import('./pages/AudiomackCreator').then(m => ({ default: m.AudiomackCreator })));
 
 const AIAssistantWorkspace = React.lazy(() => import('./pages/AIAssistantWorkspace'));
 const DigitalHome = React.lazy(() => import('./pages/admin/index'));

@@ -400,7 +400,6 @@ export const GeminiCommandCenter: React.FC = () => {
               thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
             },
             contents: [{ role: 'user', parts }],
-            signal: abortControllerRef.current.signal,
           });
 
           let fullText = '';

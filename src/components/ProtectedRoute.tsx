@@ -1,3 +1,4 @@
+import React from "react";
 import { useAuth } from "../contexts/SafeAuthProvider";
 import { Navigate, Outlet } from "react-router-dom";
 import LoadingSpinner from "./ui/LoadingSpinner";
@@ -22,17 +23,26 @@ export function isMasterAdmin(identifier: string | undefined | null): boolean {
  * It respects the global loading state from SafeAuthProvider.
  */
 const ProtectedRoute: React.FC = () => {
-  // useAuth will throw if called outside of AuthProvider. In rare cases
-  // (e.g., during server‑side rendering or when the component tree
-  // changes unexpectedly) this can cause the entire app to crash.  We
-  // guard against that by catching the error and rendering a fallback.
   let authContext;
   try {
     authContext = useAuth();
   } catch (e) {
     console.error('ProtectedRoute: AuthProvider missing', e);
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
+
+  if (!authContext) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   const { isAuthenticated, isLoading, user } = authContext;
 
   if (isLoading) {
@@ -56,8 +66,21 @@ export const MasterAdminRoute: React.FC<{ children: React.ReactNode }> = ({ chil
     authContext = useAuth();
   } catch (e) {
     console.error('MasterAdminRoute: AuthProvider missing', e);
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="w-8 h-8 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
+
+  if (!authContext) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="w-8 h-8 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   const { isAuthenticated, isLoading, user } = authContext;
 
   if (isLoading) {
@@ -76,7 +99,7 @@ export const MasterAdminRoute: React.FC<{ children: React.ReactNode }> = ({ chil
     return <Navigate to="/" replace />;
   }
 
-  return <>{children}</>;
+  return <React.Fragment>{children}</React.Fragment>;
 };
 
 /**
@@ -89,8 +112,21 @@ export const DualAdminRoute: React.FC<{ children: React.ReactNode }> = ({ childr
     authContext = useAuth();
   } catch (e) {
     console.error('DualAdminRoute: AuthProvider missing', e);
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
+
+  if (!authContext) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   const { isAuthenticated, isLoading, user } = authContext;
 
   if (isLoading) {
@@ -109,7 +145,7 @@ export const DualAdminRoute: React.FC<{ children: React.ReactNode }> = ({ childr
     return <Navigate to="/" replace />;
   }
 
-  return <>{children}</>;
+  return <React.Fragment>{children}</React.Fragment>;
 };
 
 export default ProtectedRoute;

@@ -22,7 +22,7 @@
   "crons": [
     {
       "path": "/api/cron/solana-flush",
-      "schedule": "*/20 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }

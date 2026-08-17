@@ -327,6 +327,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Local state cache for graceful fallback on 500 errors
   const [cachedUser, setCachedUser] = useState<User | null>(null);
+
+  // Clear stale Supabase auth tokens from storage
+  const clearStaleSupabaseTokens = useCallback(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('sb-access-token');
+        localStorage.removeItem('sb-refresh-token');
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('supabase.auth.token') || key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('[AppContext] Failed to clear stale tokens:', e);
+    }
+  }, []);
   const [cachedTasks, setCachedTasks] = useState<Task[]>([]);
   const [cachedTransactions, setCachedTransactions] = useState<Transaction[]>([]);
   const isCheckingAuth = useRef(false);
@@ -373,6 +390,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // First, restore Supabase session from storage
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
+          const message = sessionError.message || '';
+          if (message.includes('Invalid Refresh Token') || message.includes('refresh_token') || message.includes('JWT')) {
+            console.warn('[AppContext] Stale Supabase refresh token detected, clearing tokens and falling back to public landing');
+            clearStaleSupabaseTokens();
+            setUser(null);
+            setIsAuthenticated(false);
+            return;
+          }
           throw sessionError;
         }
 
@@ -433,7 +458,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setIsAuthenticated(false);
         }
       } catch (error: any) {
-        // Silently handle network errors
+        const message = error?.message || '';
+        if (message.includes('Invalid Refresh Token') || message.includes('refresh_token') || message.includes('JWT')) {
+          console.warn('[AppContext] Stale Supabase refresh token caught in checkSession, clearing tokens');
+          clearStaleSupabaseTokens();
+          setUser(null);
+          setIsAuthenticated(false);
+        } else if (message.includes('Failed to fetch') || error?.name === 'TypeError') {
+          console.warn('[AppContext] Network error during session check, staying on current auth state');
+        } else {
+          console.error('[AppContext] Session check error:', error);
+          clearStaleSupabaseTokens();
+          setUser(null);
+          setIsAuthenticated(false);
+        }
       } finally {
         setIsLoading(false);
         isCheckingAuth.current = false;
@@ -496,6 +534,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // Check if session is still valid
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error || !session) {
+          const message = error?.message || '';
+          if (message.includes('Invalid Refresh Token') || message.includes('refresh_token') || message.includes('JWT')) {
+            console.warn('[AppContext] Stale refresh token during recovery, clearing tokens');
+            clearStaleSupabaseTokens();
+          }
           console.log('[AppContext] Session invalid during recovery check, signing out');
           await logout();
           return;

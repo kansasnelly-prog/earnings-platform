@@ -190,6 +190,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const { data: { session }, error } = await supabase.auth.getSession();
         console.log('[SafeAuthProvider] Session restored on mount:', session ? 'Active' : 'None');
         if (error) {
+          const message = error.message || '';
+          if (message.includes('Invalid Refresh Token') || message.includes('refresh_token') || message.includes('JWT')) {
+            console.warn('[SafeAuthProvider] Stale refresh token detected during restore, clearing tokens');
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('sb-access-token');
+              localStorage.removeItem('sb-refresh-token');
+              Object.keys(localStorage).forEach((key) => {
+                if (key.startsWith('supabase.auth.token') || key.startsWith('sb-')) {
+                  localStorage.removeItem(key);
+                }
+              });
+            }
+            dispatch({ type: 'LOGOUT' });
+            return;
+          }
           throw error;
         }
         if (session?.user && !cancelled) {
@@ -309,6 +324,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     void supabase.auth.signOut().catch((e) => console.error('SafeAuth signOut error', e));
     localStorage.removeItem('opt_user');
+    localStorage.removeItem('main_admin_authenticated');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('sb-access-token');
+      localStorage.removeItem('sb-refresh-token');
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.token') || key.startsWith('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
     dispatch({ type: 'LOGOUT' });
     // Skip redirect on admin route
     if (!window.location.pathname.startsWith('/admin')) {

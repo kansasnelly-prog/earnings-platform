@@ -1,88 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import GlitterBlock from '../GlitterBlock';
 import { useLiveStreams } from '@/hooks/useSreymaraRealtime';
+import { useYieldStream } from '@/contexts/YieldStreamContext';
 
 type StreamSubTab = 'following' | 'foryou' | 'latest';
 
 const StreamTab: React.FC = () => {
   const [subTab, setSubTab] = useState<StreamSubTab>('foryou');
-  const [activeStreamId, setActiveStreamId] = useState<string | null>(null);
-  const [watchSeconds, setWatchSeconds] = useState(0);
-  const [watchRewardPending, setWatchRewardPending] = useState(false);
-  const watchIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Wire to Supabase Realtime live streams
   const { data: streams, loading } = useLiveStreams();
 
-  useEffect(() => {
-    if (activeStreamId) {
-      watchIntervalRef.current = setInterval(() => {
-        setWatchSeconds((s) => s + 1);
-      }, 1000);
-    } else if (watchIntervalRef.current) {
-      clearInterval(watchIntervalRef.current);
-      watchIntervalRef.current = null;
-    }
+  const {
+    activeStreamId,
+    watchSeconds,
+    watchRewardPending,
+    startWatching,
+    claimWatchReward,
+  } = useYieldStream();
 
-    return () => {
-      if (watchIntervalRef.current) {
-        clearInterval(watchIntervalRef.current);
-      }
-    };
-  }, [activeStreamId]);
-
-  const handleWatch = async (stream: any) => {
-    setActiveStreamId(stream.id);
-    setWatchSeconds(0);
-    setWatchRewardPending(false);
-
-    try {
-      await fetch('/api/cinema/stream-reward', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: 'current-user',
-          videoId: stream.id,
-          watchDurationSeconds: 0,
-          rewardAmount: 0.01,
-          sessionId: `stream-${stream.id}-${Date.now()}`,
-          metadata: { title: stream.title, host: stream.host },
-        }),
-      });
-    } catch (error) {
-      console.error('[StreamTab] Stream watch start failed:', error);
-    }
-  };
-
-  const claimWatchReward = async () => {
-    if (!activeStreamId || watchRewardPending) return;
-    setWatchRewardPending(true);
-
-    try {
-      const response = await fetch('/api/cinema/stream-reward', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: 'current-user',
-          videoId: activeStreamId,
-          watchDurationSeconds: watchSeconds,
-          rewardAmount: Math.max(0.01, watchSeconds * 0.001),
-          sessionId: `stream-${activeStreamId}-${Date.now()}`,
-        }),
-      });
-
-      if (response.ok) {
-        TelegramExecutiveAlertService.sendYieldAlert(
-          Math.max(0.01, watchSeconds * 0.001),
-          `watch-${activeStreamId}-${Date.now()}`
-        );
-      }
-    } catch (error) {
-      console.error('[StreamTab] Watch reward claim failed:', error);
-    } finally {
-      setWatchRewardPending(false);
-    }
-  };
   const displayStreams = streams && streams.length > 0
     ? streams
     : [
@@ -146,7 +80,7 @@ const StreamTab: React.FC = () => {
                 </div>
               ) : (
                 <button
-                  onClick={() => handleWatch(stream)}
+                  onClick={() => startWatching(stream.id)}
                   className="px-4 py-2 bg-rose-500/18 border border-rose-500/45 text-rose-400 text-[9px] font-black tracking-widest uppercase hover:bg-rose-500/28 transition-all"
                 >
                   Watch

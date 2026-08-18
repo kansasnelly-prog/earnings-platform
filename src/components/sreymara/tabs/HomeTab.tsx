@@ -1,7 +1,10 @@
 import React from 'react';
 import GlitterBlock from '../GlitterBlock';
+import { useTabNavigation } from '@/contexts/TabNavigationContext';
 
 const HomeTab: React.FC = () => {
+  const { navigateTo } = useTabNavigation();
+
   return (
     <div className="space-y-3 py-1">
       <GlitterBlock glowColor="crimson" padding="lg" className="text-center">
@@ -27,7 +30,10 @@ const HomeTab: React.FC = () => {
 
       <div className="space-y-2">
         <GlitterBlock glowColor="crimson" padding="md">
-          <div className="flex items-center justify-between">
+          <div
+            className="flex items-center justify-between cursor-pointer"
+            onClick={() => navigateTo('live')}
+          >
             <div>
               <div className="text-xs font-black text-slate-200 mb-0.5">Live Matchmaking</div>
               <div className="text-[10px] text-slate-500">5 engines available</div>
@@ -37,7 +43,10 @@ const HomeTab: React.FC = () => {
         </GlitterBlock>
 
         <GlitterBlock glowColor="cyan" padding="md">
-          <div className="flex items-center justify-between">
+          <div
+            className="flex items-center justify-between cursor-pointer"
+            onClick={() => navigateTo('explore')}
+          >
             <div>
               <div className="text-xs font-black text-slate-200 mb-0.5">AI Editor</div>
               <div className="text-[10px] text-slate-500">Gemini 3.6 Flash</div>
@@ -47,7 +56,10 @@ const HomeTab: React.FC = () => {
         </GlitterBlock>
 
         <GlitterBlock glowColor="teal" padding="md">
-          <div className="flex items-center justify-between">
+          <div
+            className="flex items-center justify-between cursor-pointer"
+            onClick={() => navigateTo('home')}
+          >
             <div>
               <div className="text-xs font-black text-slate-200 mb-0.5">Solana Vault</div>
               <div className="text-[10px] text-slate-500">Master wallet bound</div>

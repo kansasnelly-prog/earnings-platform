@@ -26,26 +26,28 @@ const LiveTab: React.FC = () => {
   const { data: matchSessions, loading } = useMatchmakingEngine();
 
   const toggleEngine = async (id: MatchEngine) => {
-    setEngines((prev) =>
-      prev.map((eng) =>
+    setEngines((prev) => {
+      const engine = prev.find(e => e.id === id);
+      if (!engine || engine.status !== 'idle') {
+        return prev;
+      }
+
+      const updated = prev.map((eng) =>
         eng.id === id
-          ? { ...eng, status: eng.status === 'idle' ? 'searching' : 'idle' }
+          ? { ...eng, status: 'searching' as const }
           : eng
-      )
-    );
+      );
 
-    const engine = engines.find(e => e.id === id);
-    if (!engine || engine.status !== 'idle') return;
-
-    try {
-      await fetch('/api/matchmaking/start', {
+      fetch('/api/matchmaking/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ engineId: id, userId: 'current-user' }),
+      }).catch((error) => {
+        console.error('[LiveTab] Matchmaking start failed:', error);
       });
-    } catch (error) {
-      console.error('[LiveTab] Matchmaking start failed:', error);
-    }
+
+      return updated;
+    });
   };
 
   const getStatusColor = (status: string) => {

@@ -1,24 +1,26 @@
 import React, { useState } from 'react';
 import GlitterBlock from '../GlitterBlock';
+import { useTabNavigation } from '@/contexts/TabNavigationContext';
 
 const ExploreTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const { navigateTo } = useTabNavigation();
 
   const categories = [
-    { id: 'networking', name: 'Executive Network', count: '2.4K', color: 'crimson' as const },
-    { id: 'matchmaking', name: 'Matchmaking', count: '1.8K', color: 'teal' as const },
-    { id: 'ai-tools', name: 'AI Studio', count: '956', color: 'gold' as const },
-    { id: 'crypto', name: 'Solana Vault', count: '3.1K', color: 'cyan' as const },
-    { id: 'streaming', name: 'Live Streams', count: '1.2K', color: 'crimson' as const },
-    { id: 'monetize', name: 'Earn & Withdraw', count: '890', color: 'teal' as const },
+    { id: 'networking', name: 'Executive Network', count: '2.4K', color: 'crimson' as const, tab: 'home' as const },
+    { id: 'matchmaking', name: 'Matchmaking', count: '1.8K', color: 'teal' as const, tab: 'live' as const },
+    { id: 'ai-tools', name: 'AI Studio', count: '956', color: 'gold' as const, tab: 'explore' as const },
+    { id: 'crypto', name: 'Solana Vault', count: '3.1K', color: 'cyan' as const, tab: 'home' as const },
+    { id: 'streaming', name: 'Live Streams', count: '1.2K', color: 'crimson' as const, tab: 'stream' as const },
+    { id: 'monetize', name: 'Earn & Withdraw', count: '890', color: 'teal' as const, tab: 'home' as const },
   ];
 
   const trending = [
-    { title: 'Soul Game Engine', subtitle: 'Blind audio matching', hot: true, action: 'matchmaking' },
-    { title: 'Voice Game', subtitle: 'Real-time voice rooms', hot: true, action: 'matchmaking' },
-    { title: 'AI Match Engine', subtitle: 'Gemini-powered matching', hot: false, action: 'ai-tools' },
-    { title: 'Party Match', subtitle: 'Group social events', hot: false, action: 'matchmaking' },
-    { title: 'Worldwide Match', subtitle: 'Global connections', hot: false, action: 'matchmaking' },
+    { title: 'Soul Game Engine', subtitle: 'Blind audio matching', hot: true, tab: 'live' as const },
+    { title: 'Voice Game', subtitle: 'Real-time voice rooms', hot: true, tab: 'live' as const },
+    { title: 'AI Match Engine', subtitle: 'Gemini-powered matching', hot: false, tab: 'explore' as const },
+    { title: 'Party Match', subtitle: 'Group social events', hot: false, tab: 'live' as const },
+    { title: 'Worldwide Match', subtitle: 'Global connections', hot: false, tab: 'live' as const },
   ];
 
   const handleTrendingClick = async (item: typeof trending[0]) => {
@@ -35,6 +37,7 @@ const ExploreTab: React.FC = () => {
     } catch (error) {
       console.error('[ExploreTab] Telemetry failed:', error);
     }
+    navigateTo(item.tab);
   };
 
   return (
@@ -55,8 +58,13 @@ const ExploreTab: React.FC = () => {
         <div className="grid grid-cols-2 gap-2">
           {categories.map((cat) => (
             <GlitterBlock key={cat.id} glowColor={cat.color} padding="md">
-              <div className="text-xs font-black text-slate-200 mb-1">{cat.name}</div>
-              <div className="text-[10px] text-slate-600 sreymara-mono">{cat.count} active</div>
+              <div
+                className="cursor-pointer"
+                onClick={() => navigateTo(cat.tab)}
+              >
+                <div className="text-xs font-black text-slate-200 mb-1">{cat.name}</div>
+                <div className="text-[10px] text-slate-600 sreymara-mono">{cat.count} active</div>
+              </div>
             </GlitterBlock>
           ))}
         </div>
@@ -67,7 +75,10 @@ const ExploreTab: React.FC = () => {
         <div className="space-y-2">
           {trending.map((item, idx) => (
             <GlitterBlock key={idx} glowColor={item.hot ? 'crimson' : 'teal'} padding="md">
-              <div className="flex items-center justify-between cursor-pointer" onClick={() => handleTrendingClick(item)}>
+              <div
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => handleTrendingClick(item)}
+              >
                 <div>
                   <div className="text-xs font-black text-slate-200 flex items-center gap-2">
                     {item.title}

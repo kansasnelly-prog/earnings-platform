@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">SREMARA Executive Hub</string>
-    <string name="title_activity_main">SREMARA Executive Hub</string>
+    <string name="app_name">SREMARA Executive Network</string>
+    <string name="title_activity_main">SREMARA Executive Network</string>
     <string name="package_name">com.sreymara.executive</string>
     <string name="custom_url_scheme">com.sreymara.executive</string>
 </resources>

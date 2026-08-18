@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import GlitterBlock from '../GlitterBlock';
 import { useActiveChat } from '@/hooks/useSreymaraRealtime';
+import { useYieldStream } from '@/contexts/YieldStreamContext';
 
 interface ChatMessage {
   id: string;
@@ -12,39 +13,21 @@ interface ChatMessage {
 
 const ActiveTab: React.FC = () => {
   const [input, setInput] = useState('');
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [isMatchActive, setIsMatchActive] = useState(false);
   const conversationId = 'default';
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const { isMatchActive, elapsedSeconds, setMatchActive } = useYieldStream();
 
   // Wire to Supabase Realtime chat messages
   const { data: messages, loading } = useActiveChat(conversationId);
 
   useEffect(() => {
-    if (isMatchActive) {
-      timerRef.current = setInterval(() => {
-        setElapsedSeconds((s) => s + 1);
-      }, 1000);
-    } else if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [isMatchActive]);
-
-  useEffect(() => {
     if (messages && messages.length > 0) {
       const last = messages[messages.length - 1];
       if (last && last.is_own && !isMatchActive) {
-        setIsMatchActive(true);
+        setMatchActive(true);
       }
     }
-  }, [messages, isMatchActive]);
+  }, [messages, isMatchActive, setMatchActive]);
 
   const formatElapsed = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -75,18 +58,8 @@ const ActiveTab: React.FC = () => {
       created_at: new Date().toISOString(),
     };
 
-    // Optimistically add to local state
-    const optimisticMsg: ChatMessage = {
-      id: Date.now().toString(),
-      sender: 'You',
-      content: input.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isOwn: true,
-    };
-
     setInput('');
 
-    // Send to Supabase
     try {
       const { supabase } = await import('@/lib/supabaseClient');
       await supabase.from('messages').insert(newMessage);

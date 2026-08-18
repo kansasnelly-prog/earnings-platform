@@ -7,6 +7,8 @@ import StreamTab from '@/components/sreymara/tabs/StreamTab';
 import SolanaGathering from '@/components/sreymara/SolanaGathering';
 import AIEditorToolbar from '@/components/sreymara/AIEditorToolbar';
 import GeminiChatOverlay from '@/components/sreymara/GeminiChatOverlay';
+import { YieldStreamProvider } from '@/contexts/YieldStreamContext';
+import { TabNavigationProvider, useTabNavigation } from '@/contexts/TabNavigationContext';
 
 declare global {
   interface Window {
@@ -47,33 +49,6 @@ const TelegramMiniView: React.FC = () => {
     { id: 'active', label: 'ACTIVE', icon: '◆' },
     { id: 'stream', label: 'STREAM', icon: '▷' },
   ];
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'home':
-        return (
-          <div className="space-y-4 py-1">
-            <HomeTab />
-            <SolanaGathering />
-          </div>
-        );
-      case 'explore':
-        return (
-          <div className="space-y-4 py-1">
-            <ExploreTab />
-            <AIEditorToolbar />
-          </div>
-        );
-      case 'live':
-        return <LiveTab />;
-      case 'active':
-        return <ActiveTab />;
-      case 'stream':
-        return <StreamTab />;
-      default:
-        return <HomeTab />;
-    }
-  };
 
   return (
     <div
@@ -133,7 +108,11 @@ const TelegramMiniView: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-24 z-10 sreymara-scroll">
-        {renderContent()}
+        <TabNavigationProvider initialTab={activeTab}>
+          <YieldStreamProvider>
+            <InnerContent activeTab={activeTab} />
+          </YieldStreamProvider>
+        </TabNavigationProvider>
       </main>
 
       {/* Floating AI Editor */}
@@ -145,12 +124,7 @@ const TelegramMiniView: React.FC = () => {
           </div>
           <div className="flex gap-1">
             {['TRANSLATE', 'STYLE', 'FIX', 'GEMINI'].map((action) => (
-              <button
-                key={action}
-                className="flex-1 py-2 text-[9px] font-black tracking-widest uppercase bg-slate-900/70 border border-yellow-500/25 text-yellow-300 hover:border-yellow-500/55 hover:text-yellow-200 transition-all"
-              >
-                {action}
-              </button>
+              <AIActionButton key={action} action={action} />
             ))}
           </div>
         </div>
@@ -175,6 +149,57 @@ const TelegramMiniView: React.FC = () => {
       <GeminiChatOverlay />
     </div>
   );
+};
+
+const AIActionButton: React.FC<{ action: string }> = ({ action }) => {
+  const { navigateTo } = useTabNavigation();
+
+  const handleClick = () => {
+    if (action === 'TRANSLATE' || action === 'STYLE' || action === 'FIX' || action === 'GEMINI') {
+      navigateTo('explore');
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      className="flex-1 py-2 text-[9px] font-black tracking-widest uppercase bg-slate-900/70 border border-yellow-500/25 text-yellow-300 hover:border-yellow-500/55 hover:text-yellow-200 transition-all"
+    >
+      {action}
+    </button>
+  );
+};
+
+const InnerContent: React.FC<{ activeTab: string }> = ({ activeTab }) => {
+  switch (activeTab) {
+    case 'home':
+      return (
+        <div className="space-y-4 py-1">
+          <HomeTab />
+          <SolanaGathering />
+        </div>
+      );
+    case 'explore':
+      return (
+        <div className="space-y-4 py-1">
+          <ExploreTab />
+          <AIEditorToolbar />
+        </div>
+      );
+    case 'live':
+      return <LiveTab />;
+    case 'active':
+      return <ActiveTab />;
+    case 'stream':
+      return <StreamTab />;
+    default:
+      return (
+        <div className="space-y-4 py-1">
+          <HomeTab />
+          <SolanaGathering />
+        </div>
+      );
+  }
 };
 
 export default TelegramMiniView;

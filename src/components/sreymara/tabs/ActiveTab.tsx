@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import GlitterBlock from '../GlitterBlock';
 import { useActiveChat } from '@/hooks/useSreymaraRealtime';
 
@@ -12,10 +12,45 @@ interface ChatMessage {
 
 const ActiveTab: React.FC = () => {
   const [input, setInput] = useState('');
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [isMatchActive, setIsMatchActive] = useState(false);
   const conversationId = 'default';
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Wire to Supabase Realtime chat messages
   const { data: messages, loading } = useActiveChat(conversationId);
+
+  useEffect(() => {
+    if (isMatchActive) {
+      timerRef.current = setInterval(() => {
+        setElapsedSeconds((s) => s + 1);
+      }, 1000);
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [isMatchActive]);
+
+  useEffect(() => {
+    if (messages && messages.length > 0) {
+      const last = messages[messages.length - 1];
+      if (last && last.is_own && !isMatchActive) {
+        setIsMatchActive(true);
+      }
+    }
+  }, [messages, isMatchActive]);
+
+  const formatElapsed = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   const displayMessages: ChatMessage[] = messages && messages.length > 0
     ? messages.map((msg: any) => ({
@@ -66,7 +101,9 @@ const ActiveTab: React.FC = () => {
         <div className="text-[10px] text-slate-600 tracking-[0.3em] uppercase font-black">Active Connections</div>
         <div className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[10px] text-emerald-400 sreymara-mono">3 Online</span>
+          <span className="text-[10px] text-emerald-400 sreymara-mono">
+            {isMatchActive ? formatElapsed(elapsedSeconds) : '3 Online'}
+          </span>
         </div>
       </div>
 

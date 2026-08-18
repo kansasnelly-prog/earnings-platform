@@ -106,11 +106,6 @@ const AppLayout: React.FC = () => {
   const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
   const [returningUserName, setReturningUserName] = useState<string | undefined>(undefined);
 
-  // Show a global loading spinner while the app context is initializing
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
   // Session auto-detection for returning users
   useEffect(() => {
     const detectReturningUser = async () => {
@@ -129,6 +124,11 @@ const AppLayout: React.FC = () => {
     };
     detectReturningUser();
   }, []);
+
+  // Show a global loading spinner while the app context is initializing
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   const handleOpenAuth = (tab: 'login' | 'register') => {
     setAuthTab(tab);

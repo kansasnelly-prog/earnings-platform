@@ -14,12 +14,28 @@ const ExploreTab: React.FC = () => {
   ];
 
   const trending = [
-    { title: 'Soul Game Engine', subtitle: 'Blind audio matching', hot: true },
-    { title: 'Voice Game', subtitle: 'Real-time voice rooms', hot: true },
-    { title: 'AI Match Engine', subtitle: 'Gemini-powered matching', hot: false },
-    { title: 'Party Match', subtitle: 'Group social events', hot: false },
-    { title: 'Worldwide Match', subtitle: 'Global connections', hot: false },
+    { title: 'Soul Game Engine', subtitle: 'Blind audio matching', hot: true, action: 'matchmaking' },
+    { title: 'Voice Game', subtitle: 'Real-time voice rooms', hot: true, action: 'matchmaking' },
+    { title: 'AI Match Engine', subtitle: 'Gemini-powered matching', hot: false, action: 'ai-tools' },
+    { title: 'Party Match', subtitle: 'Group social events', hot: false, action: 'matchmaking' },
+    { title: 'Worldwide Match', subtitle: 'Global connections', hot: false, action: 'matchmaking' },
   ];
+
+  const handleTrendingClick = async (item: typeof trending[0]) => {
+    try {
+      await fetch('/api/ads/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userWalletAddress: localStorage.getItem('sreymara_bound_wallet') || '',
+          adEngine: 'HILLTOP_DIRECT_LINK',
+          eventType: 'trending_click',
+        }),
+      });
+    } catch (error) {
+      console.error('[ExploreTab] Telemetry failed:', error);
+    }
+  };
 
   return (
     <div className="space-y-4 py-1">
@@ -51,7 +67,7 @@ const ExploreTab: React.FC = () => {
         <div className="space-y-2">
           {trending.map((item, idx) => (
             <GlitterBlock key={idx} glowColor={item.hot ? 'crimson' : 'teal'} padding="md">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between cursor-pointer" onClick={() => handleTrendingClick(item)}>
                 <div>
                   <div className="text-xs font-black text-slate-200 flex items-center gap-2">
                     {item.title}

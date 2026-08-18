@@ -6,6 +6,7 @@ import ActiveTab from '@/components/sreymara/tabs/ActiveTab';
 import StreamTab from '@/components/sreymara/tabs/StreamTab';
 import SolanaGathering from '@/components/sreymara/SolanaGathering';
 import AIEditorToolbar from '@/components/sreymara/AIEditorToolbar';
+import GeminiChatOverlay from '@/components/sreymara/GeminiChatOverlay';
 
 declare global {
   interface Window {
@@ -169,6 +170,9 @@ const TelegramMiniView: React.FC = () => {
 
       {/* Bottom luxury accent line */}
       <div className="fixed bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-rose-500 to-transparent opacity-70 z-50" />
+
+      {/* Gemini AI Chat Overlay */}
+      <GeminiChatOverlay />
     </div>
   );
 };

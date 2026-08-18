@@ -25,7 +25,7 @@ const LiveTab: React.FC = () => {
   // Wire to Supabase Realtime matchmaking sessions
   const { data: matchSessions, loading } = useMatchmakingEngine();
 
-  const toggleEngine = (id: MatchEngine) => {
+  const toggleEngine = async (id: MatchEngine) => {
     setEngines((prev) =>
       prev.map((eng) =>
         eng.id === id
@@ -33,6 +33,19 @@ const LiveTab: React.FC = () => {
           : eng
       )
     );
+
+    const engine = engines.find(e => e.id === id);
+    if (!engine || engine.status !== 'idle') return;
+
+    try {
+      await fetch('/api/matchmaking/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ engineId: id, userId: 'current-user' }),
+      });
+    } catch (error) {
+      console.error('[LiveTab] Matchmaking start failed:', error);
+    }
   };
 
   const getStatusColor = (status: string) => {

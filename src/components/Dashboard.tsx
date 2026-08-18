@@ -13,6 +13,18 @@ import { openSmartLink } from '@/utils/smartLink';
 const Dashboard: React.FC = () => {
   const context = useAppContext();
   const { user, tasks, wallets, transactions, walletState, refreshTasks, refreshWallets, refreshTransactions, setActiveTab, refreshUser, isLoading } = context;
+  const { unreadCount } = useCSNotification();
+
+  const [isTraining, setIsTraining] = useState(user?.account_type === 'training');
+  const [isPersonal, setIsPersonal] = useState(user?.account_type === 'personal');
+  const [trainingComplete, setTrainingComplete] = useState(user?.training_completed || false);
+  const [showCombinationModal, setShowCombinationModal] = useState(false);
+  const [showCustomerService, setShowCustomerService] = useState(false);
+  const [showCSSelection, setShowCSSelection] = useState(false);
+  const [showOnlineCS, setShowOnlineCS] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [mintingAnimations, setMintingAnimations] = useState<number[]>([]);
+  const mintedCoinsRef = useRef(0);
 
   // Stage 1: Enforce Safe State Handshaking - Prevent mounting until auth resolves
   if (isLoading) {
@@ -30,7 +42,6 @@ const Dashboard: React.FC = () => {
   if (!user) {
     return <div className="p-4">Loading System Workspace...</div>;
   }
-  const { unreadCount } = useCSNotification();
 
   // Safety wrapper for setActiveTab
   const safeSetActiveTab = (tab: string) => {
@@ -40,21 +51,6 @@ const Dashboard: React.FC = () => {
       console.error('setActiveTab is not a function', context);
     }
   };
-
-  const [isTraining, setIsTraining] = useState(user?.account_type === 'training');
-  const [isPersonal, setIsPersonal] = useState(user?.account_type === 'personal');
-  const [trainingComplete, setTrainingComplete] = useState(user?.training_completed || false);
-  const [showCombinationModal, setShowCombinationModal] = useState(false);
-  const [showCustomerService, setShowCustomerService] = useState(false);
-  const [showCSSelection, setShowCSSelection] = useState(false);
-  const [showOnlineCS, setShowOnlineCS] = useState(false);
-  const [dataLoaded, setDataLoaded] = useState(false);
-
-  // ===========================================
-  // MODULE 1: OPTIMIZATION PLATFORM DUAL-PIPE MINTING ENGINE
-  // ===========================================
-  const [mintingAnimations, setMintingAnimations] = useState<number[]>([]);
-  const mintedCoinsRef = useRef(0);
 
   useEffect(() => {
     // Only activate for admin user

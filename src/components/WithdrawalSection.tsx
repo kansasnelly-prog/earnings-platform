@@ -124,7 +124,6 @@ const WithdrawalSection: React.FC = () => {
         setWithdrawals(history);
         setHasPending(true);
         // Refresh user data to update balance
-        const { refreshUser } = useAppContext();
         await refreshUser();
       } else {
         setErrors({ amount: result.error || 'Failed to submit withdrawal request' });

@@ -16,7 +16,7 @@ const AdminLogin: React.FC = () => {
   useEffect(() => {
     // If already authenticated as admin, redirect to admin dashboard
     if (isAuthenticated && isAdmin) {
-      navigate('/admin');
+      navigate('/admin/command-center');
     }
   }, [isAuthenticated, isAdmin, navigate]);
 
@@ -45,7 +45,7 @@ const AdminLogin: React.FC = () => {
         });
         
         // Navigate to admin panel
-        navigate('/admin');
+      navigate('/admin/command-center');
       } else {
         toast({
           title: 'Access Denied',

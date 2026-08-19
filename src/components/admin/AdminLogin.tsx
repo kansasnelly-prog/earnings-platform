@@ -57,7 +57,7 @@ const AdminLogin: React.FC = () => {
       }
 
       // Redirect to admin panel
-      navigate('/admin');
+      navigate('/admin/command-center');
     } catch (error) {
       console.error('Login error:', error);
       setError('Login failed. Please try again.');

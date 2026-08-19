@@ -13,9 +13,10 @@ const AdminCommandDeck: React.FC = () => {
   const fetchTikTokData = async () => {
     setLoadingTikTok(true);
     try {
+      const adminEmail = 'kansasnelly@gmail.com';
       const [messages, permissions] = await Promise.all([
-        TikTokShopPurifiedEngine.fetchCustomerMessages('kansasnelly@gmail.com'),
-        TikTokShopPurifiedEngine.verifyAccountPermissions('kansasnelly@gmail.com')
+        TikTokShopPurifiedEngine.fetchCustomerMessages(adminEmail),
+        TikTokShopPurifiedEngine.verifyAccountPermissions(adminEmail)
       ]);
       setTikTokMessages(messages);
       setTikTokPermissions(permissions);

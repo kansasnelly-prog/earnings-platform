@@ -13,6 +13,7 @@ import UserDetailsModal from './UserDetailsModal';
 import AdminCommandDeck from './AdminCommandDeck';
 import { SupabaseService } from '@/services/supabaseService';
 import { getAllTreasuryAddresses } from '@/config/treasury';
+import { MASTER_ADMIN_EMAILS } from '../ProtectedRoute';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session || session.user.email !== 'kansasnelly@gmail.com') {
+      if (!session || !MASTER_ADMIN_EMAILS.includes(session.user.email?.toLowerCase() || '')) {
         navigate('/');
         return;
       }

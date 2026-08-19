@@ -3,17 +3,17 @@ import { useAuth } from "../contexts/SafeAuthProvider";
 import { Navigate, Outlet } from "react-router-dom";
 import LoadingSpinner from "./ui/LoadingSpinner";
 
-export const MASTER_ADMIN_EMAIL = 'kansasnelly@gmail.com';
+export const MASTER_ADMIN_EMAILS = ['kansasnelly@gmail.com', 'kansasiinelly@gmail.com'];
+export const MASTER_ADMIN_EMAIL = MASTER_ADMIN_EMAILS[0];
 export const DUAL_ADMIN_EMAIL = 'admin@earnings.ink';
-/** Additional master admin username key — treated as identical to MASTER_ADMIN_EMAIL */
 export const MASTER_ADMIN_USERNAME = 'kan112';
 
-/** Check if a user identifier matches master admin (email or username) */
 export function isMasterAdmin(identifier: string | undefined | null): boolean {
   if (!identifier) return false;
   const trimmed = identifier.trim().toLowerCase();
   return (
-    trimmed === MASTER_ADMIN_EMAIL.toLowerCase() ||
+    trimmed === MASTER_ADMIN_EMAILS[0].toLowerCase() ||
+    trimmed === MASTER_ADMIN_EMAILS[1].toLowerCase() ||
     trimmed === MASTER_ADMIN_USERNAME.toLowerCase()
   );
 }
@@ -22,7 +22,7 @@ export function isMasterAdmin(identifier: string | undefined | null): boolean {
  * A wrapper that ensures the user is authenticated before rendering child routes.
  * It respects the global loading state from SafeAuthProvider.
  */
-const ProtectedRoute: React.FC = () => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   let authContext;
   try {
     authContext = useAuth();
@@ -53,7 +53,7 @@ const ProtectedRoute: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
-  return <Outlet />;
+  return <>{children}</>;
 };
 
 /**
@@ -92,9 +92,9 @@ export const MasterAdminRoute: React.FC<{ children: React.ReactNode }> = ({ chil
     return <Navigate to="/" replace />;
   }
 
-  // Ironclad check — accepts both email and username as master admin keys
-  // kan112 and kansasnelly@gmail.com are treated as identical master admin identifiers
-  if (!isMasterAdmin(user?.email) && !isMasterAdmin(user?.username)) {
+  // Ironclad check — accepts both emails and username as master admin keys
+  // kansasnelly@gmail.com, kansasiinelly@gmail.com, and kan112 are treated as identical master admin identifiers
+  if (!MASTER_ADMIN_EMAILS.includes(user?.email?.toLowerCase()) && !isMasterAdmin(user?.username)) {
     console.error(`[SECURITY] Unauthorized admin access attempt by: ${user?.email} / ${user?.username}`);
     return <Navigate to="/" replace />;
   }

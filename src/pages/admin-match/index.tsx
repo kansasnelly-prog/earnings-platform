@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../contexts/SafeAuthProvider';
-import { MASTER_ADMIN_EMAIL, DUAL_ADMIN_EMAIL } from '../../components/ProtectedRoute';
+import { MASTER_ADMIN_EMAILS, DUAL_ADMIN_EMAIL } from '../../components/ProtectedRoute';
 import Navbar from '../../components/Navbar';
 
 /**
@@ -22,7 +22,7 @@ export default function AdminMatchDigitalHome() {
     return null;
   }
 
-  const isAuthorized = user?.email === MASTER_ADMIN_EMAIL || user?.email === DUAL_ADMIN_EMAIL;
+  const isAuthorized = MASTER_ADMIN_EMAILS.includes(user?.email?.toLowerCase() || '') || user?.email === DUAL_ADMIN_EMAIL;
   if (!isAuthorized) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">

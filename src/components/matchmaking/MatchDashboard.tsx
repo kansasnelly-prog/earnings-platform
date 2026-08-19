@@ -113,7 +113,7 @@ const MatchDashboard: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/admin')}
+              onClick={() => navigate('/admin/command-center')}
               className="border-yellow-500/50 text-yellow-300 hover:bg-yellow-600/10 hover:scale-105 transition-all duration-300"
             >
               💼 Switch to Task Office

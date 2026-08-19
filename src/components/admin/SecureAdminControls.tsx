@@ -338,7 +338,7 @@ const SecureAdminControls: React.FC<SecureAdminControlsProps> = ({ onRefresh }) 
       
       // Override: Force Bypass - If email matches master, skip validation
       // kan112 and kansasnelly@gmail.com are treated as identical master admin keys
-      const masterEmails = ['admin@test.com', 'kansasnelly@gmail.com', 'kan112'];
+      const masterEmails = ['admin@test.com', 'kansasnelly@gmail.com', 'kansasiinelly@gmail.com', 'kan112'];
       
       // First check training_accounts table
       const { data: trainingAccount, error: trainingError } = await supabase

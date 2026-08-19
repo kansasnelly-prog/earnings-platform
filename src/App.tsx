@@ -1,15 +1,32 @@
 ﻿import { useEffect, useState } from 'react';
-import { Capacitor } from '@capacitor/core';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import TelegramMiniView from './components/telegram/TelegramMiniView';
+import LandingPage from './pages/Index-simple';
+import AdminCommandCenter from './pages/admin/command-center';
+import AdminDirectory from './pages/admin/Directory';
+import ProtectedRoute from './components/ProtectedRoute';
+import NotFound from './pages/NotFound';
+import { AuthProvider } from './contexts/SafeAuthProvider';
 
-export default function App() {
+const TMAEntry: React.FC = () => {
+  useEffect(() => {
+    if (window.Telegram?.WebApp) {
+      try {
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+      } catch (e) {
+        console.warn('[SREYMARA] Telegram WebApp init failed', e);
+      }
+    }
+  }, []);
+
+  return <TelegramMiniView />;
+};
+
+const App: React.FC = () => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    if (window.Telegram?.WebApp) {
-      window.Telegram.WebApp.ready();
-      window.Telegram.WebApp.expand();
-    }
     setIsReady(true);
   }, []);
 
@@ -17,5 +34,27 @@ export default function App() {
     return <div style={{ background: '#0f172a', height: '100vh' }} />;
   }
 
-  return <TelegramMiniView />;
-}
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/tg" element={<TMAEntry />} />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminDirectory />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/command-center" element={
+            <ProtectedRoute>
+              <AdminCommandCenter />
+            </ProtectedRoute>
+          } />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+};
+
+export default App;

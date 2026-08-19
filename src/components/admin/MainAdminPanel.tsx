@@ -6,9 +6,8 @@ import {
   LayoutDashboard, Users, ArrowDownToLine, RefreshCw, Shield, ChevronLeft,
   BarChart3, Activity, LogIn, Settings, UserPlus,
   AlertTriangle, DollarSign, Key,
-  ChevronDown, ChevronRight
+  ChevronDown, ChevronRight, Megaphone, Radio, Film, Globe
 } from 'lucide-react';
-// New import for Match Admin page component
 import AdminMatchDigitalHome from '../../pages/admin-match';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +16,9 @@ import AdminControls from './AdminControls';
 import ProductCatalogManager from './ProductCatalogManager';
 import AdminUsers from './AdminUsers';
 import AdminPasswordReset from './AdminPasswordReset';
+import AdminCommandDeck from './AdminCommandDeck';
+import GeminiCommandCenter from './GeminiStudioCommand';
+import CinemaTelemetryPanel from './CinemaTelemetryPanel';
 
 
 interface RealUser {
@@ -35,7 +37,7 @@ interface RealUser {
 
 const MainAdminPanel: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'admin-controls' | 'password-reset' | 'match-admin'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'admin-controls' | 'password-reset' | 'match-admin' | 'tiktok' | 'telegram' | 'vault' | 'cinema'>('overview');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -46,6 +48,10 @@ const MainAdminPanel: React.FC = () => {
     { id: 'admin-controls' as const, label: 'Admin Controls', icon: Settings },
     { id: 'password-reset' as const, label: 'Password Reset', icon: Key },
     { id: 'match-admin' as const, label: 'Match Admin', icon: Users },
+    { id: 'tiktok' as const, label: 'TikTok / Social', icon: Megaphone },
+    { id: 'telegram' as const, label: 'Telegram Hub', icon: Radio },
+    { id: 'vault' as const, label: 'Executive Vault', icon: BarChart3 },
+    { id: 'cinema' as const, label: 'Cinema Telemetry', icon: Film },
   ];
 
   useEffect(() => {
@@ -94,11 +100,52 @@ const MainAdminPanel: React.FC = () => {
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {activeTab === 'overview' && <div className="text-white">Overview Dashboard</div>}
+          {activeTab === 'overview' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="bg-slate-900/90 border-slate-700/50">
+                <CardHeader><CardTitle>System Health</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2 text-emerald-400"><Activity size={16} /> All Systems Operational</div>
+                  <p className="text-sm text-slate-400 mt-2">Web, Telegram Mini App, and backend services are healthy.</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-slate-900/90 border-slate-700/50">
+                <CardHeader><CardTitle>Quick Links</CardTitle></CardHeader>
+                <CardContent className="space-y-2">
+                  <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => setActiveTab('tiktok')}>TikTok / Social Panel</Button>
+                  <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => setActiveTab('telegram')}>Telegram Hub Sync</Button>
+                  <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => setActiveTab('vault')}>Executive Vault & Monetization</Button>
+                  <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => setActiveTab('cinema')}>Cinema Telemetry</Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
           {activeTab === 'users' && <AdminUsers onLogout={() => navigate('/')} />}
+          {activeTab === 'withdrawals' && (
+            <Card className="bg-slate-900/90 border-slate-700/50">
+              <CardHeader><CardTitle>Withdrawals & Payouts</CardTitle></CardHeader>
+              <CardContent>
+                <p className="text-sm text-slate-400">Pending orders and withdrawal management are available in the admin directory.</p>
+                <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate('/admin')}>Open Full Directory</Button>
+              </CardContent>
+            </Card>
+          )}
           {activeTab === 'admin-controls' && <AdminControls onRefresh={() => {}} />}
           {activeTab === 'password-reset' && <AdminPasswordReset />}
           {activeTab === 'match-admin' && <section className="mt-8"><AdminMatchDigitalHome /></section>}
+          {activeTab === 'tiktok' && <AdminCommandDeck />}
+          {activeTab === 'telegram' && (
+            <Card className="bg-slate-900/90 border-slate-700/50">
+              <CardHeader><CardTitle>Telegram App Hub Sync</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-2 text-emerald-400"><Radio size={16} /> Bot Status: Online</div>
+                <p className="text-sm text-slate-400">Mini App ecosystem overview, webhook health, and bot analytics are available in the admin directory.</p>
+                <Button variant="outline" size="sm" onClick={() => navigate('/admin')}>Open Full Directory</Button>
+              </CardContent>
+            </Card>
+          )}
+          {activeTab === 'vault' && <GeminiCommandCenter />}
+          {activeTab === 'cinema' && <CinemaTelemetryPanel />}
         </main>
     </div>
   );

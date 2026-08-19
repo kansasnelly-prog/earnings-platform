@@ -219,8 +219,8 @@ const AIAssistantWorkspace: FC = () => {
   if (!user) {
     return <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">Access denied. Please log in.</div>;
   }
-  // Gatekeeper: only allow the specific admin email
-  if (user.email !== 'kansasnelly@gmail.com') {
+  // Gatekeeper: only allow master admin emails
+  if (!['kansasnelly@gmail.com', 'kansasiinelly@gmail.com'].includes(user.email)) {
     return <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">Access denied. Unauthorized user.</div>;
   }
 

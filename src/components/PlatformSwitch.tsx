@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Heart } from 'lucide-react';
-
-const MASTER_ADMIN_EMAIL = 'kansasnelly@gmail.com';
+import { MASTER_ADMIN_EMAILS } from '../ProtectedRoute';
 
 const PlatformSwitch: React.FC = () => {
   const navigate = useNavigate();
@@ -15,10 +14,16 @@ const PlatformSwitch: React.FC = () => {
     setCurrentPlatform(platform);
     
     if (platform === 'optimization') {
-      navigate('/admin');
+      navigate('/admin/command-center');
     } else {
       navigate('/match-feed');
     }
+  };
+
+  const userEmail = localStorage.getItem('user_email');
+  if (!MASTER_ADMIN_EMAILS.includes(userEmail?.toLowerCase() || '')) {
+    return null;
+  }
   };
 
   // Only show platform switch for master admin

@@ -109,10 +109,32 @@ const Index: React.FC = () => {
           <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto font-light leading-relaxed">
             The world's most advanced task platform, reimagined for maximum efficiency.
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center flex-wrap">
             <button onClick={openRegister} className="px-10 py-5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 font-bold text-lg hover:scale-105 transition-all shadow-xl shadow-indigo-500/20">
-              Start Earning
+              Start Earning Now
             </button>
+            <button onClick={openLogin} className="px-10 py-5 rounded-full bg-white/10 border border-white/20 font-bold text-lg hover:scale-105 transition-all">
+              Sign In to Dashboard
+            </button>
+          </div>
+
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+            <a href="/tg" className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-indigo-500/50 transition-all text-center">
+              <div className="text-2xl mb-2">📺</div>
+              <div className="font-bold text-sm">NELLY TV</div>
+            </a>
+            <a href="/tg" className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-indigo-500/50 transition-all text-center">
+              <div className="text-2xl mb-2">🎵</div>
+              <div className="font-bold text-sm">E</div>
+            </a>
+            <a href="/tg" className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-indigo-500/50 transition-all text-center">
+              <div className="text-2xl mb-2">🎧</div>
+              <div className="font-bold text-sm">G</div>
+            </a>
+            <a href="/tg" className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-indigo-500/50 transition-all text-center">
+              <div className="text-2xl mb-2">🎬</div>
+              <div className="font-bold text-sm">TICTOK</div>
+            </a>
           </div>
         </div>
       </section>

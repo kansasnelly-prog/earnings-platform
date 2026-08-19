@@ -1,10 +1,8 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Zap, Shield, Globe, Mail, MessageCircle } from 'lucide-react';
 
 
 const Footer: React.FC = () => {
-  const navigate = useNavigate();
   return (
     <footer className="bg-[#060a14] border-t border-white/[0.06]">
 
@@ -99,18 +97,11 @@ const Footer: React.FC = () => {
           </div>
         </div>
 
-        {/* Copyright + Admin Link */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-6 border-t border-white/[0.04]">
+        {/* Copyright */}
+        <div className="pt-6 border-t border-white/[0.04]">
           <p className="text-xs text-gray-600">
             &copy; {new Date().getFullYear()} OptimizeHub. All rights reserved. This platform is for informational purposes only.
           </p>
-          <button
-            onClick={() => navigate('/admin')}
-            className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-indigo-400 transition-colors"
-          >
-            <Shield size={10} />
-            Admin
-          </button>
         </div>
 
       </div>

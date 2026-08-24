@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import TelegramMiniView from './components/telegram/TelegramMiniView';
+import OptimizationPlatform from './pages/Index';
 import LandingPage from './pages/Index-simple';
 import AdminCommandCenter from './pages/admin/command-center';
 import AdminDirectory from './pages/admin/Directory';
@@ -38,7 +39,8 @@ const App: React.FC = () => {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<OptimizationPlatform />} />
+          <Route path="/landing" element={<LandingPage />} />
           <Route path="/tg" element={<TMAEntry />} />
           <Route path="/admin" element={
             <ProtectedRoute>

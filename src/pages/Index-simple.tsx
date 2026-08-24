@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   Zap, Shield, TrendingUp, Wallet, Users, Globe, Clock, 
   ArrowRight, Star, Menu, X, ChevronRight, Mail, Lock, User, Loader2, CheckCircle
@@ -9,11 +9,13 @@ import { toast } from 'sonner';
 import { SupabaseService } from '@/services/supabaseService';
 
 const Index: React.FC = () => {
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [pendingRoute, setPendingRoute] = useState<string>('');
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,6 +24,28 @@ const Index: React.FC = () => {
 
   const openLogin = () => { setAuthTab('login'); setAuthModalOpen(true); };
   const openRegister = () => { setAuthTab('register'); setAuthModalOpen(true); };
+
+  const handleProtectedNavigation = async (targetRoute: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setPendingRoute(targetRoute);
+      setAuthModalOpen(true);
+    } else {
+      navigate(targetRoute);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    setIsLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/admin/command-center' }
+    });
+    if (error) {
+      toast.error(error.message || 'Google login failed');
+      setIsLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +56,10 @@ const Index: React.FC = () => {
       setUser(data.user);
       toast.success('Login successful!');
       setAuthModalOpen(false);
+      if (pendingRoute) {
+        navigate(pendingRoute);
+        setPendingRoute('');
+      }
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
     } finally {
@@ -51,6 +79,10 @@ const Index: React.FC = () => {
           setUser(signInData.user);
           toast.success('Welcome back!');
           setAuthModalOpen(false);
+          if (pendingRoute) {
+            navigate(pendingRoute);
+            setPendingRoute('');
+          }
           return;
         }
         throw error;
@@ -58,6 +90,10 @@ const Index: React.FC = () => {
       setUser(user);
       toast.success('Account created!');
       setAuthModalOpen(false);
+      if (pendingRoute) {
+        navigate(pendingRoute);
+        setPendingRoute('');
+      }
     } catch (error: any) {
       toast.error('Please try again in a moment.');
     } finally {
@@ -125,34 +161,34 @@ const Index: React.FC = () => {
           </div>
 
           <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            <Link 
-              to="/tg" 
+            <button 
+              onClick={() => handleProtectedNavigation('/')} 
               className="group p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-yellow-500/40 hover:-translate-y-1 transition-all duration-300 text-center hover:shadow-[0_0_20px_rgba(212,175,55,0.25)]"
             >
               <div className="text-2xl mb-2">📺</div>
               <div className="font-bold text-sm group-hover:text-yellow-300 transition-colors">NELLY TV</div>
-            </Link>
-            <Link 
-              to="/tg" 
+            </button>
+            <button 
+              onClick={() => handleProtectedNavigation('/')} 
               className="group p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-yellow-500/40 hover:-translate-y-1 transition-all duration-300 text-center hover:shadow-[0_0_20px_rgba(212,175,55,0.25)]"
             >
               <div className="text-2xl mb-2">🎵</div>
               <div className="font-bold text-sm group-hover:text-yellow-300 transition-colors">E</div>
-            </Link>
-            <Link 
-              to="/tg" 
+            </button>
+            <button 
+              onClick={handleGoogleAuth} 
               className="group p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-yellow-500/40 hover:-translate-y-1 transition-all duration-300 text-center hover:shadow-[0_0_20px_rgba(212,175,55,0.25)]"
             >
               <div className="text-2xl mb-2">🎧</div>
               <div className="font-bold text-sm group-hover:text-yellow-300 transition-colors">G</div>
-            </Link>
-            <Link 
-              to="/tg" 
+            </button>
+            <button 
+              onClick={() => handleProtectedNavigation('/')} 
               className="group p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-yellow-500/40 hover:-translate-y-1 transition-all duration-300 text-center hover:shadow-[0_0_20px_rgba(212,175,55,0.25)]"
             >
               <div className="text-2xl mb-2">🎬</div>
               <div className="font-bold text-sm group-hover:text-yellow-300 transition-colors">TICTOK</div>
-            </Link>
+            </button>
           </div>
         </div>
       </section>
@@ -188,6 +224,9 @@ const Index: React.FC = () => {
                 {isLoading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : (authTab === 'login' ? 'Login' : 'Create Account')}
               </button>
             </form>
+            <button onClick={handleGoogleAuth} className="w-full mt-3 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-lg text-sm border border-white/10 transition-all flex items-center justify-center gap-2">
+              <span>Sign in with Google (G)</span>
+            </button>
             <button onClick={() => setAuthModalOpen(false)} className="w-full mt-4 text-gray-400">Cancel</button>
           </div>
         </div>

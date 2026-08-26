@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import TelegramMiniView from './components/telegram/TelegramMiniView';
 import OptimizationPlatform from './pages/Index';

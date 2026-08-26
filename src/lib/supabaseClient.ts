@@ -1,11 +1,9 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Environment validation for frontend
+// supabaseMain: User accounts, task metrics, front-end balances
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-// Create frontend client with anon key
-const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabaseMain = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -37,8 +35,44 @@ const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-export { supabase };
-export default supabase;
+// supabaseVault: Monetization logs, Solana yield splitting, Telegram webhooks
+const vaultUrl = import.meta.env.VITE_SUPABASE_VAULT_URL || supabaseUrl;
+const vaultAnonKey = import.meta.env.VITE_SUPABASE_VAULT_ANON_KEY || supabaseAnonKey;
+export const supabaseVault = createClient(vaultUrl, vaultAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storageKey: 'supabase.auth.token',
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    flowType: 'pkce',
+    debug: false,
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'earnings-platform'
+    },
+    fetch: (url, options = {}) => {
+      const fetchOptions = {
+        ...options,
+        credentials: 'omit' as RequestCredentials
+      };
+      return fetch(url, fetchOptions);
+    }
+  },
+  db: {
+    schema: 'public'
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  }
+});
+
+// Default export for backward compatibility
+export const supabase = supabaseMain;
+export default supabaseMain;
 
 // ================= DATABASE TYPES =================
 export type Database = {
@@ -135,7 +169,7 @@ export type Database = {
           admin_id?: string
           details?: any
           ip_address?: string
-          created_at: string
+          created_at?: string
         }
       }
       creator_videos: {

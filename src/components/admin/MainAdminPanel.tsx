@@ -67,7 +67,7 @@ const MainAdminPanel: React.FC = () => {
   }, [navigate]);
 
   if (!isInitialized) return <div className="text-center p-10">Verifying access...</div>;
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated) return <div className="text-center p-10 text-white bg-[#060a14]">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">

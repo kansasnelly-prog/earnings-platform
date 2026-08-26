@@ -8,6 +8,7 @@ import AdminDirectory from './pages/admin/Directory';
 import ProtectedRoute from './components/ProtectedRoute';
 import NotFound from './pages/NotFound';
 import { AuthProvider } from './contexts/SafeAuthProvider';
+import { CSNotificationProvider } from './contexts/CSNotificationContext';
 
 const TMAEntry: React.FC = () => {
   useEffect(() => {
@@ -38,22 +39,24 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/" element={<OptimizationPlatform />} />
-          <Route path="/landing" element={<LandingPage />} />
-          <Route path="/tg" element={<TMAEntry />} />
-          <Route path="/admin" element={
-            <ProtectedRoute>
-              <AdminDirectory />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/command-center" element={
-            <ProtectedRoute>
-              <AdminCommandCenter />
-            </ProtectedRoute>
-          } />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <CSNotificationProvider>
+          <Routes>
+            <Route path="/" element={<OptimizationPlatform />} />
+            <Route path="/landing" element={<LandingPage />} />
+            <Route path="/tg" element={<TMAEntry />} />
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <AdminDirectory />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/command-center" element={
+              <ProtectedRoute>
+                <AdminCommandCenter />
+              </ProtectedRoute>
+            } />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </CSNotificationProvider>
       </AuthProvider>
     </BrowserRouter>
   );

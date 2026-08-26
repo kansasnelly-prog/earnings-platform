@@ -101,7 +101,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'withdrawals' as const, label: 'Withdrawals', icon: ArrowDownToLine, count: withdrawals.filter(w => w.status === 'pending').length },
   ];
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated) return <div className="p-6 text-white bg-[#060a14]">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-[#060a14] text-white p-6">

@@ -117,6 +117,11 @@ export default defineConfig(({ mode }) => ({
     host: "0.0.0.0",
     port: 5173,
     open: true,
+    allowedHosts: [
+      "telegram-mini-app-server-o5za.onrender.com",
+      "localhost",
+      "127.0.0.1"
+    ],
     headers: {
       'Content-Security-Policy': "default-src 'self' 'unsafe-inline' 'unsafe-eval' * blob: data: https: http:; script-src 'self' 'unsafe-inline' 'unsafe-eval' * blob: data: https: http:; style-src 'self' 'unsafe-inline' * blob: data: https: http:; img-src 'self' 'unsafe-inline' * blob: data: https: http:; font-src 'self' 'unsafe-inline' * blob: data: https: http:; connect-src 'self' 'unsafe-inline' * blob: data: https: http:; media-src * blob: data: https: http:; frame-src 'self' * blob: data: https: http:; worker-src 'self' * blob: data: https: http:; child-src 'self' * blob: data: https: http:;",
       'Access-Control-Allow-Origin': '*',
@@ -130,6 +135,13 @@ export default defineConfig(({ mode }) => ({
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
+  },
+  preview: {
+    allowedHosts: [
+      "telegram-mini-app-server-o5za.onrender.com",
+      "localhost",
+      "127.0.0.1"
+    ]
   },
   plugins: [
     react(),

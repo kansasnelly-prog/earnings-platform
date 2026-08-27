@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, ArrowDownToLine, RefreshCw, Shield, ChevronLeft,
   BarChart3, Activity, LogIn, Settings, UserPlus,
   AlertTriangle, DollarSign, Key,
-  ChevronDown, ChevronRight, Megaphone, Radio, Film, Globe
+  ChevronDown, ChevronRight, Megaphone, Radio, Film, Globe, Zap
 } from 'lucide-react';
 import AdminMatchDigitalHome from '../../pages/admin-match';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,7 @@ import AdminPasswordReset from './AdminPasswordReset';
 import AdminCommandDeck from './AdminCommandDeck';
 import GeminiCommandCenter from './GeminiStudioCommand';
 import CinemaTelemetryPanel from './CinemaTelemetryPanel';
+import MonetizationHub from '@/components/earnings/MonetizationHub';
 
 
 interface RealUser {
@@ -37,7 +38,7 @@ interface RealUser {
 
 const MainAdminPanel: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'admin-controls' | 'password-reset' | 'match-admin' | 'tiktok' | 'telegram' | 'vault' | 'cinema'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'admin-controls' | 'password-reset' | 'match-admin' | 'tiktok' | 'telegram' | 'vault' | 'cinema' | 'monetization'>('overview');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -52,6 +53,7 @@ const MainAdminPanel: React.FC = () => {
     { id: 'telegram' as const, label: 'Telegram Hub', icon: Radio },
     { id: 'vault' as const, label: 'Executive Vault', icon: BarChart3 },
     { id: 'cinema' as const, label: 'Cinema Telemetry', icon: Film },
+    { id: 'monetization' as const, label: 'Monetization Hub', icon: Zap },
   ];
 
   useEffect(() => {
@@ -146,6 +148,7 @@ const MainAdminPanel: React.FC = () => {
           )}
           {activeTab === 'vault' && <GeminiCommandCenter />}
           {activeTab === 'cinema' && <CinemaTelemetryPanel />}
+          {activeTab === 'monetization' && <MonetizationHub />}
         </main>
     </div>
   );

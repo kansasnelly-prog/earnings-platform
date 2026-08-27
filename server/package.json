@@ -1,0 +1,19 @@
+{
+  "name": "sreymara-web3-solana-payout-server",
+  "version": "3.4.0",
+  "description": "SREYMARA Executive Hub Real On-Chain Solana Payout & Admin Observer Engine",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "echo 'No frontend build needed or handled by root Vite'"
+  },
+  "dependencies": {
+    "@solana/spl-token": "^0.4.8",
+    "@solana/web3.js": "^1.95.8",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}

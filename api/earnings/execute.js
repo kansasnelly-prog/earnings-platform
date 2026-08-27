@@ -55,6 +55,17 @@ const STRATEGY_HANDLERS: Record<string, (userId: string, body: any) => Promise<a
   'multi-chain-yield': async () => ({ status: 'YIELD_DISTRIBUTED', reward: 0.2, currency: 'USDT', message: 'Multi-chain yield distributed.' }),
   'mini-app-engagement': async () => ({ status: 'REWARDED', reward: 0.015, currency: 'USDT', message: 'Mini-app engagement reward credited.' }),
   'executive-membership': async () => ({ status: 'REWARDED', reward: 1, currency: 'USDT', message: 'Executive membership reward credited.' }),
+  'us-premium-ads': async () => ({ status: 'REWARDED', reward: 0.25, currency: 'USDT', message: 'US premium ad inventory reward credited.' }),
+  'ca-streaming-bonus': async () => ({ status: 'REWARDED', reward: 0.18, currency: 'USDT', message: 'Canada streaming bonus credited.' }),
+  'uk-media-yield': async () => ({ status: 'REWARDED', reward: 0.22, currency: 'USDT', message: 'UK media yield pool reward credited.' }),
+  'global-executive-revenue': async () => ({ status: 'YIELD_DISTRIBUTED', reward: 0.35, currency: 'USDT', message: 'Global executive revenue share distributed.' }),
+  'google-2nd-gen-monetization': async () => ({ status: 'REWARDED', reward: 0.30, currency: 'USDT', message: 'Google 2nd gen monetization reward credited.' }),
+  'ai-enhanced-cpm': async () => ({ status: 'REWARDED', reward: 0.20, currency: 'USDT', message: 'AI-enhanced CPM optimization reward credited.' }),
+  'premium-sponsorship': async () => ({ status: 'REWARDED', reward: 2.5, currency: 'USDT', message: 'Premium sponsorship reward credited.' }),
+  'youtube-content-monetization': async () => ({ status: 'REWARDED', reward: 0.15, currency: 'USDT', message: 'YouTube content monetization reward credited.' }),
+  'telegram-mini-app-ads': async () => ({ status: 'REWARDED', reward: 0.08, currency: 'USDT', message: 'Telegram Mini App ads reward credited.' }),
+  'solana-yield-farming': async () => ({ status: 'STAKING_ACTIVE', reward: 0.02, currency: 'SOL', message: 'Solana yield farming reward credited.' }),
+  'usdt-liquidity-mining': async () => ({ status: 'YIELD_DISTRIBUTED', reward: 0.12, currency: 'USDT', message: 'USDT liquidity mining reward credited.' }),
 };
 
 async function handler(req, res) {

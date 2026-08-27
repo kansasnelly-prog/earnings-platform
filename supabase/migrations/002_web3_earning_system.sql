@@ -161,5 +161,16 @@ VALUES
   ('ad-impression-revenue', 'Ad Impression Revenue Share', 'ads', 'Earn from ad impressions across app surfaces.', 'usdt', 0.0001, 'USDT', true, true, false, 1, '{"module": "ads"}'),
   ('multi-chain-yield', 'Multi-Chain Yield Farming', 'defi', 'Earn yield across TON, Solana, and BSC chains.', 'usdt', 0.2, 'USDT', true, true, true, 43200, '{"chains": ["ton", "solana", "bsc"]}'),
   ('mini-app-engagement', 'Mini App Engagement', 'mini-app', 'Earn for completing mini-app sessions inside Telegram.', 'points', 0.015, 'USDT', true, true, false, 90, '{"platform": "telegram"}'),
-  ('executive-membership', 'Executive Membership Fee', 'bonus', 'Earn executive membership rewards and fee rebates.', 'usdt', 1, 'USDT', true, true, false, 0, '{"tier": "executive"}')
+  ('executive-membership', 'Executive Membership Fee', 'bonus', 'Earn executive membership rewards and fee rebates.', 'usdt', 1, 'USDT', true, true, false, 0, '{"tier": "executive"}'),
+  ('us-premium-ads', 'US Premium Ad Inventory', 'ads', 'High-CPM US display/video ad inventory access with 12x yield multiplier.', 'usdt', 0.25, 'USDT', true, true, false, 1, '{"region": "US", "cpm_multiplier": 12}'),
+  ('ca-streaming-bonus', 'Canada Streaming Bonus', 'streaming', 'Enhanced streaming rewards for CA viewers with 10x multiplier.', 'usdt', 0.18, 'USDT', true, true, false, 1, '{"region": "CA", "cpm_multiplier": 10}'),
+  ('uk-media-yield', 'UK Media Yield Pool', 'ads', 'UK ad yield pool with premium CPM and 11x multiplier.', 'usdt', 0.22, 'USDT', true, true, false, 1, '{"region": "UK", "cpm_multiplier": 11}'),
+  ('global-executive-revenue', 'Global Executive Revenue Share', 'defi', 'Worldwide executive revenue share across all active zones.', 'usdt', 0.35, 'USDT', true, true, true, 1800, '{"region": "global", "multiplier": 12}'),
+  ('google-2nd-gen-monetization', 'Google 2nd Generation Monetization', 'ads', 'Next-gen Google ad formats with AI optimization and 15x yield.', 'usdt', 0.30, 'USDT', true, true, false, 1, '{"provider": "google", "generation": 2, "cpm_multiplier": 15}'),
+  ('ai-enhanced-cpm', 'AI-Enhanced CPM Optimization', 'ai', 'Machine-learning optimized ad placements for maximum CPM.', 'usdt', 0.20, 'USDT', true, true, false, 1, '{"module": "ai", "cpm_multiplier": 12}'),
+  ('premium-sponsorship', 'Premium Sponsorship Deals', 'social', 'Direct sponsorship deals with major brands for top creators.', 'usdt', 2.5, 'USDT', true, true, false, 0, '{"tier": "premium"}'),
+  ('youtube-content-monetization', 'YouTube Content Monetization', 'streaming', 'Monetize NELLY TV YouTube streams with adsense and super chats.', 'usdt', 0.15, 'USDT', true, true, false, 1, '{"provider": "youtube"}'),
+  ('telegram-mini-app-ads', 'Telegram Mini App Ads', 'mini-app', 'In-app advertisement revenue from Telegram Mini App ecosystem.', 'usdt', 0.08, 'USDT', true, true, false, 30, '{"platform": "telegram", "placement": "mini_app"}'),
+  ('solana-yield-farming', 'Solana Yield Farming', 'defi', 'Automated yield farming on Solana with 8-12% APY.', 'sol', 0.02, 'SOL', true, true, true, 86400, '{"network": "solana", "apy": "8-12%"}'),
+  ('usdt-liquidity-mining', 'USDT Liquidity Mining', 'defi', 'Provide USDT liquidity and earn trading fees.', 'usdt', 0.12, 'USDT', true, true, true, 43200, '{"network": "solana", "pool": "USDT"}')
 ON CONFLICT (slug) DO NOTHING;

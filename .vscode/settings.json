@@ -1,0 +1,15 @@
+{
+  "deno.enable": true,
+  "deno.enablePaths": ["supabase/functions"],
+  "deno.importMap": "supabase/functions/deno.json",
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "editor.fontSize": 16,
+  "accessibility.signalOptions.volume": 100,
+  "window.zoomLevel": 1,
+  "screencastMode.keyboardOverlayTimeout": 700,
+  "editor.tabSize": 2,
+  "remote.windsurfDevContainers.enableSSHAgentForwarding": false
+}

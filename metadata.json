@@ -1,0 +1,6 @@
+{
+  "name": "SREYMARA Executive Hub",
+  "description": "Android runtime and testing container for Telegram Mini Apps and custom HTML web apps.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

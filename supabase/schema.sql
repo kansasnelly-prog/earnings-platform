@@ -1,136 +1,63 @@
--- Optimize Tasks Platform Database Schema
--- Run these SQL commands in Supabase SQL Editor
+-- SREYMARA MASTER DUAL-PIPELINE & FINANCIAL INFRASTRUCTURE SCHEMA
 
--- Users Table
-CREATE TABLE IF NOT EXISTS users (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password VARCHAR(255),
-  phone VARCHAR(20),
-  display_name VARCHAR(255) NOT NULL,
-  vip_level INTEGER DEFAULT 1 CHECK (vip_level IN (1, 2)),
-  balance DECIMAL(10,2) DEFAULT 0.00,
-  total_earned DECIMAL(10,2) DEFAULT 0.00,
-  referral_code VARCHAR(20) UNIQUE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  account_type VARCHAR(20) DEFAULT 'personal' CHECK (account_type IN ('personal', 'training')),
-  user_status VARCHAR(20) DEFAULT 'registered' CHECK (user_status IN ('registered', 'active', 'suspended')),
-  training_completed BOOLEAN DEFAULT FALSE,
-  training_progress INTEGER DEFAULT 0,
-  training_phase INTEGER DEFAULT 1 CHECK (training_phase IN (1, 2)),
-  tasks_completed INTEGER DEFAULT 0,
-  trigger_task_number INTEGER,
-  has_pending_order BOOLEAN DEFAULT FALSE,
-  pending_amount DECIMAL(10,2) DEFAULT 0.00,
-  is_negative_balance BOOLEAN DEFAULT FALSE,
-  profit_added BOOLEAN DEFAULT FALSE
-);
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Tasks Table
-CREATE TABLE IF NOT EXISTS tasks (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  task_number INTEGER NOT NULL,
-  status VARCHAR(20) DEFAULT 'locked' CHECK (status IN ('locked', 'pending', 'completed')),
-  reward DECIMAL(10,2) NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  completed_at TIMESTAMP WITH TIME ZONE,
-  UNIQUE(user_id, task_number)
-);
-
--- Wallets Table
-CREATE TABLE IF NOT EXISTS wallets (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  wallet_type VARCHAR(50) NOT NULL,
-  address VARCHAR(255) NOT NULL,
-  network VARCHAR(50) NOT NULL,
-  is_default BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id, address)
-);
-
--- Withdrawals Table
-CREATE TABLE IF NOT EXISTS withdrawals (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  amount DECIMAL(10,2) NOT NULL,
-  wallet_address VARCHAR(255) NOT NULL,
-  network VARCHAR(50) NOT NULL,
-  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'rejected')),
-  tx_hash VARCHAR(255),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  processed_at TIMESTAMP WITH TIME ZONE
-);
-
--- Transactions Table
-CREATE TABLE IF NOT EXISTS transactions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  type VARCHAR(20) NOT NULL CHECK (type IN ('deposit', 'withdrawal', 'task_reward', 'bonus')),
-  amount DECIMAL(10,2) NOT NULL,
-  status VARCHAR(20) DEFAULT 'completed' CHECK (status IN ('pending', 'completed', 'failed')),
-  description TEXT,
+-- Users & Multi-Chain Wallet Profile Table
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  wallet_address TEXT UNIQUE NOT NULL,
+  usdt_balance NUMERIC(18, 4) DEFAULT 12450.0000,
+  sol_balance NUMERIC(18, 4) DEFAULT 76.8000,
+  usdc_balance NUMERIC(18, 4) DEFAULT 5200.0000,
+  eth_balance NUMERIC(18, 4) DEFAULT 4.2500,
+  country_code VARCHAR(3) DEFAULT 'USA',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Training Accounts Table (for admin management)
-CREATE TABLE IF NOT EXISTS training_accounts (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  assigned_to VARCHAR(255),
-  created_by VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'suspended'))
+-- Dual-Pipeline Ad Tracking Table (SSP/DSP)
+CREATE TABLE IF NOT EXISTS public.ad_impressions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES public.profiles(id),
+  pipeline_type VARCHAR(20) CHECK (pipeline_type IN ('WEB2_SSP', 'WEB3_DSP')),
+  source_module VARCHAR(50) CHECK (source_module IN ('CINEMA_STREAMING', 'AI_CHAT', 'IN_APP_BANNER', 'FLOATING_BANNER', 'MATCH_SUITE')),
+  cpm_earned NUMERIC(12, 6) NOT NULL,
+  country_code VARCHAR(3) NOT NULL DEFAULT 'USA',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Indexes for performance
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_referral_code ON users(referral_code);
-CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id);
-CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
-CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
-CREATE INDEX IF NOT EXISTS idx_withdrawals_user_id ON withdrawals(user_id);
-
--- Row Level Security (RLS)
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
-ALTER TABLE wallets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE withdrawals ENABLE ROW LEVEL SECURITY;
-ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
-
--- Users can only access their own data
-CREATE POLICY "Users can view own data" ON users FOR SELECT USING (auth.uid()::text = id::text);
-CREATE POLICY "Users can update own data" ON users FOR UPDATE USING (auth.uid()::text = id::text);
-
-CREATE POLICY "Users can view own tasks" ON tasks FOR SELECT USING (auth.uid()::text = user_id::text);
-CREATE POLICY "Users can update own tasks" ON tasks FOR UPDATE USING (auth.uid()::text = user_id::text);
-
-CREATE POLICY "Users can view own wallets" ON wallets FOR SELECT USING (auth.uid()::text = user_id::text);
-CREATE POLICY "Users can manage own wallets" ON wallets FOR ALL USING (auth.uid()::text = user_id::text);
-
-CREATE POLICY "Users can view own withdrawals" ON withdrawals FOR SELECT USING (auth.uid()::text = user_id::text);
-CREATE POLICY "Users can create own withdrawals" ON withdrawals FOR INSERT WITH CHECK (auth.uid()::text = user_id::text);
-
-CREATE POLICY "Users can view own transactions" ON transactions FOR SELECT USING (auth.uid()::text = user_id::text);
-
--- Admin policies (for admin@optimize.com)
-CREATE POLICY "Admin full access users" ON users FOR ALL USING (
-  auth.jwt() ->> 'email' = 'admin@optimize.com'
+-- Multi-Bank & Virtual Card Payout Destinations (BaaS)
+CREATE TABLE IF NOT EXISTS public.payout_destinations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES public.profiles(id),
+  bank_name TEXT NOT NULL,
+  account_number TEXT NOT NULL,
+  routing_number TEXT,
+  swift_bic TEXT,
+  provider VARCHAR(30) CHECK (provider IN ('ZENUS_BANK', 'AIRWALLEX', 'ADYEN_GLOBAL', 'RAPYD_PAYOUT', 'TIPALTI')),
+  is_active_toggle BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-CREATE POLICY "Admin full access tasks" ON tasks FOR ALL USING (
-  auth.jwt() ->> 'email' = 'admin@optimize.com'
+
+-- Solana & Multi-Chain to USDT Settlement Log
+CREATE TABLE IF NOT EXISTS public.token_exchanges (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES public.profiles(id),
+  sol_amount NUMERIC(18, 6) NOT NULL,
+  usdt_received NUMERIC(18, 4) NOT NULL,
+  exchange_rate NUMERIC(12, 4) NOT NULL,
+  tx_hash TEXT NOT NULL,
+  settled_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-CREATE POLICY "Admin full access wallets" ON wallets FOR ALL USING (
-  auth.jwt() ->> 'email' = 'admin@optimize.com'
-);
-CREATE POLICY "Admin full access withdrawals" ON withdrawals FOR ALL USING (
-  auth.jwt() ->> 'email' = 'admin@optimize.com'
-);
-CREATE POLICY "Admin full access transactions" ON transactions FOR ALL USING (
-  auth.jwt() ->> 'email' = 'admin@optimize.com'
-);
-CREATE POLICY "Admin full access training accounts" ON training_accounts FOR ALL USING (
-  auth.jwt() ->> 'email' = 'admin@optimize.com'
+
+-- Direct Multi-Chain Payout Events Ledger
+CREATE TABLE IF NOT EXISTS public.direct_yield_payouts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  wallet_address TEXT NOT NULL,
+  currency VARCHAR(10) NOT NULL, -- 'USDT', 'USDC', 'ETH', 'SOL'
+  network VARCHAR(30) NOT NULL,  -- 'USDT_TRC20', 'ERC20', 'TON', 'POLYGON', 'SOLANA'
+  amount_added NUMERIC(18, 6) NOT NULL,
+  cpm_yield NUMERIC(12, 4),
+  source_trigger TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

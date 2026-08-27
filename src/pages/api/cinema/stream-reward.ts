@@ -30,10 +30,12 @@ export default async function handler(req, res) {
     }
 
     const reward = Number(rewardAmount) || 0.01;
+    const multiplier = metadata?.multiplier || 12;
+    const boostedReward = reward * multiplier;
 
     const { data: profile, error: profileError } = await supabase
       .from('users')
-      .select('id, watch_balance, total_watched_seconds')
+      .select('id, watch_balance, total_watched_seconds, cinema_earnings')
       .eq('id', userId)
       .single();
 
@@ -41,14 +43,16 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'User profile not found' });
     }
 
-    const newBalance = (profile.watch_balance || 0) + reward;
+    const newBalance = (profile.watch_balance || 0) + boostedReward;
     const totalWatched = (profile.total_watched_seconds || 0) + watchDurationSeconds;
+    const cinemaEarnings = (profile.cinema_earnings || 0) + boostedReward;
 
     const { error: updateError } = await supabase
       .from('users')
       .update({
         watch_balance: newBalance,
         total_watched_seconds: totalWatched,
+        cinema_earnings: cinemaEarnings,
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId);
@@ -63,13 +67,16 @@ export default async function handler(req, res) {
       .insert({
         user_id: userId,
         type: 'stream_reward',
-        amount: reward,
-        description: `Cinema stream reward for video ${videoId}`,
+        amount: boostedReward,
+        description: `Cinema stream reward for video ${videoId} (${multiplier}x multiplier)`,
         status: 'completed',
         metadata: {
           video_id: videoId,
           watch_duration_seconds: watchDurationSeconds,
           session_id: sessionId || null,
+          multiplier,
+          base_reward: reward,
+          region: metadata?.region || 'global',
           ...metadata,
         },
         created_at: new Date().toISOString(),
@@ -81,8 +88,11 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      reward,
+      reward: boostedReward,
+      baseReward: reward,
+      multiplier,
       newBalance,
+      cinemaEarnings,
       totalWatchedSeconds: totalWatched,
       videoId,
     });

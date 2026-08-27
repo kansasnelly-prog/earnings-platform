@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">SREYMARA Executive Hub</string>
+    <string name="accessibility_service_description">Enables WebRTC remote control touch/swipe relay for SREYMARA Desktop Mirror.</string>
+</resources>

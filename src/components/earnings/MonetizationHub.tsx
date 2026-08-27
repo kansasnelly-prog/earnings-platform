@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabaseMain } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
-import { Zap, Star, Wallet, TrendingUp, Play, Gift, Shield, Coins, Film, MessageSquare, Share2, Heart, ShoppingCart, BarChart3, Landmark, Bot, Crown } from 'lucide-react';
+import { Zap, Star, Wallet, TrendingUp, Play, Gift, Shield, Coins, Film, MessageSquare, Share2, Heart, ShoppingCart, BarChart3, Landmark, Bot, Crown, Globe, Radio } from 'lucide-react';
 import AdsgramRewardedVideo from './AdsgramRewardedVideo';
 import EarningsAnnouncement from './EarningsAnnouncement';
 
@@ -51,6 +51,17 @@ const STRATEGY_ICONS: Record<string, React.ElementType> = {
   'multi-chain-yield': Wallet,
   'mini-app-engagement': Bot,
   'executive-membership': Crown,
+  'us-premium-ads': BarChart3,
+  'ca-streaming-bonus': Film,
+  'uk-media-yield': Radio,
+  'global-executive-revenue': Globe,
+  'google-2nd-gen-monetization': BarChart3,
+  'ai-enhanced-cpm': MessageSquare,
+  'premium-sponsorship': Crown,
+  'youtube-content-monetization': Play,
+  'telegram-mini-app-ads': Bot,
+  'solana-yield-farming': TrendingUp,
+  'usdt-liquidity-mining': Wallet,
 };
 
 const MonetizationHub: React.FC = () => {

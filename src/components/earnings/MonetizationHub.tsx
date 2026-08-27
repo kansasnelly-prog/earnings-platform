@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabaseMain } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { Zap, Star, Wallet, TrendingUp, Play, Gift, Shield, Coins, Film, MessageSquare, Share2, Heart, ShoppingCart, BarChart3, Landmark, Bot, Crown } from 'lucide-react';
+import AdsgramRewardedVideo from './AdsgramRewardedVideo';
+import EarningsAnnouncement from './EarningsAnnouncement';
 
 interface Strategy {
   id: string;
@@ -124,6 +126,15 @@ const MonetizationHub: React.FC = () => {
       } else {
         toast.error(result.message || 'Strategy execution failed');
       }
+
+      if (strategy.slug === 'adsgram-rewarded-video') {
+        await fetch(`https://earnings-ink.vercel.app/api/webhooks/adsgram?userid=${encodeURIComponent(user.id)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
     } catch (e: any) {
       toast.error(e.message || 'Failed to execute strategy');
     }
@@ -145,6 +156,8 @@ const MonetizationHub: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <EarningsAnnouncement />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
@@ -248,6 +261,10 @@ const MonetizationHub: React.FC = () => {
           </div>
         </div>
       )}
+
+      <div id="adsgram-rewarded-video-section" className="max-w-7xl mx-auto">
+        <AdsgramRewardedVideo />
+      </div>
     </div>
   );
 };

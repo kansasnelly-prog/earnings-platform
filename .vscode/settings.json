@@ -11,5 +11,8 @@
   "window.zoomLevel": 1,
   "screencastMode.keyboardOverlayTimeout": 700,
   "editor.tabSize": 2,
-  "remote.windsurfDevContainers.enableSSHAgentForwarding": false
+  "remote.windsurfDevContainers.enableSSHAgentForwarding": false,
+  "terminal.integrated.shellIntegration.enabled": true,
+  "workbench.terminal.executionTimeout": 3600000,
+  "workbench.terminal.integrated.shellIntegration.enabled": true
 }

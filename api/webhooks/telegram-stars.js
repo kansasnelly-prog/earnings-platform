@@ -1,40 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { loadEnv, sendResponse, getSupabase, creditUser, MASTER_WALLET, PROFIT_MULTIPLIER, corsHeaders } from '../_shared/supabaseBackend.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-function loadEnv() {
-  const envPath = path.resolve(__dirname, '../.env');
-  if (!fs.existsSync(envPath)) return {};
-  const envContent = fs.readFileSync(envPath, 'utf8');
-  const envVars: Record<string, string> = {};
-  envContent.split('\n').forEach(line => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) return;
-    const [key, ...rest] = trimmed.split('=');
-    if (key && rest.length) {
-      envVars[key.trim()] = rest.join('=').trim().replace(/^["']|["']$/g, '');
-    }
-  });
-  return envVars;
-}
 
 const ENV = loadEnv();
 const TELEGRAM_BOT_TOKEN = ENV.TELEGRAM_BOT_TOKEN || '8513756424:AAFBTFeIiQA5fglLOz4HXxSixylSwGjGsgA';
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
-const MASTER_WALLET = ENV.MASTER_WALLET || '5uYJ3iVSCnCTVA7Nfr25JTCmE8LPyaAziCNGi1P55DRL';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
-
-function sendResponse(res, statusCode, data) {
-  res.writeHead(statusCode, corsHeaders);
-  res.end(JSON.stringify(data));
-}
 
 async function callTelegramAPI(method, payload) {
   const url = `${TELEGRAM_API_URL}/${method}`;
@@ -60,13 +33,13 @@ async function sendTelegramAlert(chatId, messageText) {
 
 async function handler(req, res) {
   if (req.method === 'OPTIONS') {
-    res.writeHead(200, corsHeaders);
-    res.end();
+    sendResponse(res, 200, { success: true });
     return;
   }
 
   if (req.method !== 'POST') {
-    return sendResponse(res, 405, { error: 'Method Not Allowed' });
+    sendResponse(res, 405, { error: 'Method Not Allowed' });
+    return;
   }
 
   try {
@@ -87,23 +60,34 @@ async function handler(req, res) {
     }
 
     const chatId = message.chat.id;
-    const amountStars = payment.total_amount;
+    const amountStars = Number(payment.total_amount) || 0;
     const txId = payment.telegram_payment_charge_id;
 
-    const alertMsg = `<b>Instant Payment Confirmation!</b>\n\nReceived: <b>${amountStars} Stars (XTR)</b>\nCharge ID: <code>${txId}</code>\nStatus: Credited to SREYMARA Wallet.`;
+    const multipliedStars = amountStars * PROFIT_MULTIPLIER;
+    const creditResult = await creditUser(
+      String(chatId),
+      multipliedStars,
+      'Stars',
+      'telegram-stars',
+      { txId, network: 'telegram-stars' }
+    );
+
+    const alertMsg = `<b>Instant Payment Confirmation!</b>\n\nReceived: <b>${multipliedStars} Stars (XTR)</b>\nCharge ID: <code>${txId}</code>\nMaster Wallet: <code>${MASTER_WALLET.slice(0, 8)}...</code>\nStatus: Credited to SREYMARA Wallet.`;
 
     await sendTelegramAlert(chatId, alertMsg);
 
-    return sendResponse(res, 200, {
+    sendResponse(res, 200, {
       status: 'processed',
       network: 'telegram-stars',
-      amountStars,
+      amountStars: multipliedStars,
+      baseAmountStars: amountStars,
       txId,
+      creditResult,
       masterWallet: MASTER_WALLET,
     });
   } catch (error) {
     console.error('[TelegramStars] Handler error:', error);
-    return sendResponse(res, 500, { status: 'FAILED', error: error.message || 'Internal server error' });
+    sendResponse(res, 500, { status: 'FAILED', error: error.message || 'Internal server error' });
   }
 }
 

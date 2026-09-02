@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, ArrowDownToLine, Settings, Key, UsersRound, BarChart3, Megaphone, Radio, Film, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, ArrowDownToLine, Settings, Key, UsersRound, BarChart3, Megaphone, Radio, Film, Shield, Bot } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
@@ -10,6 +10,7 @@ const AdminDirectory: React.FC = () => {
 
   const panels = [
     { id: 'command-center', label: 'Command Center', desc: 'Main admin hub with overview, users, withdrawals, and match admin.', icon: LayoutDashboard, route: '/admin/command-center' },
+    { id: 'ai-workspace', label: 'AI Workspace', desc: 'Premium 3D admin panels, NellyCoin ledger, and platform controls.', icon: Bot, route: '/admin/ai-workspace' },
     { id: 'match-feed', label: 'Match & Chat Monitor', desc: 'Live matchmaking feeds, chat oversight, and dating sandbox admin.', icon: UsersRound, route: '/admin/command-center' },
     { id: 'tiktok', label: 'TikTok / Social Panel', desc: 'TikTok Shop sync, permissions, and social engine monitoring.', icon: Megaphone, route: '/admin/command-center' },
     { id: 'telegram', label: 'Telegram App Hub Sync', desc: 'Mini App ecosystem status, webhook health, and bot analytics.', icon: Radio, route: '/admin/command-center' },

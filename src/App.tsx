@@ -5,6 +5,7 @@ import OptimizationPlatform from './pages/Index';
 import LandingPage from './pages/Index-simple';
 import AdminCommandCenter from './pages/admin/command-center';
 import AdminDirectory from './pages/admin/Directory';
+import AIAssistantWorkspace from './pages/AIAssistantWorkspace';
 import ProtectedRoute from './components/ProtectedRoute';
 import NotFound from './pages/NotFound';
 import { AuthProvider } from './contexts/SafeAuthProvider';
@@ -52,6 +53,11 @@ const App: React.FC = () => {
             <Route path="/admin/command-center" element={
               <ProtectedRoute>
                 <AdminCommandCenter />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/ai-workspace" element={
+              <ProtectedRoute>
+                <AIAssistantWorkspace />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

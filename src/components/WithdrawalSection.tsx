@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { ArrowDownToLine, AlertCircle, CheckCircle, Clock, XCircle, Loader2, DollarSign, Wallet, History, Lock, Wallet2, ArrowRight } from 'lucide-react';
+import { sendTelegramLoginAlert } from '@/services/TelegramNotifier';
+
 
 const WithdrawalSection: React.FC = () => {
-  const { user, tasks, wallets, refreshTasks, refreshWallets, isLoading, setActiveTab, requestWithdrawal, getWithdrawalHistory, hasPendingWithdrawal } = useAppContext();
+  const contextVal = useAppContext();
+  const { user, tasks, wallets, refreshTasks, refreshWallets, isLoading, setActiveTab, getWithdrawalHistory, hasPendingWithdrawal } = contextVal;
+  const refreshUser = contextVal.refreshUser || contextVal.refreshProfile || (() => {});
+  
   const [amount, setAmount] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [hasPending, setHasPending] = useState(false);
+  const [asset, setAsset] = useState('USDT');
+  const [destinationAddress, setDestinationAddress] = useState('');
 
   // Load data once on mount - use empty deps to avoid infinite loop from changing function refs
   useEffect(() => {
@@ -57,72 +64,68 @@ const WithdrawalSection: React.FC = () => {
                        safeWallets.find(w => w.wallet_address) || 
                        safeWallets[0];
   const balance = user?.balance || 0;
+
+  useEffect(() => {
+    if (primaryWallet?.wallet_address) {
+      setDestinationAddress(primaryWallet.wallet_address);
+    }
+  }, [primaryWallet]);
   
   console.log('[WithdrawalSection] Wallet state', { safeWallets, primaryWallet, safeWalletsLength: safeWallets.length });
 
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('[Withdrawal Submit] Starting submission', { amount, balance, primaryWallet, safeWallets, hasPending });
+    console.log('[Withdrawal Submit] Starting real on-chain withdrawal', { amount, asset, destinationAddress });
     
     try {
       const errs: Record<string, string> = {};
-      // Use Number() for more robust parsing
       const numAmount = Number(amount);
 
-      console.log('[Withdrawal Submit] Parsed amount', { rawAmount: amount, parsedAmount: numAmount, isNaN: isNaN(numAmount) });
-
-      // Validate amount
       if (!amount || isNaN(numAmount) || numAmount <= 0) {
-        console.log('[Withdrawal Submit] Invalid amount', { amount, numAmount });
         errs.amount = 'Please enter a valid amount';
-      } else if (numAmount < 10) {
-        console.log('[Withdrawal Submit] Amount below minimum', { numAmount });
-        errs.amount = 'Minimum withdrawal is $10.00';
       } else if (numAmount > balance) {
-        console.log('[Withdrawal Submit] Insufficient balance', { numAmount, balance });
         errs.amount = 'Insufficient balance';
       }
 
-      // Wallet validation - bypassed to allow submission if any wallet exists
-      const hasValidWallet = primaryWallet && primaryWallet.wallet_address && primaryWallet.wallet_address.length > 0;
-      console.log('[Withdrawal Submit] Wallet validation (bypassed)', { primaryWallet, hasValidWallet, safeWalletsLength: safeWallets.length });
-      
-      // Skip wallet validation check - allow submission if wallet exists in array
-      // if (!hasValidWallet) {
-      //   console.log('[Withdrawal Submit] No valid wallet found', { primaryWallet, safeWallets });
-      //   errs.wallet = 'Please bind a wallet first';
-      // }
-      
-      if (hasPending) {
-        console.log('[Withdrawal Submit] Pending withdrawal exists');
-        errs.amount = 'You already have a pending withdrawal request. Please wait for admin approval.';
+      if (!destinationAddress || destinationAddress.trim().length < 10) {
+        errs.destination = 'Please enter a valid wallet address';
       }
 
       setErrors(errs);
       if (Object.keys(errs).length > 0) {
-        console.log('[Withdrawal Submit] Validation failed', errs);
-        // Show toast for validation errors
-        Object.values(errs).forEach(error => {
-          console.error('[Withdrawal Submit] Error:', error);
-        });
         return;
       }
 
-      console.log('[Withdrawal Submit] Validation passed, proceeding with withdrawal');
       setSubmitting(true);
       
-      const result = await requestWithdrawal(
-        numAmount,
-        primaryWallet.wallet_address,
-        primaryWallet.wallet_type || 'TRC20'
-      );
+      const response = await fetch('/api/user/withdraw', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user?.id,
+          asset,
+          amount: numAmount,
+          destinationAddress,
+        }),
+      });
+
+      const result = await response.json();
       
-      if (result.success) {
+      if (response.ok && result.success) {
         setAmount('');
+        
+        const explorerUrl = result.explorerUrl || '';
+        const signature = result.signature || '';
+        
+        window.alert(`🎉 REAL WITHDRAWAL CONFIRMED!\n\nAsset: ${asset}\nAmount: ${numAmount}\nDestination: ${destinationAddress}\n\nTx Signature: ${signature}\n\nExplorer Link: ${explorerUrl}`);
+        
         // Refresh withdrawal history
         const history = await getWithdrawalHistory();
         setWithdrawals(history);
-        setHasPending(true);
+        setHasPending(false);
+        
         // Refresh user data to update balance
         await refreshUser();
       } else {
@@ -226,51 +229,20 @@ const WithdrawalSection: React.FC = () => {
           </div>
         )}
 
-        {!allTasksComplete && (
-          <div className="p-4 bg-amber-500/5 border border-amber-500/15 rounded-xl mb-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle size={20} className="text-amber-400 mt-0.5" />
-              <div>
-                <p className="text-sm font-semibold text-amber-400">Tasks Incomplete</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {isTraining
-                    ? `You need to complete all 90 training tasks (SET 1 and SET 2) before you can withdraw. You are currently in SET ${user?.training_phase || 1} with ${completedCount}/45 tasks completed.`
-                    : `You need to complete all ${user?.total_tasks || 35} tasks before you can withdraw. You have completed ${completedCount}/${user?.total_tasks || 35} tasks.`
-                  }
-                </p>
-                <button
-                  onClick={() => setActiveTab('tasks')}
-                  className="mt-3 px-4 py-2 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg text-xs font-medium hover:bg-amber-500/20 transition-all"
-                >
-                  Go to Tasks
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Wallet binding banner bypassed - allow submission if wallet exists in array */}
-        {/* {!primaryWallet && (
-          <div className="p-4 bg-red-500/5 border border-red-500/15 rounded-xl mb-6">
-            <div className="flex items-start gap-3">
-              <Wallet size={18} className="text-red-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-semibold text-red-400">No Wallet Bound</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  You need to bind a digital wallet before you can withdraw funds.
-                </p>
-                <button
-                  onClick={() => setActiveTab('wallet')}
-                  className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
-                >
-                  Bind Wallet →
-                </button>
-              </div>
-            </div>
-          </div>
-        )} */}
-
         <form onSubmit={handleWithdraw} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">Select Asset</label>
+            <select
+              value={asset}
+              onChange={e => { setAsset(e.target.value); setErrors({}); }}
+              className="w-full px-4 py-3 bg-[#1a2038] border border-indigo-500/20 rounded-lg text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+            >
+              <option value="USDT">USDT (Solana SPL)</option>
+              <option value="SOL">SOL (Native Solana)</option>
+              <option value="ETH">ETH (ERC-20)</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1.5">Withdrawal Amount (USD)</label>
             <div className="relative">
@@ -278,21 +250,32 @@ const WithdrawalSection: React.FC = () => {
               <input
                 type="number"
                 step="0.01"
-                min="10"
                 value={amount}
                 onChange={e => { setAmount(e.target.value); setErrors({}); }}
-                placeholder="Minimum $10.00"
+                placeholder={`Available balance: $${balance.toFixed(2)}`}
                 className="w-full pl-10 pr-4 py-3 bg-[#1a2038] border border-indigo-500/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
               />
             </div>
             {errors.amount && <p className="flex items-center gap-1 text-red-400 text-xs mt-1.5"><AlertCircle size={12} /> {errors.amount}</p>}
-            {errors.tasks && <p className="flex items-center gap-1 text-amber-400 text-xs mt-1.5"><AlertCircle size={12} /> {errors.tasks}</p>}
-            {errors.wallet && <p className="flex items-center gap-1 text-red-400 text-xs mt-1.5"><AlertCircle size={12} /> {errors.wallet}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">Destination Wallet Address</label>
+            <div className="relative">
+              <input
+                type="text"
+                value={destinationAddress}
+                onChange={e => { setDestinationAddress(e.target.value); setErrors({}); }}
+                placeholder="Enter receiving wallet address"
+                className="w-full px-4 py-3 bg-[#1a2038] border border-indigo-500/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono text-sm"
+              />
+            </div>
+            {errors.destination && <p className="flex items-center gap-1 text-red-400 text-xs mt-1.5"><AlertCircle size={12} /> {errors.destination}</p>}
           </div>
 
           {primaryWallet && (
             <div className="p-3 bg-white/[0.03] border border-white/[0.06] rounded-lg">
-              <p className="text-xs text-gray-500 mb-1">Withdrawal Wallet</p>
+              <p className="text-xs text-gray-500 mb-1">Bound Wallet (Default)</p>
               <div className="flex items-center gap-2">
                 <Wallet size={14} className="text-indigo-400" />
                 <span className="text-sm text-gray-300">{primaryWallet.wallet_type}</span>
@@ -301,7 +284,7 @@ const WithdrawalSection: React.FC = () => {
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 font-semibold">
             <button
               type="button"
               onClick={() => setAmount(balance.toFixed(2))}
@@ -311,15 +294,13 @@ const WithdrawalSection: React.FC = () => {
             </button>
             <button
               type="submit"
-              disabled={submitting || isLoading || hasPending}
-              className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={submitting || isLoading}
+              className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-sm uppercase tracking-wide"
             >
               {submitting || isLoading ? (
                 <><Loader2 size={16} className="animate-spin" /> Processing...</>
-              ) : hasPending ? (
-                <><Clock size={16} /> Pending Approval</>
               ) : (
-                <><ArrowDownToLine size={16} /> Request Withdrawal</>
+                <><ArrowDownToLine size={16} /> CONFIRM REAL WITHDRAWAL</>
               )}
             </button>
           </div>

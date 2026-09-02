@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabaseMain } from '@/lib/supabaseClient';
+import { useAppContext } from '@/contexts/AppContext';
 import { toast } from 'sonner';
-import { Zap, Star, Wallet, TrendingUp, Play, Gift, Shield, Coins, Film, MessageSquare, Share2, Heart, ShoppingCart, BarChart3, Landmark, Bot, Crown, Globe, Radio } from 'lucide-react';
+import { Zap, Star, Wallet, TrendingUp, Play, Gift, Shield, Coins, Film, MessageSquare, Share2, Heart, ShoppingCart, BarChart3, Landmark, Bot, Crown, Globe, Radio, DollarSign } from 'lucide-react';
 import AdsgramRewardedVideo from './AdsgramRewardedVideo';
 import EarningsAnnouncement from './EarningsAnnouncement';
 
@@ -65,6 +66,7 @@ const STRATEGY_ICONS: Record<string, React.ElementType> = {
 };
 
 const MonetizationHub: React.FC = () => {
+  const { user, refreshUser } = useAppContext();
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [earnings, setEarnings] = useState<UserEarning[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,6 +136,7 @@ const MonetizationHub: React.FC = () => {
       if (result.success) {
         toast.success(`${strategy.name}: ${result.message || 'Reward processed'}`);
         loadData();
+        refreshUser().catch(() => {});
       } else {
         toast.error(result.message || 'Strategy execution failed');
       }
@@ -184,6 +187,55 @@ const MonetizationHub: React.FC = () => {
         <StatCard label="Stars Earned" value={totalEarned.stars.toLocaleString()} icon={Star} />
         <StatCard label="TON Earned" value={`${totalEarned.ton.toFixed(2)} TON`} icon={Wallet} />
         <StatCard label="SOL Earned" value={`${totalEarned.sol.toFixed(4)} SOL`} icon={TrendingUp} />
+      </div>
+
+      {/* Master Wallet Aggregator */}
+      <div className="bg-gradient-to-r from-yellow-900/20 to-amber-900/20 border border-yellow-500/30 rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <DollarSign className="text-yellow-400" size={24} />
+              12X Profit Engine
+            </h2>
+            <p className="text-sm text-gray-400 mt-1">Aggregates cinema, ads, telegram, and all monetization channels. 15% master cut auto-distributed.</p>
+          </div>
+          <button
+            onClick={async () => {
+              try {
+                const token = localStorage.getItem('supabase_jwt') || localStorage.getItem('sb-access-token');
+                const response = await fetch('/api/master-wallet/aggregator', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ action: 'aggregate' }),
+                });
+                const result = await response.json();
+                toast.success(`Aggregated: $${result.totals?.total?.toFixed(2) || 0} | Master cut: $${result.masterCut?.toFixed(2) || 0}`);
+              } catch (e) {
+                toast.error('Aggregation failed');
+              }
+            }}
+            className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white font-bold rounded-xl transition-all"
+          >
+            Aggregate 12X Profits
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-black/30 border border-yellow-500/20 rounded-xl p-4">
+            <p className="text-xs text-gray-400 uppercase tracking-widest">Master Wallet</p>
+            <p className="text-sm font-mono text-yellow-300 mt-1">5uYJ3iVSCnCTVA7Nfr25JTCmE8LPyaAziCNGi1P55DRL</p>
+          </div>
+          <div className="bg-black/30 border border-yellow-500/20 rounded-xl p-4">
+            <p className="text-xs text-gray-400 uppercase tracking-widest">Profit Multiplier</p>
+            <p className="text-2xl font-bold text-yellow-300 mt-1">12X</p>
+          </div>
+          <div className="bg-black/30 border border-yellow-500/20 rounded-xl p-4">
+            <p className="text-xs text-gray-400 uppercase tracking-widest">Master Cut</p>
+            <p className="text-2xl font-bold text-emerald-300 mt-1">15%</p>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">

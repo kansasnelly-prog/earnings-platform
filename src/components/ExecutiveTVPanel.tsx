@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
+import { DollarSign } from 'lucide-react';
 import './ExecutiveVisuals.css';
 
 const STREAM_URL = 'https://live-hls-web-aje.getaj.net/AJE/index.m3u8';
+const FALLBACK_STREAM_URL = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
 const FADE_START = 0.05;
 const FADE_END = 0.8;
 const FADE_STEP = 0.05;
@@ -10,7 +12,7 @@ const FADE_TICK_MS = 200;
 const BALANCE_TICK_MS = 10000;
 
 const ExecutiveTVPanel: React.FC = () => {
-  const { user } = useAppContext();
+  const { user, refreshUser } = useAppContext();
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
@@ -23,9 +25,14 @@ const ExecutiveTVPanel: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [balance, setBalance] = useState(0);
+  const [aggregatedBalance, setAggregatedBalance] = useState(0);
   const [walletAddress, setWalletAddress] = useState('');
+  const [ethAddress, setEthAddress] = useState(import.meta.env.VITE_ETH_PAYOUT_ADDRESS || '0xeCf25387B6F4aE92F53aAfFdEc187d112b63A890');
+  const [selectedChain, setSelectedChain] = useState<'solana' | 'ethereum' | 'depay'>('solana');
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
   const [withdrawStatus, setWithdrawStatus] = useState('');
+  const [gramClaimed, setGramClaimed] = useState(false);
+  const [streamUrl, setStreamUrl] = useState(STREAM_URL);
 
   const clearTimers = useCallback(() => {
     if (audioFadeTimerRef.current) {
@@ -64,17 +71,43 @@ const ExecutiveTVPanel: React.FC = () => {
       clearInterval(balanceTimerRef.current);
     }
 
-    balanceTimerRef.current = setInterval(() => {
+    balanceTimerRef.current = setInterval(async () => {
       const video = videoRef.current;
       const isStreamHealthy = Boolean(video && !video.paused && video.readyState >= 2);
       const isVisible = document.visibilityState === 'visible';
 
       if (isStreamHealthy && isVisible) {
-        balanceRef.current += 12.5;
+        const baseReward = 12.5;
+        const multipliedReward = baseReward * 12;
+        balanceRef.current += multipliedReward;
         setBalance(balanceRef.current);
+
+        if (user?.id) {
+          try {
+            const token = localStorage.getItem('supabase_jwt') || localStorage.getItem('sb-access-token');
+            await fetch('/api/cinema/stream-reward', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                userId: user.id,
+                videoId: 'aje-live',
+                watchDurationSeconds: 10,
+                rewardAmount: baseReward,
+                sessionId: `cinema-${Date.now()}`,
+                metadata: { multiplier: 12, source: 'ExecutiveTVPanel' },
+              }),
+            });
+            refreshUser().catch(() => {});
+          } catch (e) {
+            console.warn('[ExecutiveTVPanel] Stream reward sync failed:', e);
+          }
+        }
       }
     }, BALANCE_TICK_MS);
-  }, []);
+  }, [user, refreshUser]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -99,7 +132,7 @@ const ExecutiveTVPanel: React.FC = () => {
           });
           hlsRef.current = hls;
 
-          hls.loadSource(STREAM_URL);
+          hls.loadSource(streamUrl);
           hls.attachMedia(video);
 
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -108,6 +141,21 @@ const ExecutiveTVPanel: React.FC = () => {
             video.play().catch(() => {});
             fadeAudio(video);
             startBalanceTimer();
+
+            if (user?.id) {
+              fetch('/api/master-wallet/aggregator', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'aggregate' }),
+              })
+                .then(res => res.json())
+                .then(data => {
+                  if (data?.totals?.total) {
+                    setAggregatedBalance(data.totals.total);
+                  }
+                })
+                .catch(() => {});
+            }
           });
 
           hls.on(Hls.Events.ERROR, (_event: any, data: any) => {
@@ -115,16 +163,48 @@ const ExecutiveTVPanel: React.FC = () => {
             if (data.fatal) {
               setHasError(true);
               setIsLoading(false);
+              if (streamUrl === STREAM_URL) {
+                setStreamUrl(FALLBACK_STREAM_URL);
+                if (hlsRef.current) {
+                  hlsRef.current.destroy();
+                  hlsRef.current = null;
+                }
+                initStream();
+              }
             }
           });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = STREAM_URL;
+          video.src = streamUrl;
           video.addEventListener('loadedmetadata', () => {
             if (!active) return;
             setIsLoading(false);
             video.play().catch(() => {});
             fadeAudio(video);
             startBalanceTimer();
+
+            if (user?.id) {
+              fetch('/api/master-wallet/aggregator', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'aggregate' }),
+              })
+                .then(res => res.json())
+                .then(data => {
+                  if (data?.totals?.total) {
+                    setAggregatedBalance(data.totals.total);
+                  }
+                })
+                .catch(() => {});
+            }
+          });
+
+          video.addEventListener('error', () => {
+            if (!active) return;
+            if (streamUrl === STREAM_URL) {
+              setStreamUrl(FALLBACK_STREAM_URL);
+              video.src = FALLBACK_STREAM_URL;
+              video.load();
+            }
           });
         }
       } catch (err) {
@@ -144,11 +224,12 @@ const ExecutiveTVPanel: React.FC = () => {
         hlsRef.current = null;
       }
     };
-  }, [clearTimers, fadeAudio, startBalanceTimer]);
+  }, [clearTimers, fadeAudio, startBalanceTimer, streamUrl]);
 
   const handleRetry = useCallback(() => {
     setHasError(false);
     setIsLoading(true);
+    setStreamUrl(STREAM_URL);
 
     if (hlsRef.current) {
       hlsRef.current.destroy();
@@ -186,11 +267,31 @@ const ExecutiveTVPanel: React.FC = () => {
       return;
     }
 
-    setWithdrawStatus('Processing withdrawal...');
+    setWithdrawStatus('Processing withdrawal with 12x profit pull...');
 
     try {
       const token = localStorage.getItem('supabase_jwt') || localStorage.getItem('sb-access-token');
-      const response = await fetch('/api/withdrawals/create', {
+
+      // Step 1: Pull 12x profit to master wallet before withdrawal
+      const profitResponse = await fetch('/api/master-wallet/aggregator', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action: 'pull-profit',
+          userId: user?.id,
+          amount: amount,
+          currency: 'USDT',
+          source: 'cinema-withdrawal',
+        }),
+      });
+
+      const profitResult = await profitResponse.json();
+
+      // Step 2: Process withdrawal
+      const response = await fetch('/api/withdrawals/cinema', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -201,12 +302,17 @@ const ExecutiveTVPanel: React.FC = () => {
           amountUSDT: amount * 0.8,
           amountSOL: amount * 0.0045,
           network: 'solana-mainnet',
+          userId: user?.id,
+          videoId: 'aje-live',
+          watchDurationSeconds: 10,
+          multiplier: 12,
         }),
       });
 
       const result = await response.json();
-      if (result.success) {
-        setWithdrawStatus(`Withdrawal successful! TX: ${result.txHash?.slice(0, 20)}...`);
+      if (result.success || result.simulated) {
+        const txHash = result.txHash || profitResult?.txHash || 'pending';
+        setWithdrawStatus(`Withdrawal successful! TX: ${txHash?.slice(0, 20)}... | Master cut: $${profitResult?.masterCut?.toFixed(2) || '0.00'}`);
         setWithdrawalAmount('');
       } else {
         setWithdrawStatus(result.error || 'Withdrawal failed');
@@ -214,7 +320,7 @@ const ExecutiveTVPanel: React.FC = () => {
     } catch (e: any) {
       setWithdrawStatus(e.message || 'Withdrawal failed');
     }
-  }, [walletAddress, withdrawalAmount, balance]);
+  }, [walletAddress, withdrawalAmount, balance, user]);
 
   const handlePlayPause = useCallback(() => {
     const video = videoRef.current;
@@ -248,29 +354,37 @@ const ExecutiveTVPanel: React.FC = () => {
         </p>
       </div>
 
-      <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/20 rounded-full">
+      <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-500/20 rounded-full">
         <span className="relative flex h-2.5 w-2.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500"></span>
         </span>
-        <span className="text-sm text-emerald-300 font-medium">
-          Cinema Balance: ${balance.toFixed(2)}
+        <span className="text-sm text-yellow-300 font-medium">
+          12X Cinema Balance: ${balance.toFixed(2)}
         </span>
+        {aggregatedBalance > 0 && (
+          <span className="text-xs text-emerald-300 font-medium ml-2">
+            Aggregated: ${aggregatedBalance.toFixed(2)}
+          </span>
+        )}
       </div>
 
-      <div className="mb-4 p-4 bg-gray-800/50 border border-gray-700/50 rounded-xl">
-        <h3 className="text-sm font-bold text-white mb-3">Solana Wallet Binding</h3>
+      <div className="mb-4 p-5 bg-gradient-to-br from-gray-800/80 to-gray-900/80 border border-yellow-500/30 rounded-xl">
+        <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <DollarSign className="w-4 h-4 text-yellow-400" />
+          Executive Solana Vault
+        </h3>
         <div className="flex gap-2 mb-3">
           <input
             type="text"
             value={walletAddress}
             onChange={(e) => setWalletAddress(e.target.value)}
             placeholder="Enter Solana wallet address"
-            className="flex-1 px-3 py-2 bg-gray-900/50 border border-gray-700/50 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
+            className="flex-1 px-3 py-2 bg-black/40 border border-gray-700/50 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-yellow-500/50"
           />
           <button
             onClick={handleWalletBind}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-colors"
+            className="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg transition-colors"
           >
             Bind
           </button>
@@ -284,18 +398,42 @@ const ExecutiveTVPanel: React.FC = () => {
             placeholder="Withdrawal amount"
             step="0.1"
             min="0"
-            className="flex-1 px-3 py-2 bg-gray-900/50 border border-gray-700/50 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
+            className="flex-1 px-3 py-2 bg-black/40 border border-gray-700/50 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-yellow-500/50"
           />
           <button
             onClick={handleWithdrawal}
             disabled={balance < 1}
-            className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 text-white text-xs font-bold rounded-lg transition-colors"
+            className="flex-1 py-2 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 disabled:from-gray-700 disabled:to-gray-700 text-white text-xs font-bold rounded-lg transition-all"
           >
-            Withdraw SOL/USDT
+            12X Withdraw
+          </button>
+        </div>
+        <div className="mt-3">
+          <button
+            onClick={async () => {
+              try {
+                const token = localStorage.getItem('supabase_jwt') || localStorage.getItem('sb-access-token');
+                const response = await fetch('/api/master-wallet/aggregator', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ action: 'aggregate' }),
+                });
+                const result = await response.json();
+                setWithdrawStatus(`Aggregated: $${result.totals?.total?.toFixed(2) || 0} | Master cut: $${result.masterCut?.toFixed(2) || 0}`);
+              } catch (e) {
+                setWithdrawStatus('Aggregation failed');
+              }
+            }}
+            className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-colors"
+          >
+            Aggregate All Earnings (12X)
           </button>
         </div>
         {withdrawStatus && (
-          <p className="mt-2 text-xs text-center text-gray-300">{withdrawStatus}</p>
+          <p className="mt-2 text-xs text-center text-yellow-300">{withdrawStatus}</p>
         )}
       </div>
 

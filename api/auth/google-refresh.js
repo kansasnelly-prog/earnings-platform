@@ -9,7 +9,7 @@ function loadEnv() {
   const envPath = path.resolve(__dirname, '../.env');
   if (!fs.existsSync(envPath)) return {};
   const envContent = fs.readFileSync(envPath, 'utf8');
-  const envVars: Record<string, string> = {};
+  const envVars = {};
   envContent.split('\n').forEach(line => {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('#')) return;

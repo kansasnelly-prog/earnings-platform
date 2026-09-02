@@ -24,13 +24,6 @@ const PlatformSwitch: React.FC = () => {
   if (!MASTER_ADMIN_EMAILS.includes(userEmail?.toLowerCase() || '')) {
     return null;
   }
-  };
-
-  // Only show platform switch for master admin
-  const userEmail = localStorage.getItem('user_email');
-  if (userEmail !== MASTER_ADMIN_EMAIL) {
-    return null;
-  }
 
   return (
     <div className="fixed top-4 right-4 z-50 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-2 shadow-2xl">

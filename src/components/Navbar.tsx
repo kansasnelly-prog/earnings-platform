@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 import { useCSNotification } from '@/contexts/CSNotificationContext';
-import { LogOut, User, ChevronDown, Zap, Home, LayoutDashboard, Wallet, ArrowDownToLine, UserCircle, Menu, X, Shield, MessageCircle, ExternalLink, RefreshCw, Badge, Settings, BarChart3, Film, LucideIcon } from 'lucide-react';
+import { LogOut, User, ChevronDown, Zap, Home, LayoutDashboard, Wallet, ArrowDownToLine, UserCircle, Menu, X, Shield, MessageCircle, ExternalLink, RefreshCw, Badge, Settings, BarChart3, Film, LucideIcon, Crown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,6 +79,10 @@ const navItems: NavItem[] = [{
     id: 'withdraw',
     label: 'Withdraw',
     icon: ArrowDownToLine
+  }, {
+    id: 'vault',
+    label: 'Vault',
+    icon: Crown
   }, {
     id: 'profile',
     label: 'Profile',

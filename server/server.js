@@ -45,9 +45,9 @@ app.use('/api/user', masterControllerRouter);
 // =========================================================================
 
 const TELEGRAM_CONFIG = {
-  CHAT_ID: "7683177085",
-  BOT_TOKEN: "8513756424:AAFBTFeIiQA5fglLOz4HXxSixylSwGjGsgA",
-  OWNER: "NDUNAKA PROSPER CHINEMEREM"
+  CHAT_ID: process.env.TELEGRAM_CHAT_ID || "7683177085",
+  BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || "",
+  OWNER: process.env.OWNER || "NDUNAKA PROSPER CHINEMEREM"
 };
 
 async function sendS2STelegramAlert(network, userRef, amountUsd, type) {

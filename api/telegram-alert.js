@@ -1,46 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { loadEnv, sendResponse, getSupabase, creditUser, MASTER_WALLET, PROFIT_MULTIPLIER, corsHeaders } from '../_shared/supabaseBackend.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Load environment variables from .env file
-function loadEnv() {
-  const envPath = path.resolve(__dirname, '../.env');
-  if (!fs.existsSync(envPath)) return {};
-  const envContent = fs.readFileSync(envPath, 'utf8');
-  const envVars: Record<string, string> = {};
-  envContent.split('\n').forEach(line => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) return;
-    const [key, ...rest] = trimmed.split('=');
-    if (key && rest.length) {
-      envVars[key.trim()] = rest.join('=').trim().replace(/^["']|["']$/g, '');
-    }
-  });
-  return envVars;
-}
-
-const ENV = loadEnv();
-
-const TELEGRAM_BOT_TOKEN = ENV.TELEGRAM_BOT_TOKEN || '8513756424:AAFBTFeIiQA5fglLOz4HXxSixylSwGjGsgA';
-const TELEGRAM_CHAT_ID = ENV.TELEGRAM_CHAT_ID || '';
-const MASTER_EMAIL = ENV.MASTER_EMAIL || 'kansasnelly@gmail.com';
-const MASTER_WALLET = ENV.MASTER_WALLET || '5uYJ3iVSCnCTVA7Nfr25JTCmE8LPyaAziCNGi1P55DRL';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
-
-function sendResponse(res, statusCode, data) {
-  res.writeHead(statusCode, corsHeaders);
-  res.end(JSON.stringify(data));
-}
-
 async function callTelegramAPI(method, payload) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`;
+  const env = loadEnv();
+  const token = env.TELEGRAM_BOT_TOKEN || '';
+  const url = `https://api.telegram.org/bot${token}/${method}`;
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -50,9 +18,9 @@ async function callTelegramAPI(method, payload) {
 }
 
 async function sendTelegramAlert(message, options = {}) {
-  const chatId = options.chatId || TELEGRAM_CHAT_ID;
+  const env = loadEnv();
+  const chatId = options.chatId || env.TELEGRAM_CHAT_ID || '';
   if (!chatId) {
-    console.warn('[TelegramAlert] No chat ID configured');
     return { ok: false, error: 'No chat ID configured' };
   }
 
@@ -74,6 +42,8 @@ async function sendTelegramAlert(message, options = {}) {
 }
 
 function generateExecutiveAlertHTML(type, data) {
+  const env = loadEnv();
+  const masterWallet = env.MASTER_WALLET || MASTER_WALLET;
   const timestamp = new Date().toLocaleString('en-US', {
     timeZone: 'Asia/Phnom_Penh',
     hour12: false,
@@ -91,12 +61,12 @@ function generateExecutiveAlertHTML(type, data) {
 <b>💰 SOL YIELD EXECUTED</b>
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 <b>Amount:</b> <code>${data.amount || '0.00'} SOL</code>
-<b>Recipient:</b> <code>${data.recipient || MASTER_WALLET}</code>
+<b>Recipient:</b> <code>${data.recipient || masterWallet}</code>
 <b>Signature:</b> <code>${data.signature || 'N/A'}</code>
 <b>Status:</b> <code>${data.status || 'CONFIRMED'}</code>
 <b>Time:</b> ${timestamp}
 ━━━━━━━━━━━━━━━━━━━━━━━━━
-<b>Master Vault:</b> <code>${MASTER_WALLET}</code>
+<b>Master Vault:</b> <code>${masterWallet}</code>
 <b>Network:</b> Solana Mainnet
       `.trim();
 
@@ -107,7 +77,7 @@ function generateExecutiveAlertHTML(type, data) {
 <b>Cycle:</b> 45-Minute Executive Pulse
 <b>Status:</b> <code>ACTIVE</code>
 <b>Gathered:</b> <code>${data.gathered || '0.00'} / ${data.target || '100'}</code>
-<b>Master Wallet:</b> <code>${MASTER_WALLET.slice(0, 8)}...</code>
+<b>Master Wallet:</b> <code>${masterWallet.slice(0, 8)}...</code>
 <b>Time:</b> ${timestamp}
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 <i>Auto-flush cycle initiated. Revenue aggregation in progress.</i>
@@ -120,7 +90,7 @@ function generateExecutiveAlertHTML(type, data) {
 <b>Type:</b> ${data.type || 'DEPOSIT'}
 <b>Amount:</b> <code>${data.amount || '0.00'} SOL</code>
 <b>From:</b> <code>${data.from || 'N/A'}</code>
-<b>To:</b> <code>${data.to || MASTER_WALLET}</code>
+<b>To:</b> <code>${data.to || masterWallet}</code>
 <b>Time:</b> ${timestamp}
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 <i>On-chain verification complete.</i>
@@ -147,18 +117,18 @@ ${data.message || 'System notification'}
 
 async function handler(req, res) {
   if (req.method === 'OPTIONS') {
-    res.writeHead(200, corsHeaders);
-    res.end();
+    sendResponse(res, 200, { success: true });
     return;
   }
 
   if (req.method !== 'POST') {
-    return sendResponse(res, 405, { error: 'Method Not Allowed' });
+    sendResponse(res, 405, { error: 'Method Not Allowed' });
+    return;
   }
 
   try {
     const body = req.body || {};
-    const { type, data, chatId, message } = body;
+    const { type, data, chatId, message, userId, amount, currency } = body;
 
     let alertMessage;
     if (message) {
@@ -166,28 +136,40 @@ async function handler(req, res) {
     } else if (type) {
       alertMessage = generateExecutiveAlertHTML(type, data || {});
     } else {
-      return sendResponse(res, 400, { error: 'Missing type or message field' });
+      sendResponse(res, 400, { error: 'Missing type or message field' });
+      return;
     }
 
     const result = await sendTelegramAlert(alertMessage, { chatId });
 
     if (result.ok) {
+      const creditResult = await creditUser(
+        userId,
+        amount || (data?.amount || 0.01),
+        currency || 'USDT',
+        'telegram-alert',
+        { alertType: type, chatId }
+      );
+
       console.log(`[TelegramAlert] Alert sent successfully: ${type || 'custom'}`);
-      return sendResponse(res, 200, {
+      sendResponse(res, 200, {
         success: true,
         messageId: result.result?.message_id,
         type: type || 'custom',
+        telegramResult: result,
+        creditResult,
+        masterWallet: MASTER_WALLET,
       });
     } else {
       console.error('[TelegramAlert] Telegram API error:', result);
-      return sendResponse(res, 500, {
+      sendResponse(res, 500, {
         success: false,
         error: result.description || 'Failed to send Telegram alert',
       });
     }
   } catch (error) {
     console.error('[TelegramAlert] Handler error:', error);
-    return sendResponse(res, 500, {
+    sendResponse(res, 500, {
       success: false,
       error: error.message,
     });

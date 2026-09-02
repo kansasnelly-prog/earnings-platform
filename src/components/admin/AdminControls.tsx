@@ -1699,6 +1699,61 @@ const AdminControls: React.FC<AdminControlsProps> = ({ onRefresh }) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Master Wallet Profit Aggregator */}
+      <Card className="bg-slate-900/90 border-yellow-500/30">
+        <CardHeader>
+          <CardTitle className="text-yellow-300 flex items-center gap-2">
+            <DollarSign className="w-5 h-5" />
+            Master Wallet Profit Aggregator
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-slate-400 mb-4">
+            Aggregate earnings from cinema, ads, telegram, and monetization engines. 12x profit multiplier pulls 15% master cut to the treasury wallet.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/master-wallet/aggregator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'aggregate' }),
+                  });
+                  const result = await response.json();
+                  toast.success(`Aggregated: $${result.totals?.total?.toFixed(2) || 0} | Master cut: $${result.masterCut?.toFixed(2) || 0}`);
+                } catch (e) {
+                  toast.error('Aggregation failed');
+                }
+              }}
+              className="bg-yellow-600 hover:bg-yellow-500"
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Aggregate Profits
+            </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/master-wallet/aggregator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'pull-profit', userId: 'master', amount: 1000, currency: 'USDT', source: 'admin-trigger' }),
+                  });
+                  const result = await response.json();
+                  toast.success(`Pulled $${result.profitAmount?.toFixed(2)} | Master cut: $${result.masterCut?.toFixed(2)}`);
+                } catch (e) {
+                  toast.error('Profit pull failed');
+                }
+              }}
+              className="bg-emerald-600 hover:bg-emerald-500"
+            >
+              <DollarSign className="w-4 h-4 mr-2" />
+              12X Profit Pull
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

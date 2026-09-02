@@ -11,13 +11,13 @@ function sendResponse(res, statusCode, data) {
 
 async function handler(req, res) {
   if (req.method === 'OPTIONS') {
-    res.writeHead(200, corsHeaders);
-    res.end();
+    sendResponse(res, 200, { success: true });
     return;
   }
 
   if (req.method !== 'POST') {
-    return sendResponse(res, 405, { error: 'Method Not Allowed' });
+    sendResponse(res, 405, { error: 'Method Not Allowed' });
+    return;
   }
 
   try {
@@ -25,24 +25,32 @@ async function handler(req, res) {
     const { engineId, userId } = body;
 
     if (!engineId) {
-      return sendResponse(res, 400, { error: 'Missing engineId' });
+      sendResponse(res, 400, { error: 'Missing engineId' });
+      return;
     }
+
+    const creditResult = await creditUser(userId, 0.1, 'USDT', 'matchmaking', {
+      engineId,
+      action: 'start',
+    });
 
     console.log('[Matchmaking] Start request:', {
       engineId,
       userId: userId || 'anonymous',
+      creditResult,
       timestamp: new Date().toISOString(),
     });
 
-    return sendResponse(res, 200, {
+    sendResponse(res, 200, {
       success: true,
       engineId,
       status: 'searching',
       message: `Matchmaking started for ${engineId}`,
+      creditResult,
     });
   } catch (error) {
     console.error('[Matchmaking] Handler error:', error);
-    return sendResponse(res, 500, { error: error.message || 'Internal server error' });
+    sendResponse(res, 500, { error: error.message || 'Internal server error' });
   }
 }
 

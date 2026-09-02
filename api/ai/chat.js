@@ -11,36 +11,44 @@ function sendResponse(res, statusCode, data) {
 
 async function handler(req, res) {
   if (req.method === 'OPTIONS') {
-    res.writeHead(200, corsHeaders);
-    res.end();
+    sendResponse(res, 200, { success: true });
     return;
   }
 
   if (req.method !== 'POST') {
-    return sendResponse(res, 405, { error: 'Method Not Allowed' });
+    sendResponse(res, 405, { error: 'Method Not Allowed' });
+    return;
   }
 
   try {
     const body = req.body || {};
-    const { message, model, history } = body;
+    const { message, model, history, userId } = body;
 
     if (!message || !message.trim()) {
-      return sendResponse(res, 400, { error: 'Missing message' });
+      sendResponse(res, 400, { error: 'Missing message' });
+      return;
     }
 
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
 
     if (!GEMINI_API_KEY) {
-      return sendResponse(res, 200, {
+      const creditResult = await creditUser(userId, 0.03, 'USDT', 'ai-chat-engagement', {
+        messageLength: message.trim().length,
+        model: model || 'Flash',
+      });
+
+      sendResponse(res, 200, {
         reply: `[${model || 'Flash'}] Simulated response to: "${message.trim()}"`,
         model: model || 'Flash',
         simulated: true,
+        creditResult,
       });
+      return;
     }
 
     const contents = (history || [])
-      .filter((m: any) => m.content)
-      .map((m: any) => ({
+      .filter((m) => m.content)
+      .map((m) => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }],
       }));
@@ -57,23 +65,30 @@ async function handler(req, res) {
     if (!response.ok) {
       const text = await response.text();
       console.error('[AI/Chat] Gemini error:', response.status, text);
-      return sendResponse(res, 200, {
+      const creditResult = await creditUser(userId, 0.03, 'USDT', 'ai-chat-engagement', { error: true, model: model || 'Flash' });
+      sendResponse(res, 200, {
         reply: `[${model || 'Flash'}] Service temporarily unavailable.`,
+        model: model || 'Flash',
         simulated: true,
+        creditResult,
       });
+      return;
     }
 
     const data = await response.json();
     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response.';
 
-    return sendResponse(res, 200, {
+    const creditResult = await creditUser(userId, 0.03, 'USDT', 'ai-chat-engagement', { model: model || 'Flash' });
+
+    sendResponse(res, 200, {
       reply,
       model: model || 'Flash',
       simulated: false,
+      creditResult,
     });
   } catch (error) {
     console.error('[AI/Chat] Handler error:', error);
-    return sendResponse(res, 500, { error: error.message || 'Internal server error' });
+    sendResponse(res, 500, { error: error.message || 'Internal server error' });
   }
 }
 

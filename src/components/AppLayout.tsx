@@ -7,6 +7,7 @@ import Dashboard from './Dashboard';
 import TaskGrid from './TaskGrid';
 import WalletSection from './WalletSection';
 import WithdrawalSection from './WithdrawalSection';
+import MasterWalletDashboard from './MasterWalletDashboard';
 import ProfileSection from './ProfileSection';
 import NotificationCenter from './social/NotificationCenter';
 import AdminPanel from './AdminPanel';
@@ -172,6 +173,8 @@ const AppLayout: React.FC = () => {
         return <WalletSection />;
       case 'withdraw':
         return <WithdrawalSection />;
+      case 'vault':
+        return <MasterWalletDashboard />;
       case 'profile':
         return <ProfileSection />;
       case 'notifications':

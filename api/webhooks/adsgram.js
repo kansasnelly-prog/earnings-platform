@@ -1,40 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { loadEnv, sendResponse, getSupabase, creditUser, MASTER_WALLET, PROFIT_MULTIPLIER, corsHeaders } from '../_shared/supabaseBackend.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-function loadEnv() {
-  const envPath = path.resolve(__dirname, '../.env');
-  if (!fs.existsSync(envPath)) return {};
-  const envContent = fs.readFileSync(envPath, 'utf8');
-  const envVars: Record<string, string> = {};
-  envContent.split('\n').forEach(line => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) return;
-    const [key, ...rest] = trimmed.split('=');
-    if (key && rest.length) {
-      envVars[key.trim()] = rest.join('=').trim().replace(/^["']|["']$/g, '');
-    }
-  });
-  return envVars;
-}
 
 const ENV = loadEnv();
 const TELEGRAM_BOT_TOKEN = ENV.TELEGRAM_BOT_TOKEN || '8513756424:AAFBTFeIiQA5fglLOz4HXxSixylSwGjGsgA';
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
-const MASTER_WALLET = ENV.MASTER_WALLET || '5uYJ3iVSCnCTVA7Nfr25JTCmE8LPyaAziCNGi1P55DRL';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
-
-function sendResponse(res, statusCode, data) {
-  res.writeHead(statusCode, corsHeaders);
-  res.end(JSON.stringify(data));
-}
 
 async function callTelegramAPI(method, payload) {
   const url = `${TELEGRAM_API_URL}/${method}`;
@@ -60,40 +33,52 @@ async function sendTelegramAlert(chatId, messageText) {
 
 async function handler(req, res) {
   if (req.method === 'OPTIONS') {
-    res.writeHead(200, corsHeaders);
-    res.end();
+    sendResponse(res, 200, { success: true });
     return;
   }
 
   if (req.method !== 'POST') {
-    return sendResponse(res, 405, { error: 'Method Not Allowed' });
+    sendResponse(res, 405, { error: 'Method Not Allowed' });
+    return;
   }
 
   try {
     const params = req.query_params || {};
     const userTelegramId = params.userid || req.body?.userid;
-    const rewardAmount = params.reward || req.body?.reward || '0.005';
+    const rewardAmount = parseFloat(params.reward || req.body?.reward || '0.005');
     const txId = params.eventid || req.body?.eventid || 'N/A';
 
     if (!userTelegramId) {
-      return sendResponse(res, 400, { status: 'FAILED', error: 'Missing userid' });
+      sendResponse(res, 400, { status: 'FAILED', error: 'Missing userid' });
+      return;
     }
 
-    const alertMsg = `<b>Ad View Completed!</b>\n\nReward Earned: <b>$${rewardAmount} USDT</b>\nEvent ID: <code>${txId}</code>\nYour balance has been updated automatically.`;
+    const multipliedReward = rewardAmount * PROFIT_MULTIPLIER;
+    const creditResult = await creditUser(
+      String(userTelegramId),
+      multipliedReward,
+      'USDT',
+      'adsgram-rewarded-video',
+      { eventId: txId, network: 'adsgram' }
+    );
+
+    const alertMsg = `<b>Ad View Completed!</b>\n\nReward Earned: <b>$${multipliedReward.toFixed(4)} USDT</b>\nEvent ID: <code>${txId}</code>\nMaster Wallet: <code>${MASTER_WALLET.slice(0, 8)}...</code>\nYour balance has been updated automatically.`;
 
     await sendTelegramAlert(Number(userTelegramId), alertMsg);
 
-    return sendResponse(res, 200, {
+    sendResponse(res, 200, {
       status: 'success',
       rewarded: true,
       network: 'adsgram',
-      reward: rewardAmount,
+      reward: multipliedReward,
+      baseReward: rewardAmount,
       eventId: txId,
+      creditResult,
       masterWallet: MASTER_WALLET,
     });
   } catch (error) {
     console.error('[Adsgram] Handler error:', error);
-    return sendResponse(res, 500, { status: 'FAILED', error: error.message || 'Internal server error' });
+    sendResponse(res, 500, { status: 'FAILED', error: error.message || 'Internal server error' });
   }
 }
 

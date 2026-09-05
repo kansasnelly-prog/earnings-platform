@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Heart } from 'lucide-react';
-import { MASTER_ADMIN_EMAILS } from '../ProtectedRoute';
+import { MASTER_ADMIN_EMAILS } from './ProtectedRoute';
 
 const PlatformSwitch: React.FC = () => {
   const navigate = useNavigate();

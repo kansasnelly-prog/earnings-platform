@@ -109,6 +109,47 @@ const ExecutiveTVPanel: React.FC = () => {
     }, BALANCE_TICK_MS);
   }, [user, refreshUser]);
 
+  const logStreamError = useCallback((context, error) => {
+    console.error(`[ExecutiveTVPanel] ${context}`, {
+      manifestUrl: streamUrl,
+      errorType: error?.type,
+      errorDetails: error,
+      fatal: error?.fatal,
+      network: error?.network,
+      mediaError: error?.mediaError,
+      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'unknown',
+      timestamp: new Date().toISOString(),
+    });
+  }, [streamUrl]);
+
+  const switchToFallback = useCallback(() => {
+    if (streamUrl === STREAM_URL) {
+      console.warn('[ExecutiveTVPanel] Switching to fallback stream');
+      setStreamUrl(FALLBACK_STREAM_URL);
+    }
+  }, [streamUrl]);
+
+  const checkManifestReachability = useCallback(async (url) => {
+    try {
+      const response = await fetch(url, { method: 'HEAD', mode: 'cors' });
+      console.log('[ExecutiveTVPanel] Manifest reachability check', {
+        url,
+        status: response.status,
+        contentType: response.headers.get('content-type'),
+        corsAllowed: response.headers.get('access-control-allow-origin'),
+        timestamp: new Date().toISOString(),
+      });
+      return response.status;
+    } catch (e) {
+      console.warn('[ExecutiveTVPanel] Manifest reachability check failed', {
+        url,
+        error: e.message,
+        timestamp: new Date().toISOString(),
+      });
+      return 0;
+    }
+  }, []);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -120,6 +161,12 @@ const ExecutiveTVPanel: React.FC = () => {
       setHasError(false);
 
       try {
+        const reachability = await checkManifestReachability(streamUrl);
+        if (reachability === 0 && streamUrl === STREAM_URL) {
+          switchToFallback();
+          return;
+        }
+
         const Hls = (await import('hls.js')).default;
 
         if (Hls.isSupported()) {
@@ -160,17 +207,11 @@ const ExecutiveTVPanel: React.FC = () => {
 
           hls.on(Hls.Events.ERROR, (_event: any, data: any) => {
             if (!active) return;
+            logStreamError('HLS error', data);
             if (data.fatal) {
               setHasError(true);
               setIsLoading(false);
-              if (streamUrl === STREAM_URL) {
-                setStreamUrl(FALLBACK_STREAM_URL);
-                if (hlsRef.current) {
-                  hlsRef.current.destroy();
-                  hlsRef.current = null;
-                }
-                initStream();
-              }
+              switchToFallback();
             }
           });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -200,15 +241,16 @@ const ExecutiveTVPanel: React.FC = () => {
 
           video.addEventListener('error', () => {
             if (!active) return;
-            if (streamUrl === STREAM_URL) {
-              setStreamUrl(FALLBACK_STREAM_URL);
-              video.src = FALLBACK_STREAM_URL;
-              video.load();
-            }
+            logStreamError('Native video error', {
+              network: true,
+              mediaError: video.error,
+            });
+            switchToFallback();
           });
         }
       } catch (err) {
         if (!active) return;
+        logStreamError('Init stream exception', err);
         setHasError(true);
         setIsLoading(false);
       }
@@ -224,7 +266,7 @@ const ExecutiveTVPanel: React.FC = () => {
         hlsRef.current = null;
       }
     };
-  }, [clearTimers, fadeAudio, startBalanceTimer, streamUrl]);
+  }, [clearTimers, fadeAudio, startBalanceTimer, streamUrl, user, logStreamError, switchToFallback, checkManifestReachability]);
 
   const handleRetry = useCallback(() => {
     setHasError(false);

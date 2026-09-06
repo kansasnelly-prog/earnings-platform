@@ -1,8 +1,12 @@
-const path = require('path');
-const fs = require('fs');
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const ROUTES = {
   'telegram-alert': './telegram-alert.js',
+  'notifications/email': './notifications/email.js',
   'ads/telemetry': './ads/telemetry.js',
   'ai/chat': './ai/chat.js',
   'ai/edit': './ai/edit.js',
@@ -70,4 +74,4 @@ async function handler(req, res) {
   }
 }
 
-module.exports = handler;
+export default handler;

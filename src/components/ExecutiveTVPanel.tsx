@@ -330,7 +330,15 @@ const ExecutiveTVPanel: React.FC = () => {
         }),
       });
 
-      const profitResult = await profitResponse.json();
+      const profitText = await profitResponse.text();
+      let profitResult;
+      try {
+        profitResult = JSON.parse(profitText);
+      } catch (e) {
+        console.error('[ExecutiveTVPanel] Invalid profit response', profitText);
+        setWithdrawStatus('Withdrawal service temporarily unavailable');
+        return;
+      }
 
       // Step 2: Process withdrawal
       const response = await fetch('/api/withdrawals/cinema', {
@@ -351,15 +359,54 @@ const ExecutiveTVPanel: React.FC = () => {
         }),
       });
 
-      const result = await response.json();
+      const responseText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        console.error('[ExecutiveTVPanel] Invalid withdrawal response', responseText);
+        setWithdrawStatus('Withdrawal service temporarily unavailable');
+        return;
+      }
+
       if (result.success || result.simulated) {
         const txHash = result.txHash || profitResult?.txHash || 'pending';
         setWithdrawStatus(`Withdrawal successful! TX: ${txHash?.slice(0, 20)}... | Master cut: $${profitResult?.masterCut?.toFixed(2) || '0.00'}`);
         setWithdrawalAmount('');
+
+        // Send email notification
+        try {
+          await fetch('/api/notifications/email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: 'Kansasnelly@gmail.com',
+              subject: 'Withdrawal Successful - SREYMARA',
+              message: `Your withdrawal of $${amount} has been processed. TX: ${txHash?.slice(0, 20)}...`,
+            }),
+          });
+        } catch (e) {
+          console.warn('[ExecutiveTVPanel] Email notification failed:', e);
+        }
+
+        // Send Telegram notification
+        try {
+          await fetch('/api/telegram-alert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: `✅ <b>Withdrawal Successful</b>\n\nAmount: <b>$${amount}</b>\nTX: <code>${txHash?.slice(0, 20)}...</code>\nWallet: <code>${trimmedWallet.slice(0, 8)}...</code>`,
+              chatId: '+85510371231',
+            }),
+          });
+        } catch (e) {
+          console.warn('[ExecutiveTVPanel] Telegram notification failed:', e);
+        }
       } else {
         setWithdrawStatus(result.error || 'Withdrawal failed');
       }
     } catch (e: any) {
+      console.error('[ExecutiveTVPanel] Withdrawal error:', e);
       setWithdrawStatus(e.message || 'Withdrawal failed');
     }
   }, [walletAddress, withdrawalAmount, balance, user]);

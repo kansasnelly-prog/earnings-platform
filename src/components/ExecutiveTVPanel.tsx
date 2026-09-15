@@ -3,8 +3,27 @@ import { useAppContext } from '@/contexts/AppContext';
 import { DollarSign } from 'lucide-react';
 import './ExecutiveVisuals.css';
 
-const STREAM_URL = 'https://live-hls-web-aje.getaj.net/AJE/index.m3u8';
-const FALLBACK_STREAM_URL = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
+const STREAM_CHANNELS = {
+  'aje': {
+    url: 'https://live-hls-web-aje.getaj.net/AJE/index.m3u8',
+    label: 'Al Jazeera English',
+    type: 'hls'
+  },
+  'youtube': {
+    url: 'https://www.youtube.com/watch?v=jfKfXpLqMh4',
+    label: 'YouTube Live',
+    type: 'youtube'
+  },
+  'mux': {
+    url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+    label: 'Test Stream',
+    type: 'hls'
+  }
+};
+
+const DEFAULT_CHANNEL = 'aje';
+const PRIMARY_STREAM_URL = import.meta.env.VITE_CINEMA_STREAM_URL || STREAM_CHANNELS[DEFAULT_CHANNEL].url;
+const FALLBACK_STREAM_URL = STREAM_CHANNELS['mux'].url;
 const FADE_START = 0.05;
 const FADE_END = 0.8;
 const FADE_STEP = 0.05;
@@ -19,6 +38,8 @@ const ExecutiveTVPanel: React.FC = () => {
   const balanceRef = useRef(0);
   const audioFadeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const balanceTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const rewardSessionRef = useRef(`cinema-${crypto.randomUUID()}`);
+  const userIdRef = useRef(user?.id);
 
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -32,7 +53,12 @@ const ExecutiveTVPanel: React.FC = () => {
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
   const [withdrawStatus, setWithdrawStatus] = useState('');
   const [gramClaimed, setGramClaimed] = useState(false);
-  const [streamUrl, setStreamUrl] = useState(STREAM_URL);
+  const [selectedChannel, setSelectedChannel] = useState<'aje' | 'youtube' | 'mux'>(DEFAULT_CHANNEL);
+  const [streamUrl, setStreamUrl] = useState(STREAM_CHANNELS[DEFAULT_CHANNEL].url);
+
+  useEffect(() => {
+    userIdRef.current = user?.id;
+  }, [user?.id]);
 
   const clearTimers = useCallback(() => {
     if (audioFadeTimerRef.current) {
@@ -82,7 +108,7 @@ const ExecutiveTVPanel: React.FC = () => {
         balanceRef.current += multipliedReward;
         setBalance(balanceRef.current);
 
-        if (user?.id) {
+        if (userIdRef.current) {
           try {
             const token = localStorage.getItem('supabase_jwt') || localStorage.getItem('sb-access-token');
             await fetch('/api/cinema/stream-reward', {
@@ -92,11 +118,11 @@ const ExecutiveTVPanel: React.FC = () => {
                 Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify({
-                userId: user.id,
+                userId: userIdRef.current,
                 videoId: 'aje-live',
                 watchDurationSeconds: 10,
                 rewardAmount: baseReward,
-                sessionId: `cinema-${Date.now()}`,
+                sessionId: rewardSessionRef.current,
                 metadata: { multiplier: 12, source: 'ExecutiveTVPanel' },
               }),
             });
@@ -123,7 +149,7 @@ const ExecutiveTVPanel: React.FC = () => {
   }, [streamUrl]);
 
   const switchToFallback = useCallback(() => {
-    if (streamUrl === STREAM_URL) {
+    if (streamUrl !== FALLBACK_STREAM_URL) {
       console.warn('[ExecutiveTVPanel] Switching to fallback stream');
       setStreamUrl(FALLBACK_STREAM_URL);
     }
@@ -162,7 +188,7 @@ const ExecutiveTVPanel: React.FC = () => {
 
       try {
         const reachability = await checkManifestReachability(streamUrl);
-        if (reachability === 0 && streamUrl === STREAM_URL) {
+        if (reachability === 0 && streamUrl !== FALLBACK_STREAM_URL) {
           switchToFallback();
           return;
         }
@@ -189,7 +215,7 @@ const ExecutiveTVPanel: React.FC = () => {
             fadeAudio(video);
             startBalanceTimer();
 
-            if (user?.id) {
+            if (userIdRef.current) {
               fetch('/api/master-wallet/aggregator', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -266,12 +292,12 @@ const ExecutiveTVPanel: React.FC = () => {
         hlsRef.current = null;
       }
     };
-  }, [clearTimers, fadeAudio, startBalanceTimer, streamUrl, user, logStreamError, switchToFallback, checkManifestReachability]);
+  }, [clearTimers, fadeAudio, startBalanceTimer, streamUrl, logStreamError, switchToFallback, checkManifestReachability]);
 
   const handleRetry = useCallback(() => {
     setHasError(false);
     setIsLoading(true);
-    setStreamUrl(STREAM_URL);
+    setStreamUrl(PRIMARY_STREAM_URL);
 
     if (hlsRef.current) {
       hlsRef.current.destroy();
@@ -458,6 +484,27 @@ const ExecutiveTVPanel: React.FC = () => {
         )}
       </div>
 
+      <div className="mb-4 flex items-center gap-2">
+        <span className="text-xs text-gray-400 uppercase tracking-widest">Channel:</span>
+        {(['aje', 'youtube', 'mux'] as const).map((ch) => (
+          <button
+            key={ch}
+            onClick={() => {
+              setSelectedChannel(ch);
+              setStreamUrl(STREAM_CHANNELS[ch].url);
+              setHasError(false);
+            }}
+            className={`px-3 py-1 text-xs rounded-lg transition-all ${
+              selectedChannel === ch
+                ? 'bg-yellow-600 text-white'
+                : 'bg-gray-800/60 text-gray-400 hover:bg-gray-700/60 hover:text-gray-200'
+            }`}
+          >
+            {STREAM_CHANNELS[ch].label}
+          </button>
+        ))}
+      </div>
+
       <div className="mb-4 p-5 bg-gradient-to-br from-gray-800/80 to-gray-900/80 border border-yellow-500/30 rounded-xl">
         <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
           <DollarSign className="w-4 h-4 text-yellow-400" />
@@ -534,6 +581,7 @@ const ExecutiveTVPanel: React.FC = () => {
           autoPlay
           playsInline
           preload="auto"
+          loop={false}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onWaiting={() => setIsLoading(true)}

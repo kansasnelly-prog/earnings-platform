@@ -15,6 +15,7 @@ import About from '@/pages/About';
 import Legal from '@/pages/Legal';
 import TelegramWidget from './TelegramWidget';
 import Footer from './Footer';
+import MusicSection from './MusicSection';
 import { Mail, Radio, Users, Chrome } from 'lucide-react';
 
 const QuickAuthDock: React.FC<{
@@ -177,6 +178,8 @@ const AppLayout: React.FC = () => {
         return <MasterWalletDashboard />;
       case 'profile':
         return <ProfileSection />;
+      case 'music':
+        return <MusicSection />;
       case 'notifications':
         return <NotificationCenter />;
       case 'about':

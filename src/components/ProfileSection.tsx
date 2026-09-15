@@ -5,15 +5,43 @@ import { toast } from '@/components/ui/use-toast';
 import TaskHistory from './TaskHistory';
 import { supabase } from '@/lib/supabase';
 import { sendTelegramNotification } from '@/utils/telegramHelper';
+import { Connection, PublicKey } from '@solana/web3.js';
 
 const ProfileSection: React.FC = () => {
   const { user, tasks, walletState, logout, refreshUser } = useAppContext();
   const [copied, setCopied] = useState(false);
   const [walletInput, setWalletInput] = useState('');
+  const [walletNetwork, setWalletNetwork] = useState('solana');
   const [isBinding, setIsBinding] = useState(false);
   const [showUnbindDialog, setShowUnbindDialog] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalling, setIsInstalling] = useState(false);
+  const [phantomAddress, setPhantomAddress] = useState('');
+  const [phantomBalance, setPhantomBalance] = useState<number | null>(null);
+  const [isConnectingPhantom, setIsConnectingPhantom] = useState(false);
+
+  const connectPhantom = async () => {
+    const provider = (window as Window & { solana?: { isPhantom?: boolean; connect: () => Promise<{ publicKey: { toString: () => string } }> } }).solana;
+    if (!provider?.isPhantom) {
+      toast({ title: 'Phantom not detected', description: 'Install the Phantom browser extension, then try again.', variant: 'destructive' });
+      return;
+    }
+    setIsConnectingPhantom(true);
+    try {
+      const response = await provider.connect();
+      const address = response.publicKey.toString();
+      const connection = new Connection(import.meta.env.VITE_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com', 'confirmed');
+      const lamports = await connection.getBalance(new PublicKey(address));
+      setPhantomAddress(address);
+      setPhantomBalance(lamports / 1e9);
+      toast({ title: 'Phantom connected', description: `${address.slice(0, 6)}…${address.slice(-4)}` });
+    } catch (error) {
+      console.error('[ProfileSection] Phantom connection failed:', error);
+      toast({ title: 'Connection cancelled', description: 'Phantom did not approve the connection.', variant: 'destructive' });
+    } finally {
+      setIsConnectingPhantom(false);
+    }
+  };
 
   // MODULE 2: PWA Install Prompt Handler
   useEffect(() => {
@@ -141,11 +169,22 @@ const ProfileSection: React.FC = () => {
       return;
     }
 
+    const normalizedWallet = walletInput.trim();
+    const isValid = walletNetwork === 'solana'
+      ? /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(normalizedWallet)
+      : walletNetwork === 'ethereum'
+        ? /^0x[a-fA-F0-9]{40}$/.test(normalizedWallet)
+        : /^[A-Za-z0-9]{20,128}$/.test(normalizedWallet);
+    if (!isValid) {
+      toast({ title: 'Invalid wallet address', description: `Enter a valid ${walletNetwork} address before binding.`, variant: 'destructive' });
+      return;
+    }
+
     setIsBinding(true);
     try {
       const { error } = await supabase
         .from('users')
-        .update({ wallet_address: walletInput.trim() })
+        .update({ wallet_address: normalizedWallet, wallet_network: walletNetwork })
         .eq('id', user?.id);
 
       if (error) throw error;
@@ -155,7 +194,8 @@ const ProfileSection: React.FC = () => {
         type: 'wallet_bind',
         email: user?.email,
         accountType: user?.account_type,
-        walletAddress: walletInput.trim(),
+        walletAddress: normalizedWallet,
+        walletNetwork,
         timestamp: new Date().toISOString()
       });
 
@@ -377,16 +417,30 @@ const ProfileSection: React.FC = () => {
 
       {/* Wallet Binding */}
       <div className="p-6 bg-white/[0.02] border border-white/[0.06] rounded-2xl">
+        <div className="flex items-center justify-between gap-4">
+          <div><h3 className="text-lg font-bold text-white">Phantom wallet</h3><p className="text-sm text-gray-500">Connect read-only to display the live SOL balance. Withdrawals still require a verified backend request.</p></div>
+          <button onClick={connectPhantom} disabled={isConnectingPhantom} className="px-4 py-2 bg-purple-500/15 border border-purple-400/25 rounded-lg text-purple-200 font-semibold hover:bg-purple-500/25 disabled:opacity-50">{isConnectingPhantom ? 'Connecting…' : phantomAddress ? 'Refresh balance' : 'Connect Phantom'}</button>
+        </div>
+        {phantomAddress && <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/[0.03] p-3"><span className="font-mono text-sm text-slate-300">{maskWalletAddress(phantomAddress)}</span><span className="font-semibold text-emerald-300">{phantomBalance?.toFixed(4)} SOL</span></div>}
+      </div>
+
+      {/* Wallet Binding */}
+      <div className="p-6 bg-white/[0.02] border border-white/[0.06] rounded-2xl">
         <h3 className="text-lg font-bold text-white mb-4">Wallet Address</h3>
         {!isWalletBound ? (
           <div className="space-y-4">
             <p className="text-sm text-gray-500">Bind your wallet address to enable withdrawals.</p>
             <div className="flex items-center gap-3">
+              <select value={walletNetwork} onChange={(e) => setWalletNetwork(e.target.value)} disabled={isBinding} className="rounded-lg border border-indigo-500/20 bg-[#1a2038] p-3 text-sm text-white focus:outline-none focus:border-indigo-500/50">
+                <option value="solana">Solana</option>
+                <option value="ethereum">Ethereum / EVM</option>
+                <option value="usdt">USDT-compatible address</option>
+              </select>
               <input
                 type="text"
                 value={walletInput}
                 onChange={(e) => setWalletInput(e.target.value)}
-                placeholder="Enter wallet address (e.g., 0x1234...abcd)"
+                placeholder={walletNetwork === 'solana' ? 'Base58 Solana address' : 'Enter wallet address'}
                 className="flex-1 p-3 bg-[#1a2038] border border-indigo-500/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
                 disabled={isBinding}
               />

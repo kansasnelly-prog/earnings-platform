@@ -58,9 +58,9 @@ object GeminiService {
 
             2. STANDALONE APK BUILD INITIATION:
                - When the user asks to "build a standalone APK", generate the precise GitHub REST API trigger payload to invoke the `.github/workflows/android.yml` workflow via `workflow_dispatch`.
-               - Target Repository: vinsovin7-cmd/sreymara1
+               - Target Repository: kansasnelly-prog/earnings-platform
                - Provide the curl/fetch payload:
-                 POST https://api.github.com/repos/vinsovin7-cmd/sreymara1/actions/workflows/android.yml/dispatches
+                 POST https://api.github.com/repos/kansasnelly-prog/earnings-platform/actions/workflows/android.yml/dispatches
                  Headers:
                    Accept: application/vnd.github+json
                    Authorization: Bearer <YOUR_GITHUB_PAT>

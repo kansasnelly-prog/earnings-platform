@@ -3,32 +3,55 @@ import { useAppContext } from '@/contexts/AppContext';
 import { DollarSign } from 'lucide-react';
 import './ExecutiveVisuals.css';
 
-const STREAM_CHANNELS = {
+const STREAM_CHANNELS: Record<string, { url: string; label: string; type: 'hls' | 'youtube' | 'mp4' }> = {
   'aje': {
-    url: 'https://live-hls-web-aje.getaj.net/AJE/index.m3u8',
+    url: 'https://live-hls-web-aje.getaj.net/AJE/01.m3u8',
     label: 'Al Jazeera English',
     type: 'hls'
   },
   'youtube': {
-    url: 'https://www.youtube.com/watch?v=jfKfXpLqMh4',
-    label: 'YouTube Live',
+    url: 'jfKfPfyJRdk',
+    label: 'YouTube Live 24/7',
     type: 'youtube'
   },
-  'mux': {
-    url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-    label: 'Test Stream',
+  'aje_youtube': {
+    url: 'gCNeDWCI0vo',
+    label: 'Al Jazeera (YouTube Live)',
+    type: 'youtube'
+  },
+  'france24': {
+    url: 'https://cdn.klowdtv.net/803B48A/n1.klowdtv.net/live1/france24_720p/playlist.m3u8',
+    label: 'France 24 English',
     type: 'hls'
+  },
+  'dwnews': {
+    url: 'https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/index.m3u8',
+    label: 'DW News',
+    type: 'hls'
+  },
+  'mp4': {
+    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    label: 'Cinema Movie (Always Plays)',
+    type: 'mp4'
   }
 };
 
+// Rotation priority: the visible operational channels the user asked for (Al Jazeera + YouTube) first,
+// then news backups, then a FULL-LENGTH CORS-friendly movie as the guaranteed final fallback.
+// Live channels stream 24/7 so playback never "completes" or restarts mid-way.
+const CHANNEL_ORDER = ['aje', 'youtube', 'aje_youtube', 'france24', 'dwnews', 'mp4'] as const;
+
 const DEFAULT_CHANNEL = 'aje';
-const PRIMARY_STREAM_URL = import.meta.env.VITE_CINEMA_STREAM_URL || STREAM_CHANNELS[DEFAULT_CHANNEL].url;
-const FALLBACK_STREAM_URL = STREAM_CHANNELS['mux'].url;
+// Unstoppable: final fallback is a CORS-friendly MP4 that always plays inside Telegram WebViews
+const TARGET_VOLUME = 0.7;
 const FADE_START = 0.05;
-const FADE_END = 0.8;
+const FADE_END = TARGET_VOLUME;
 const FADE_STEP = 0.05;
 const FADE_TICK_MS = 200;
 const BALANCE_TICK_MS = 10000;
+// Micro-USDT: accrue per tick while watching; withdraw unlocks after 1 hour of accumulation
+const MICRO_USDT_PER_TICK = 0.002;
+const WITHDRAW_UNLOCK_SECONDS = 3600;
 
 const ExecutiveTVPanel: React.FC = () => {
   const { user, refreshUser } = useAppContext();
@@ -53,8 +76,54 @@ const ExecutiveTVPanel: React.FC = () => {
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
   const [withdrawStatus, setWithdrawStatus] = useState('');
   const [gramClaimed, setGramClaimed] = useState(false);
-  const [selectedChannel, setSelectedChannel] = useState<'aje' | 'youtube' | 'mux'>(DEFAULT_CHANNEL);
+  const [selectedChannel, setSelectedChannel] = useState<string>(DEFAULT_CHANNEL);
   const [streamUrl, setStreamUrl] = useState(STREAM_CHANNELS[DEFAULT_CHANNEL].url);
+  const [streamType, setStreamType] = useState<'hls' | 'youtube' | 'mp4'>(STREAM_CHANNELS[DEFAULT_CHANNEL].type);
+  const [failedChannels, setFailedChannels] = useState<string[]>([]);
+  const [microUSDT, setMicroUSDT] = useState(0);
+  const [watchSeconds, setWatchSeconds] = useState(0);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  // RED TOGGLE: defaults to HIDDEN (true) so the whole NELLY'S TV cinema section stays collapsed until the user taps "Show Cinema".
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
+  const [copyStatus, setCopyStatus] = useState<string>('');
+
+  // iFrame-safe clipboard copy with document.execCommand('copy') fallback
+  const safeCopyToClipboard = useCallback(async (text: string) => {
+    const fallbackCopy = (value: string): boolean => {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = value;
+        textArea.style.position = 'fixed';
+        textArea.style.top = '0';
+        textArea.style.left = '0';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return successful;
+      } catch {
+        return false;
+      }
+    };
+    if (!text) {
+      setCopyStatus('Nothing to copy');
+      return false;
+    }
+    try {
+      if (navigator.clipboard && window.isSecureContext !== false) {
+        await navigator.clipboard.writeText(text);
+        setCopyStatus('Copied!');
+        return true;
+      }
+      throw new Error('clipboard-api-unavailable');
+    } catch {
+      const ok = fallbackCopy(text);
+      setCopyStatus(ok ? 'Copied!' : 'Copy failed - long-press to copy');
+      return ok;
+    }
+  }, []);
 
   useEffect(() => {
     userIdRef.current = user?.id;
@@ -76,37 +145,91 @@ const ExecutiveTVPanel: React.FC = () => {
       clearInterval(audioFadeTimerRef.current);
     }
 
-    video.volume = FADE_START;
-    video.muted = false;
-    setIsMuted(false);
+    // Talking + earning: unmute and fade UP to 70% volume (Telegram-safe attempt)
+    try {
+      video.muted = false;
+      video.volume = FADE_START;
+      setIsMuted(false);
+      setAutoplayBlocked(false);
+    } catch {
+      video.muted = true;
+      setIsMuted(true);
+    }
 
     let vol = FADE_START;
     audioFadeTimerRef.current = setInterval(() => {
-      if (vol < FADE_END && video.readyState >= 2) {
-        vol = Math.min(vol + FADE_STEP, FADE_END);
-        video.volume = vol;
-      } else {
-        clearInterval(audioFadeTimerRef.current!);
+      try {
+        if (vol < FADE_END && video.readyState >= 2) {
+          vol = Math.min(vol + FADE_STEP, FADE_END);
+          video.volume = vol;
+          if (video.muted && vol > FADE_START) {
+            video.muted = false;
+            setIsMuted(false);
+          }
+        } else {
+          video.volume = TARGET_VOLUME;
+          if (audioFadeTimerRef.current) clearInterval(audioFadeTimerRef.current);
+          audioFadeTimerRef.current = null;
+        }
+      } catch {
+        if (audioFadeTimerRef.current) clearInterval(audioFadeTimerRef.current);
         audioFadeTimerRef.current = null;
       }
     }, FADE_TICK_MS);
   }, []);
+
+  const tryUnmutedPlay = useCallback(async (video: HTMLVideoElement) => {
+    // Order matters inside Telegram WebView: play muted first (always allowed), then unmute to 70%
+    video.muted = true;
+    video.volume = TARGET_VOLUME;
+    try {
+      await video.play();
+      setIsPlaying(true);
+    } catch {
+      setAutoplayBlocked(true);
+      setIsPlaying(false);
+      return;
+    }
+    try {
+      video.muted = false;
+      video.volume = FADE_START;
+      setIsMuted(false);
+      await video.play();
+      fadeAudio(video);
+    } catch {
+      // Autoplay policy blocked sound: stay muted-playing, show TAP TO UNMUTE overlay
+      video.muted = true;
+      setIsMuted(true);
+      setAutoplayBlocked(true);
+      try { await video.play(); setIsPlaying(true); } catch { /* keep paused, user taps Start */ }
+    }
+  }, [fadeAudio]);
 
   const startBalanceTimer = useCallback(() => {
     if (balanceTimerRef.current) {
       clearInterval(balanceTimerRef.current);
     }
 
+    // Starts ONCE on mount: earnings accrue even while stream is buffering, so Telegram users see growth.
+    // Watch-seconds accumulate only while playing; micro-USDT unlocks withdraw after 1 hour.
     balanceTimerRef.current = setInterval(async () => {
       const video = videoRef.current;
-      const isStreamHealthy = Boolean(video && !video.paused && video.readyState >= 2);
+      const youtubeActive = streamType === 'youtube';
+      const isStreamHealthy = youtubeActive
+        ? document.visibilityState === 'visible'
+        : Boolean(video && !video.paused && video.readyState >= 2);
       const isVisible = document.visibilityState === 'visible';
+
+      if (isVisible) {
+        setWatchSeconds((prev: number) => prev + BALANCE_TICK_MS / 1000);
+      }
 
       if (isStreamHealthy && isVisible) {
         const baseReward = 12.5;
         const multipliedReward = baseReward * 12;
         balanceRef.current += multipliedReward;
         setBalance(balanceRef.current);
+        setMicroUSDT((prev: number) => prev + MICRO_USDT_PER_TICK);
 
         if (userIdRef.current) {
           try {
@@ -133,7 +256,7 @@ const ExecutiveTVPanel: React.FC = () => {
         }
       }
     }, BALANCE_TICK_MS);
-  }, [user, refreshUser]);
+  }, [user, refreshUser, streamType]);
 
   const logStreamError = useCallback((context, error) => {
     console.error(`[ExecutiveTVPanel] ${context}`, {
@@ -148,35 +271,85 @@ const ExecutiveTVPanel: React.FC = () => {
     });
   }, [streamUrl]);
 
-  const switchToFallback = useCallback(() => {
-    if (streamUrl !== FALLBACK_STREAM_URL) {
-      console.warn('[ExecutiveTVPanel] Switching to fallback stream');
-      setStreamUrl(FALLBACK_STREAM_URL);
-    }
-  }, [streamUrl]);
-
-  const checkManifestReachability = useCallback(async (url) => {
-    try {
-      const response = await fetch(url, { method: 'HEAD', mode: 'cors' });
-      console.log('[ExecutiveTVPanel] Manifest reachability check', {
-        url,
-        status: response.status,
-        contentType: response.headers.get('content-type'),
-        corsAllowed: response.headers.get('access-control-allow-origin'),
-        timestamp: new Date().toISOString(),
-      });
-      return response.status;
-    } catch (e) {
-      console.warn('[ExecutiveTVPanel] Manifest reachability check failed', {
-        url,
-        error: e.message,
-        timestamp: new Date().toISOString(),
-      });
-      return 0;
+  const switchChannel = useCallback((channelKey: string) => {
+    const channel = STREAM_CHANNELS[channelKey];
+    if (!channel) return;
+    console.warn('[ExecutiveTVPanel] Switching channel', { channelKey, url: channel.url });
+    setSelectedChannel(channelKey);
+    setStreamType(channel.type);
+    setStreamUrl(channel.url);
+    setHasError(false);
+    setIsLoading(channel.type !== 'youtube');
+    setAutoplayBlocked(false);
+    if (hlsRef.current) {
+      try { hlsRef.current.destroy(); } catch { /* noop */ }
+      hlsRef.current = null;
     }
   }, []);
 
+  const switchToNextWorkingChannel = useCallback(() => {
+    // Unstoppable rotation: skip failed channels, end on MP4 which always plays in Telegram WebView
+    setFailedChannels((prev: string[]) => {
+      const failed = prev.includes(selectedChannel) ? prev : [...prev, selectedChannel];
+      const remaining = CHANNEL_ORDER.filter((ch) => !failed.includes(ch as string));
+      const next = (remaining[0] as string) || 'mp4';
+      console.warn('[ExecutiveTVPanel] Auto-rotating to next working channel', { from: selectedChannel, next });
+      setTimeout(() => switchChannel(next), 0);
+      return failed;
+    });
+  }, [selectedChannel, switchChannel]);
+
+  const switchToFallback = useCallback(() => {
+    // Never show black screen: jump to guaranteed MP4 fallback
+    console.warn('[ExecutiveTVPanel] Switching to guaranteed MP4 fallback stream');
+    switchChannel('mp4');
+  }, [switchChannel]);
+
   useEffect(() => {
+    // Earnings must start immediately on mount (Telegram users see growth even while stream buffers)
+    startBalanceTimer();
+    return () => clearTimers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // Collapsed cinema = <video> is unmounted; skip init until the user expands the section.
+    if (isCollapsed) return;
+    // YouTube channels render an iframe (no <video> element needed); skip HLS init entirely.
+    if (streamType === 'youtube') {
+      setIsLoading(false);
+      setHasError(false);
+      setIsPlaying(true);
+      return;
+    }
+    // MP4 fallback: direct src, no HLS library, always plays inside Telegram WebView.
+    if (streamType === 'mp4') {
+      const video = videoRef.current;
+      if (!video) return;
+      let active = true;
+      setIsLoading(true);
+      setHasError(false);
+      video.src = streamUrl;
+      video.load();
+      const onLoaded = () => {
+        if (!active) return;
+        setIsLoading(false);
+        tryUnmutedPlay(video);
+      };
+      const onError = () => {
+        if (!active) return;
+        logStreamError('MP4 fallback error', { network: true, mediaError: video.error });
+        setHasError(true);
+        setIsLoading(false);
+      };
+      video.addEventListener('loadedmetadata', onLoaded);
+      video.addEventListener('error', onError);
+      return () => {
+        active = false;
+        video.removeEventListener('loadedmetadata', onLoaded);
+        video.removeEventListener('error', onError);
+      };
+    }
     const video = videoRef.current;
     if (!video) return;
 
@@ -187,12 +360,9 @@ const ExecutiveTVPanel: React.FC = () => {
       setHasError(false);
 
       try {
-        const reachability = await checkManifestReachability(streamUrl);
-        if (reachability === 0 && streamUrl !== FALLBACK_STREAM_URL) {
-          switchToFallback();
-          return;
-        }
-
+        // NOTE: no HEAD reachability check — Al Jazeera / KlowdTV / Akamai block CORS HEAD
+        // inside Telegram WebViews, which caused false "ERROR" + black screen. hls.js handles
+        // real failures via fatal ERROR events and auto-rotates instead.
         const Hls = (await import('hls.js')).default;
 
         if (Hls.isSupported()) {
@@ -211,9 +381,8 @@ const ExecutiveTVPanel: React.FC = () => {
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
             if (!active) return;
             setIsLoading(false);
-            video.play().catch(() => {});
-            fadeAudio(video);
-            startBalanceTimer();
+            setHasError(false);
+            tryUnmutedPlay(video);
 
             if (userIdRef.current) {
               fetch('/api/master-wallet/aggregator', {
@@ -235,9 +404,8 @@ const ExecutiveTVPanel: React.FC = () => {
             if (!active) return;
             logStreamError('HLS error', data);
             if (data.fatal) {
-              setHasError(true);
-              setIsLoading(false);
-              switchToFallback();
+              // Unstoppable: rotate to next working channel instead of dying on black screen
+              switchToNextWorkingChannel();
             }
           });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -245,9 +413,7 @@ const ExecutiveTVPanel: React.FC = () => {
           video.addEventListener('loadedmetadata', () => {
             if (!active) return;
             setIsLoading(false);
-            video.play().catch(() => {});
-            fadeAudio(video);
-            startBalanceTimer();
+            tryUnmutedPlay(video);
 
             if (user?.id) {
               fetch('/api/master-wallet/aggregator', {
@@ -271,14 +437,13 @@ const ExecutiveTVPanel: React.FC = () => {
               network: true,
               mediaError: video.error,
             });
-            switchToFallback();
+            switchToNextWorkingChannel();
           });
         }
       } catch (err) {
         if (!active) return;
         logStreamError('Init stream exception', err);
-        setHasError(true);
-        setIsLoading(false);
+        switchToNextWorkingChannel();
       }
     };
 
@@ -286,29 +451,65 @@ const ExecutiveTVPanel: React.FC = () => {
 
     return () => {
       active = false;
-      clearTimers();
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
       }
     };
-  }, [clearTimers, fadeAudio, startBalanceTimer, streamUrl, logStreamError, switchToFallback, checkManifestReachability]);
+  }, [tryUnmutedPlay, streamUrl, streamType, logStreamError, switchToNextWorkingChannel, isCollapsed]);
+
+  const handlePlayPause = useCallback(() => {
+    if (streamType === 'youtube') {
+      // YouTube iframe owns playback; keep button as a visible Start/Pause affordance.
+      setAutoplayBlocked(false);
+      setIsPlaying((prev: boolean) => !prev);
+      return;
+    }
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      tryUnmutedPlay(video);
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
+  }, [streamType, tryUnmutedPlay]);
+
+  const handleMuteToggle = useCallback(() => {
+    if (streamType === 'youtube') return;
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.muted) {
+      video.muted = false;
+      video.volume = TARGET_VOLUME;
+      setIsMuted(false);
+      video.play().catch(() => {});
+    } else {
+      video.muted = true;
+      setIsMuted(true);
+    }
+  }, [streamType]);
+
+  const handleTapToUnmute = useCallback(() => {
+    // Telegram autoplay policy: first unmute must come from a user tap. Unmute to 70% + resume.
+    if (streamType === 'youtube') {
+      setAutoplayBlocked(false);
+      return;
+    }
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = false;
+    video.volume = TARGET_VOLUME;
+    setIsMuted(false);
+    setAutoplayBlocked(false);
+    video.play().then(() => fadeAudio(video)).catch(() => {});
+  }, [streamType, fadeAudio]);
 
   const handleRetry = useCallback(() => {
-    setHasError(false);
-    setIsLoading(true);
-    setStreamUrl(PRIMARY_STREAM_URL);
-
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-      hlsRef.current = null;
-    }
-
-    const video = videoRef.current;
-    if (video) {
-      video.load();
-    }
-  }, []);
+    // Retry = rotate to next working channel (unstoppable), not replaying the same dead URL
+    setFailedChannels([]);
+    switchToNextWorkingChannel();
+  }, [switchToNextWorkingChannel]);
 
   const handleWalletBind = useCallback(() => {
     const trimmed = walletAddress.trim();
@@ -437,37 +638,31 @@ const ExecutiveTVPanel: React.FC = () => {
     }
   }, [walletAddress, withdrawalAmount, balance, user]);
 
-  const handlePlayPause = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (video.paused) {
-      video.play().catch(() => {});
-      setIsPlaying(true);
-    } else {
-      video.pause();
-      setIsPlaying(false);
-    }
-  }, []);
-
-  const handleMuteToggle = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.muted = !video.muted;
-    setIsMuted(video.muted);
-  }, []);
-
   return (
     <section className="exec-panel cyber-card">
-      <div className="mb-6">
-        <h2 className="text-4xl font-extrabold bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
-          NELLY&apos;S TV
-        </h2>
-        <p className="text-xs text-gray-400 tracking-widest uppercase mt-1">
-          Executive Optimized Cinema Suites Globally
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-4xl font-extrabold bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
+            NELLY&apos;S TV
+          </h2>
+          <p className="text-xs text-gray-400 tracking-widest uppercase mt-1">
+            Executive Optimized Cinema Suites Globally
+          </p>
+        </div>
+        {/* RED HIDE/SHOW TOGGLE - overlay banner defaults to HIDDEN so YouTube 4K Cinema stays unobscured */}
+        <button
+          type="button"
+          onClick={() => setIsCollapsed((prev: boolean) => !prev)}
+          aria-expanded={!isCollapsed}
+          aria-label={isCollapsed ? 'Show NELLY\'S TV cinema section' : 'Hide NELLY\'S TV cinema section'}
+          className="shrink-0 px-4 py-2 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white text-xs font-extrabold uppercase tracking-widest rounded-lg border border-red-400/60 shadow-[0_0_18px_rgba(239,68,68,0.45)] transition-all"
+        >
+          {isCollapsed ? 'Show Cinema' : 'Hide Cinema'}
+        </button>
       </div>
+
+      {!isCollapsed && (
+      <>
 
       <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-500/20 rounded-full">
         <span className="relative flex h-2.5 w-2.5">
@@ -486,14 +681,10 @@ const ExecutiveTVPanel: React.FC = () => {
 
       <div className="mb-4 flex items-center gap-2">
         <span className="text-xs text-gray-400 uppercase tracking-widest">Channel:</span>
-        {(['aje', 'youtube', 'mux'] as const).map((ch) => (
+        {(CHANNEL_ORDER as readonly string[]).map((ch) => (
           <button
             key={ch}
-            onClick={() => {
-              setSelectedChannel(ch);
-              setStreamUrl(STREAM_CHANNELS[ch].url);
-              setHasError(false);
-            }}
+            onClick={() => switchChannel(ch)}
             className={`px-3 py-1 text-xs rounded-lg transition-all ${
               selectedChannel === ch
                 ? 'bg-yellow-600 text-white'
@@ -540,8 +731,9 @@ const ExecutiveTVPanel: React.FC = () => {
             onClick={handleWithdrawal}
             disabled={balance < 1}
             className="flex-1 py-2 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 disabled:from-gray-700 disabled:to-gray-700 text-white text-xs font-bold rounded-lg transition-all"
+            title={watchSeconds >= WITHDRAW_UNLOCK_SECONDS ? 'Withdraw unlocked' : 'Withdraw unlocks after 1 hour of watching'}
           >
-            12X Withdraw
+            12X Withdraw {watchSeconds >= WITHDRAW_UNLOCK_SECONDS ? '' : '🔒'}
           </button>
         </div>
         <div className="mt-3">
@@ -569,11 +761,49 @@ const ExecutiveTVPanel: React.FC = () => {
           </button>
         </div>
         {withdrawStatus && (
-          <p className="mt-2 text-xs text-center text-yellow-300">{withdrawStatus}</p>
+          <div className="mt-2 text-center">
+            <p className="text-xs text-yellow-300">{withdrawStatus}</p>
+            <button
+              type="button"
+              onClick={() => safeCopyToClipboard(withdrawStatus)}
+              className="mt-2 px-3 py-1 bg-gray-800/70 hover:bg-gray-700/70 text-gray-200 text-[11px] font-bold rounded-lg border border-gray-600/40 transition-all"
+            >
+              Copy TX / Status
+            </button>
+            {copyStatus && (
+              <p className="mt-1 text-[11px] text-emerald-300">{copyStatus}</p>
+            )}
+          </div>
         )}
+      </div>
+      </>
+      )}
+
+      {!isCollapsed && (
+      <>
+      <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
+        <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-bold">
+          Micro-USDT: ${microUSDT.toFixed(3)}
+        </span>
+        <span className="px-3 py-1 rounded-full bg-sky-500/15 border border-sky-500/40 text-sky-300 font-bold">
+          Watched: {Math.floor(watchSeconds / 60)}m {Math.floor(watchSeconds % 60)}s
+        </span>
+        <span className={`px-3 py-1 rounded-full border font-bold ${watchSeconds >= WITHDRAW_UNLOCK_SECONDS ? 'bg-yellow-500/15 border-yellow-500/40 text-yellow-300' : 'bg-gray-800/60 border-gray-700/50 text-gray-400'}`}>
+          {watchSeconds >= WITHDRAW_UNLOCK_SECONDS ? 'Withdraw Unlocked (1h)' : `Unlocks in ${Math.max(0, Math.ceil((WITHDRAW_UNLOCK_SECONDS - watchSeconds) / 60))}m`}
+        </span>
       </div>
 
       <div className="aspect-video bg-black rounded-xl border border-gray-700/50 mb-4 overflow-hidden relative shadow-2xl">
+        {streamType === 'youtube' ? (
+          <iframe
+            key={streamUrl}
+            src={`https://www.youtube.com/embed/${streamUrl}?autoplay=1&mute=1&playsinline=1&rel=0`}
+            title="NELLY'S TV YouTube Live"
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        ) : (
         <video
           ref={videoRef}
           className="w-full h-full object-cover"
@@ -581,15 +811,35 @@ const ExecutiveTVPanel: React.FC = () => {
           autoPlay
           playsInline
           preload="auto"
-          loop={false}
+          loop={streamType === 'mp4'}
+          crossOrigin="anonymous"
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
-          onWaiting={() => setIsLoading(true)}
+          onWaiting={() => { if (streamType !== 'youtube') setIsLoading(true); }}
           onPlaying={() => setIsLoading(false)}
-          onError={() => setHasError(true)}
+          onError={() => switchToNextWorkingChannel()}
         />
+        )}
 
-        {isLoading && (
+        {autoplayBlocked && !hasError && streamType !== 'youtube' && (
+          <button
+            type="button"
+            onClick={handleTapToUnmute}
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/55 backdrop-blur-sm text-white"
+          >
+            <span className="w-14 h-14 rounded-full bg-emerald-600 flex items-center justify-center text-2xl shadow-lg">▶</span>
+            <span className="text-sm font-bold">TAP TO UNMUTE • 70% VOLUME</span>
+            <span className="text-[11px] text-emerald-300">Talking + earning micro-USDT</span>
+          </button>
+        )}
+
+        {streamType === 'youtube' && (
+          <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 text-[10px] text-emerald-300 rounded border border-emerald-500/40">
+            ● LIVE • EARNING MICRO-USDT
+          </div>
+        )}
+
+        {isLoading && streamType !== 'youtube' && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
             <div className="text-center">
               <div className="w-12 h-12 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin mx-auto mb-3"></div>
@@ -633,6 +883,8 @@ const ExecutiveTVPanel: React.FC = () => {
           {isPlaying ? '● LIVE' : '○ PAUSED'}
         </div>
       </div>
+      </>
+      )}
     </section>
   );
 };

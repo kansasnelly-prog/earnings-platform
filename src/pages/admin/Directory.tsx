@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, ArrowDownToLine, Settings, Key, UsersRound, BarChart3, Megaphone, Radio, Film, Shield, Bot } from 'lucide-react';
+import { LayoutDashboard, Users, ArrowDownToLine, Settings, Key, UsersRound, BarChart3, Megaphone, Radio, Film, Shield, Bot, Globe, Activity, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
@@ -9,13 +9,15 @@ const AdminDirectory: React.FC = () => {
   const navigate = useNavigate();
 
   const panels = [
-    { id: 'command-center', label: 'Command Center', desc: 'Main admin hub with overview, users, withdrawals, and match admin.', icon: LayoutDashboard, route: '/admin/command-center' },
+    { id: 'command-center', label: 'Command Center', desc: 'Main admin hub — overview, users, withdrawals, controls, match, TikTok, vault, cinema & monetization.', icon: LayoutDashboard, route: '/admin/command-center' },
     { id: 'ai-workspace', label: 'AI Workspace', desc: 'Premium 3D admin panels, NellyCoin ledger, and platform controls.', icon: Bot, route: '/admin/ai-workspace' },
-    { id: 'match-feed', label: 'Match & Chat Monitor', desc: 'Live matchmaking feeds, chat oversight, and dating sandbox admin.', icon: UsersRound, route: '/admin/command-center' },
-    { id: 'tiktok', label: 'TikTok / Social Panel', desc: 'TikTok Shop sync, permissions, and social engine monitoring.', icon: Megaphone, route: '/admin/command-center' },
-    { id: 'telegram', label: 'Telegram App Hub Sync', desc: 'Mini App ecosystem status, webhook health, and bot analytics.', icon: Radio, route: '/admin/command-center' },
-    { id: 'vault', label: 'Executive Vault & Monetization', desc: 'Adsterra, Solana yield, treasury controls, and live revenue streams.', icon: BarChart3, route: '/admin/command-center' },
-    { id: 'cinema', label: 'Cinema Telemetry', desc: 'Stream health, viewer metrics, translation status, and broadcast monitoring.', icon: Film, route: '/admin/command-center' },
+    { id: 'digital-home', label: 'Digital Home Grid', desc: 'Executive digital-estate dashboard with system overview and live status.', icon: Globe, route: '/admin/digital-home' },
+    { id: 'enhanced', label: 'Enhanced Dashboard', desc: 'Full operations dashboard — users, tasks, catalog, support, training & system health.', icon: BarChart3, route: '/admin/enhanced' },
+    { id: 'dashboard', label: 'Classic Dashboard', desc: 'Core metrics, stats cards, user directory and withdrawal approvals.', icon: Activity, route: '/admin/dashboard' },
+    { id: 'real', label: 'Real-Time Dashboard', desc: 'Live platform stats and treasury minting telemetry.', icon: Zap, route: '/admin/real' },
+    { id: 'simple', label: 'Simple Panel', desc: 'Lightweight quick-access admin panel.', icon: Shield, route: '/admin/simple' },
+    { id: 'match', label: 'Match & Chat Monitor', desc: 'Dating matchmaking oversight, discovery feeds and chat sandbox admin.', icon: UsersRound, route: '/admin/match' },
+    { id: 'tiktok6-match', label: 'TikTok6 Match Admin', desc: 'TikTok6 matchmaking & monetization machine control panel.', icon: Film, route: '/admin/tiktok6-match' },
     { id: 'users', label: 'User Directory', desc: 'Registered users, VIP tiers, account status, and role management.', icon: Users, route: '/admin/command-center' },
     { id: 'payouts', label: 'Withdrawals & Payouts', desc: 'Pending orders, withdrawal approvals, and transaction logging.', icon: ArrowDownToLine, route: '/admin/command-center' },
     { id: 'controls', label: 'Admin Controls', desc: 'System controls, task migrations, treasury alerts, and live debugging.', icon: Settings, route: '/admin/command-center' },

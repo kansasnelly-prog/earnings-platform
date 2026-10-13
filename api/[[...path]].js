@@ -15,6 +15,7 @@ const ROUTES = {
   'cinema/stream-reward': './cinema/stream-reward.js',
   'cron/solana-flush': './cron/solana-flush.js',
   'earnings/execute': './earnings/execute.js',
+  'health': './health.js',
   'master-wallet/aggregator': './master-wallet/aggregator.js',
   'matchmaking/start': './matchmaking/start.js',
   'solana/flush': './solana/flush.js',

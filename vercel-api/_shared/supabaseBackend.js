@@ -6,19 +6,26 @@ import { createClient } from '@supabase/supabase-js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function loadEnv() {
+  // Vercel/serverless: platform env vars (process.env) are authoritative.
+  // Local dev: vercel-api/.env file values override for convenience.
+  const fileEnv = {};
   const envPath = path.resolve(__dirname, '../.env');
-  if (!fs.existsSync(envPath)) return {};
-  const envContent = fs.readFileSync(envPath, 'utf8');
-  const envVars = {};
-  envContent.split('\n').forEach(line => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) return;
-    const [key, ...rest] = trimmed.split('=');
-    if (key && rest.length) {
-      envVars[key.trim()] = rest.join('=').trim().replace(/^["']|["']$/g, '');
+  if (fs.existsSync(envPath)) {
+    try {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      envContent.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) return;
+        const [key, ...rest] = trimmed.split('=');
+        if (key && rest.length) {
+          fileEnv[key.trim()] = rest.join('=').trim().replace(/^["']|["']$/g, '');
+        }
+      });
+    } catch (e) {
+      console.warn('[SupabaseBackend] Local .env read failed (continuing with process.env):', e && e.message);
     }
-  });
-  return envVars;
+  }
+  return { ...process.env, ...fileEnv };
 }
 
 const ENV = loadEnv();

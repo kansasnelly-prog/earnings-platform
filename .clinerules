@@ -1240,3 +1240,27 @@ You are an expert developer operating under strict token and execution speed con
 - ### 🔒 EXPLICIT TRON MULTI-PAYMENT ARCHITECTURE:
   - The Bybit multi-payment controller must strictly preserve the verified TRON Network (TRC20) master configuration wallet key: "THw79g2JzNj2GYtLnCXR6kRQpYRSvR2mo6".
   - Never substitute or overwrite this address with random mock strings, placeholder variables, or alternative blockchain formatting.
+
+# ==============================================================================
+# 📟 MANDATORY TERMINAL & COMMAND EXECUTION RULES
+# ==============================================================================
+
+1. STRICT SINGLE-COMMAND LIMIT:
+   - Run EXACTLY ONE terminal command per turn.
+   - NEVER chain commands using `&&`, `;`, or PowerShell pipelines unless strictly necessary.
+   - NEVER issue a new command until the previous command has completely exited and returned its final output.
+
+2. PREVENT TERMINAL LOCKUPS & DEADLOCKS:
+   - Do NOT run heavy interactive or long-running foreground processes (e.g. `npx vite build`, `node server.js`) in standard foreground terminal sessions.
+   - Always run long-running tasks in detached background mode or pipe output cleanly into a log file (e.g. `Start-Process -FilePath 'cmd.exe' -ArgumentList '/c', 'npx vite build > build.log 2>&1' -WindowStyle Hidden`).
+   - Never run recursive scan commands like `Get-ChildItem -Recurse` across large folders like `node_modules` or `.git`.
+
+3. OUTPUT HANDLING:
+   - Keep command output concise and brief. Read log files using single-line or tail checks rather than spamming long-running read loops.
+
+# DEPLOYMENT EXECUTION RULES:
+1. Execute only ONE command at a time and wait for it to return output completely.
+2. Never launch long-running builds or servers directly in the foreground; always run them detached so the terminal never deadlocks or hangs.
+3. Update `.clinerules` with these guidelines, then acknowledge when saved.
+# ==============================================================================
+

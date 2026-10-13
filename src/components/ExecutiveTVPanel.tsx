@@ -41,9 +41,11 @@ const STREAM_CHANNELS: Record<string, { url: string; label: string; type: 'hls' 
 // Live channels stream 24/7 so playback never "completes" or restarts mid-way.
 const CHANNEL_ORDER = ['aje', 'youtube', 'aje_youtube', 'france24', 'dwnews', 'mp4'] as const;
 
-const DEFAULT_CHANNEL = 'aje';
+const DEFAULT_CHANNEL = 'aje_youtube';
 // Unstoppable: final fallback is a CORS-friendly MP4 that always plays inside Telegram WebViews
-const TARGET_VOLUME = 0.7;
+const TARGET_VOLUME = 0.75;
+// YouTube IFrame Player target volume (percent) applied on ready for clear audio on load
+const YT_TARGET_VOLUME = 75;
 const FADE_START = 0.05;
 const FADE_END = TARGET_VOLUME;
 const FADE_STEP = 0.05;
@@ -58,6 +60,9 @@ const ExecutiveTVPanel: React.FC = () => {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
+  const ytContainerRef = useRef<HTMLDivElement>(null);
+  const ytPlayerRef = useRef<any>(null);
+  const ytApiPromiseRef = useRef<Promise<any> | null>(null);
   const balanceRef = useRef(0);
   const audioFadeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const balanceTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -83,8 +88,10 @@ const ExecutiveTVPanel: React.FC = () => {
   const [microUSDT, setMicroUSDT] = useState(0);
   const [watchSeconds, setWatchSeconds] = useState(0);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
-  // RED TOGGLE: defaults to HIDDEN (true) so the whole NELLY'S TV cinema section stays collapsed until the user taps "Show Cinema".
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
+  // Cinema section is EXPANDED by default so the default channel autoplays the moment the dashboard loads.
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  // Executive Solana Vault: COLLAPSED by default so the vault stays compact until the user taps "Show".
+  const [vaultCollapsed, setVaultCollapsed] = useState<boolean>(true);
   const [copyStatus, setCopyStatus] = useState<string>('');
 
   // iFrame-safe clipboard copy with document.execCommand('copy') fallback
@@ -145,7 +152,7 @@ const ExecutiveTVPanel: React.FC = () => {
       clearInterval(audioFadeTimerRef.current);
     }
 
-    // Talking + earning: unmute and fade UP to 70% volume (Telegram-safe attempt)
+    // Talking + earning: unmute and fade UP to 75% volume (Telegram-safe attempt)
     try {
       video.muted = false;
       video.volume = FADE_START;
@@ -458,10 +465,102 @@ const ExecutiveTVPanel: React.FC = () => {
     };
   }, [tryUnmutedPlay, streamUrl, streamType, logStreamError, switchToNextWorkingChannel, isCollapsed]);
 
+  // Load the YouTube IFrame Player API once and cache the promise so repeated switches reuse it.
+  const loadYouTubeApi = useCallback((): Promise<any> => {
+    if (ytApiPromiseRef.current) return ytApiPromiseRef.current;
+    ytApiPromiseRef.current = new Promise<any>((resolve) => {
+      const w = window as any;
+      if (w.YT && w.YT.Player) {
+        resolve(w.YT);
+        return;
+      }
+      const prevReady = w.onYouTubeIframeAPIReady;
+      w.onYouTubeIframeAPIReady = () => {
+        if (typeof prevReady === 'function') prevReady();
+        resolve(w.YT);
+      };
+      if (!document.getElementById('youtube-iframe-api')) {
+        const tag = document.createElement('script');
+        tag.id = 'youtube-iframe-api';
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+      }
+    });
+    return ytApiPromiseRef.current;
+  }, []);
+
+  useEffect(() => {
+    // Autoplay the default YouTube channel unmuted at 75% volume on dashboard load.
+    if (isCollapsed || streamType !== 'youtube' || !streamUrl) return;
+
+    let player: any = null;
+    let cancelled = false;
+
+    setIsLoading(false);
+    setHasError(false);
+
+    loadYouTubeApi()
+      .then((YT: any) => {
+        if (cancelled || !ytContainerRef.current) return;
+        player = new YT.Player(ytContainerRef.current, {
+          videoId: streamUrl,
+          playerVars: {
+            autoplay: 1,
+            playsinline: 1,
+            rel: 0,
+            modestbranding: 1,
+            controls: 1,
+          },
+          events: {
+            onReady: (event: any) => {
+              try {
+                event.target.unMute();
+                event.target.setVolume(YT_TARGET_VOLUME);
+                event.target.playVideo();
+              } catch { /* player not interactive yet */ }
+              setIsPlaying(true);
+              setIsMuted(false);
+              setIsLoading(false);
+            },
+            onError: () => {
+              // Live stream blocked/removed -> rotate to the next working channel (unstoppable).
+              switchToNextWorkingChannel();
+            },
+          },
+        });
+        ytPlayerRef.current = player;
+      })
+      .catch(() => {
+        if (!cancelled) switchToNextWorkingChannel();
+      });
+
+    return () => {
+      cancelled = true;
+      try {
+        if (player && typeof player.destroy === 'function') player.destroy();
+      } catch { /* noop */ }
+      ytPlayerRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streamType, streamUrl, isCollapsed]);
+
   const handlePlayPause = useCallback(() => {
     if (streamType === 'youtube') {
-      // YouTube iframe owns playback; keep button as a visible Start/Pause affordance.
+      const p = ytPlayerRef.current;
       setAutoplayBlocked(false);
+      try {
+        if (p && typeof p.getPlayerState === 'function' && typeof p.playVideo === 'function') {
+          const playing = p.getPlayerState() === 1; // 1 = YT.PlayerState.PLAYING
+          if (playing) {
+            p.pauseVideo();
+            setIsPlaying(false);
+          } else {
+            p.playVideo();
+            setIsPlaying(true);
+          }
+          return;
+        }
+      } catch { /* fall through to state toggle */ }
       setIsPlaying((prev: boolean) => !prev);
       return;
     }
@@ -476,7 +575,26 @@ const ExecutiveTVPanel: React.FC = () => {
   }, [streamType, tryUnmutedPlay]);
 
   const handleMuteToggle = useCallback(() => {
-    if (streamType === 'youtube') return;
+    if (streamType === 'youtube') {
+      const p = ytPlayerRef.current;
+      try {
+        if (p && typeof p.isMuted === 'function' && typeof p.mute === 'function') {
+          if (p.isMuted()) {
+            p.unMute();
+            p.setVolume(YT_TARGET_VOLUME);
+            setIsMuted(false);
+          } else {
+            p.mute();
+            setIsMuted(true);
+          }
+        } else {
+          setIsMuted((prev: boolean) => !prev);
+        }
+      } catch {
+        setIsMuted((prev: boolean) => !prev);
+      }
+      return;
+    }
     const video = videoRef.current;
     if (!video) return;
     if (video.muted) {
@@ -494,6 +612,15 @@ const ExecutiveTVPanel: React.FC = () => {
     // Telegram autoplay policy: first unmute must come from a user tap. Unmute to 70% + resume.
     if (streamType === 'youtube') {
       setAutoplayBlocked(false);
+      try {
+        const p = ytPlayerRef.current;
+        if (p && typeof p.unMute === 'function') {
+          p.unMute();
+          p.setVolume(YT_TARGET_VOLUME);
+          if (typeof p.playVideo === 'function') p.playVideo();
+        }
+      } catch { /* noop */ }
+      setIsMuted(false);
       return;
     }
     const video = videoRef.current;
@@ -649,7 +776,7 @@ const ExecutiveTVPanel: React.FC = () => {
             Executive Optimized Cinema Suites Globally
           </p>
         </div>
-        {/* RED HIDE/SHOW TOGGLE - overlay banner defaults to HIDDEN so YouTube 4K Cinema stays unobscured */}
+        {/* HIDE/SHOW TOGGLE - cinema section is EXPANDED by default so the stream autoplays on load */}
         <button
           type="button"
           onClick={() => setIsCollapsed((prev: boolean) => !prev)}
@@ -697,10 +824,24 @@ const ExecutiveTVPanel: React.FC = () => {
       </div>
 
       <div className="mb-4 p-5 bg-gradient-to-br from-gray-800/80 to-gray-900/80 border border-yellow-500/30 rounded-xl">
-        <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-          <DollarSign className="w-4 h-4 text-yellow-400" />
-          Executive Solana Vault
-        </h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-yellow-400" />
+            Executive Solana Vault
+          </h3>
+          <button
+            type="button"
+            onClick={() => setVaultCollapsed((prev: boolean) => !prev)}
+            aria-expanded={!vaultCollapsed}
+            aria-label={vaultCollapsed ? 'Show Executive Solana Vault fields' : 'Hide Executive Solana Vault fields'}
+            className="shrink-0 px-3 py-1 bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-300 text-[11px] font-extrabold uppercase tracking-widest rounded-lg border border-yellow-500/50 transition-all"
+          >
+            {vaultCollapsed ? 'Show' : 'Hide'}
+          </button>
+        </div>
+
+        {!vaultCollapsed && (
+        <>
         <div className="flex gap-2 mb-3">
           <input
             type="text"
@@ -775,6 +916,8 @@ const ExecutiveTVPanel: React.FC = () => {
             )}
           </div>
         )}
+        </>
+        )}
       </div>
       </>
       )}
@@ -795,13 +938,11 @@ const ExecutiveTVPanel: React.FC = () => {
 
       <div className="aspect-video bg-black rounded-xl border border-gray-700/50 mb-4 overflow-hidden relative shadow-2xl">
         {streamType === 'youtube' ? (
-          <iframe
+          <div
             key={streamUrl}
-            src={`https://www.youtube.com/embed/${streamUrl}?autoplay=1&mute=1&playsinline=1&rel=0`}
-            title="NELLY'S TV YouTube Live"
+            ref={ytContainerRef}
             className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
+            title="NELLY'S TV YouTube Live"
           />
         ) : (
         <video
@@ -815,7 +956,7 @@ const ExecutiveTVPanel: React.FC = () => {
           crossOrigin="anonymous"
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
-          onWaiting={() => { if (streamType !== 'youtube') setIsLoading(true); }}
+          onWaiting={() => { setIsLoading(true); }}
           onPlaying={() => setIsLoading(false)}
           onError={() => switchToNextWorkingChannel()}
         />

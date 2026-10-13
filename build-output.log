@@ -1,0 +1,90 @@
+﻿
+> sreymara-desktop@1.0.0 build
+> vite build
+
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+node.exe : Browserslist: browsers data (caniuse-lite) is 6 months old. Please 
+run:
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Browserslist: b...ld. Please run:: 
+   String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  npx update-browserslist-db@latest
+  Why you should do it regularly: 
+https://github.com/browserslist/update-db#readme
+[32mΓ£ô[39m 1933 modules transformed.
+rendering chunks...
+[1m[33m[plugin:vite:reporter][39m[22m [33m[plugin vite:reporter] 
+(!) 
+C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/lib/supabaseClient.ts 
+is dynamically imported by C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/s
+rc/components/sreymara/tabs/ActiveTab.tsx but also statically imported by C:/Use
+rs/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/components/EarningsMatrix.tsx,
+ C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/components/MasterWallet
+Dashboard.tsx, C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/component
+s/earnings/AdsgramRewardedVideo.tsx, C:/Users/PC/Downloads/NELLY2026-WORKING/NDU
+NAKA2028/src/components/earnings/MonetizationHub.tsx, C:/Users/PC/Downloads/NELL
+Y2026-WORKING/NDUNAKA2028/src/hooks/useSreymaraRealtime.ts, 
+C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/lib/supabase.ts, 
+C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/pages/Index-simple.tsx, 
+dynamic import will not move module into another chunk.
+[39m
+[1m[33m[plugin:vite:reporter][39m[22m [33m[plugin vite:reporter] 
+(!) C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/lib/supabase.ts is 
+dynamically imported by C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/
+components/DailyBonus.tsx but also statically imported by C:/Users/PC/Downloads/
+NELLY2026-WORKING/NDUNAKA2028/src/components/CustomerService.tsx, C:/Users/PC/Do
+wnloads/NELLY2026-WORKING/NDUNAKA2028/src/components/Dashboard.tsx, C:/Users/PC/
+Downloads/NELLY2026-WORKING/NDUNAKA2028/src/components/MusicSection.tsx, C:/User
+s/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/components/ProfileSection.tsx, 
+C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/components/TaskGrid.tsx,
+ C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/components/admin/AdminC
+ontrols.tsx, C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/components/
+admin/AdminCustomerService.tsx, C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2
+028/src/components/admin/AdminDashboard.tsx, C:/Users/PC/Downloads/NELLY2026-WOR
+KING/NDUNAKA2028/src/components/admin/AdminPasswordReset.tsx, C:/Users/PC/Downlo
+ads/NELLY2026-WORKING/NDUNAKA2028/src/components/admin/AdminUsers.tsx, C:/Users/
+PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/components/admin/EnhancedAdminDas
+hboard.tsx, C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/components/a
+dmin/EnhancedPendingOrdersManager.tsx, C:/Users/PC/Downloads/NELLY2026-WORKING/N
+DUNAKA2028/src/components/admin/MainAdminPanel.tsx, C:/Users/PC/Downloads/NELLY2
+026-WORKING/NDUNAKA2028/src/components/social/NotificationCenter.tsx, C:/Users/P
+C/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/contexts/AppContext.tsx, C:/Users/
+PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/contexts/SafeAuthProvider.tsx, 
+C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/lib/realtime.ts, C:/User
+s/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/pages/AIAssistantWorkspace.tsx,
+ C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/pages/admin/Directory.t
+sx, C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/services/productCata
+logService.ts, C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/services/
+supabaseService.ts, dynamic import will not move module into another chunk.
+[39m
+[1m[33m[plugin:vite:reporter][39m[22m [33m[plugin vite:reporter] 
+(!) C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/services/productCata
+logService.ts is dynamically imported by C:/Users/PC/Downloads/NELLY2026-WORKING
+/NDUNAKA2028/src/services/supabaseService.ts but also statically imported by C:/
+Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/components/TaskGrid.tsx, C:
+/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/components/admin/ProductCa
+talogManager.tsx, C:/Users/PC/Downloads/NELLY2026-WORKING/NDUNAKA2028/src/contex
+ts/AppContext.tsx, dynamic import will not move module into another chunk.
+[39m
+computing gzip size...
+[2mdist/[22m[32mindex.html                                          [39m[1m[2m    5.03 kB[22m[1m[22m[2m Γöé gzip:   1.65 kB[22m
+[2mdist/[22m[35massets/index-newtestament-9J1Thux6.css              [39m[1m[2m  217.13 kB[22m[1m[22m[2m Γöé gzip:  31.77 kB[22m
+[2mdist/[22m[36massets/vendor-query-newtestament-CbCSVFAb.js        [39m[1m[2m    0.09 kB[22m[1m[22m[2m Γöé gzip:   0.09 kB[22m
+[2mdist/[22m[36massets/googleOAuthService-newtestament-Dnjy5Zrb.js  [39m[1m[2m    3.19 kB[22m[1m[22m[2m Γöé gzip:   1.38 kB[22m
+[2mdist/[22m[36massets/vendor-ui-newtestament-C00qaazc.js           [39m[1m[2m   44.27 kB[22m[1m[22m[2m Γöé gzip:  14.07 kB[22m
+[2mdist/[22m[36massets/vendor-react-newtestament-FAv-xx18.js        [39m[1m[2m  160.65 kB[22m[1m[22m[2m Γöé gzip:  52.44 kB[22m
+[2mdist/[22m[36massets/vendor-supabase-newtestament-CyaWda5O.js     [39m[1m[2m  197.36 kB[22m[1m[22m[2m Γöé gzip:  51.95 kB[22m
+[2mdist/[22m[36massets/vendor-3d-newtestament-K5sagkaB.js           [39m[1m[2m  528.66 kB[22m[1m[22m[2m Γöé gzip: 164.33 kB[22m
+[2mdist/[22m[36massets/index-newtestament-CVoLoXlp.js               [39m[1m[33m1,641.23 kB[39m[22m[2m Γöé gzip: 377.05 kB[22m
+[33m
+(!) Some chunks are larger than 1000 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: 
+https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32mΓ£ô built in 3m 32s[39m

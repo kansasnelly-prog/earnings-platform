@@ -9,5 +9,19 @@
       "includeFiles": "vercel-api/**",
       "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/cybernode/:path*", "destination": "/api/cybernode/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/cybernode/:path*",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
+      ]
+    }
+  ]
 }

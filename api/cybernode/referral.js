@@ -6,8 +6,8 @@ export default async function handler(req, res) {
   }
 
   const supabase = createClient(
-    req.env.SUPABASE_URL,
-    req.env.SUPABASE_SERVICE_ROLE_KEY
+    req.env.CYBERNODE_SUPABASE_URL,
+    req.env.CYBERNODE_SUPABASE_SERVICE_ROLE_KEY
   );
 
   const { new_wallet, referrer_code } = req.body || {};

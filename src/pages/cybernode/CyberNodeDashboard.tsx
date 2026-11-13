@@ -1,5 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+const cybernodeSupabase = createClient(
+  import.meta.env.VITE_CYBERNODE_SUPABASE_URL || '',
+  import.meta.env.VITE_CYBERNODE_SUPABASE_ANON_KEY || ''
+);
 import {
   Loader2,
   Wallet,
@@ -42,6 +47,13 @@ export default function CyberNodeDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [tickInterval, setTickInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
+  /* ================= Supabase Email/Password Auth ================= */
+  const [authUser, setAuthUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [authError, setAuthError] = useState<string | null>(null);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -56,6 +68,7 @@ export default function CyberNodeDashboard() {
         setWalletAddress(wallet.account.address);
         void loadUserData(wallet.account.address);
         void startMiningTick(wallet.account.address);
+        void syncUserWithSupabase(wallet.account.address);
       } else {
         setWalletConnected(false);
         setWalletAddress('');
@@ -239,6 +252,94 @@ export default function CyberNodeDashboard() {
     setTimeout(() => setError(null), 3000);
   };
 
+  /* ================= Supabase Auth Functions ================= */
+  useEffect(() => {
+    const { data: { subscription } } = cybernodeSupabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setAuthUser(session.user);
+        setAuthLoading(false);
+      } else if (event === 'SIGNED_OUT') {
+        setAuthUser(null);
+        setAuthLoading(false);
+        setWalletConnected(false);
+        setWalletAddress('');
+        setBalanceGram(0);
+        setTxHash(null);
+      } else {
+        setAuthLoading(false);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const email = (formData.get('email') || '').toString();
+    const password = (formData.get('password') || '').toString();
+    setAuthError(null);
+    if (!email || !password) {
+      setAuthError('Email and password are required.');
+      return;
+    }
+    try {
+      const { error } = await cybernodeSupabase.auth.signUp({ email, password });
+      if (error) throw error;
+      setAuthMode('signin');
+      setAuthError('Account created! Please sign in.');
+    } catch (err: any) {
+      setAuthError(err.message || 'Sign up failed');
+    }
+  };
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const email = (formData.get('email') || '').toString();
+    const password = (formData.get('password') || '').toString();
+    setAuthError(null);
+    if (!email || !password) {
+      setAuthError('Email and password are required.');
+      return;
+    }
+    try {
+      const { error } = await cybernodeSupabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      setShowAuthModal(false);
+    } catch (err: any) {
+      setAuthError(err.message || 'Sign in failed');
+    }
+  };
+
+  const handleSignOut = async () => {
+    await cybernodeSupabase.auth.signOut();
+    setWalletConnected(false);
+    setWalletAddress('');
+    setBalanceGram(0);
+    setTxHash(null);
+  };
+
+  const syncUserWithSupabase = async (address: string) => {
+    if (!authUser) return;
+    try {
+      const { data: existing } = await cybernodeSupabase
+        .from('cybernode_users')
+        .select('*')
+        .eq('wallet_address', address)
+        .single();
+      if (!existing) {
+        await cybernodeSupabase.from('cybernode_users').insert({
+          wallet_address: address,
+          balance_gram: 0,
+          mining_speed: 0.051,
+          last_mined_at: new Date().toISOString(),
+        });
+      }
+    } catch (e) {
+      console.error('[CyberNode] sync error:', e);
+    }
+  };
+
   const usdValue = balanceGram * GRAM_USD_RATE;
   const progressToWithdraw = Math.min((balanceGram / MIN_WITHDRAWAL) * 100, 100);
 
@@ -251,6 +352,11 @@ export default function CyberNodeDashboard() {
 
   return (
     <div className="min-h-screen bg-[#050a14] text-white p-4 md:p-6 font-mono selection:bg-cyan-500/30">
+      {authLoading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+        </div>
+      ) : authUser ? (
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#0d1322] p-5 rounded-2xl border border-cyan-500/25 mb-6 shadow-[0_0_30px_rgba(6,182,212,0.15)]">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.6)]">
@@ -271,7 +377,15 @@ export default function CyberNodeDashboard() {
           }`}>
             {walletConnected ? `Linked ✓ ${walletAddress.slice(0, 6)}...` : 'Not Connected'}
           </span>
-          {!walletConnected && (
+          {authUser && (
+            <button
+              onClick={handleSignOut}
+              className="text-[11px] px-3 py-1.5 rounded-md border border-red-500/40 text-red-400 bg-red-500/5 hover:bg-red-500/10 transition"
+            >
+              Sign Out
+            </button>
+          )}
+          {!walletConnected && !authUser && (
             <button
               onClick={handleConnect}
               className="text-[11px] px-3 py-1.5 rounded-md border border-cyan-500/40 text-cyan-400 bg-cyan-500/5 hover:bg-cyan-500/10 transition"
@@ -491,6 +605,59 @@ export default function CyberNodeDashboard() {
       <div className="text-center text-[10px] text-gray-600 mt-8">
         CyberNode Earnings Engine • earnings.ink/cybernode • Non-custodial TON staking via TonKeeper
       </div>
+      ) : (
+        <div className="flex items-center justify-center min-h-screen bg-[#050a14]/90 backdrop-blur-sm">
+          <div className="bg-[#0d1322] p-8 rounded-2xl border border-cyan-500/30 w-full max-w-md shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-cyan-400">
+                {authMode === 'signin' ? 'Welcome Back' : 'Create Account'}
+              </h2>
+              <button
+                onClick={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')}
+                className="text-xs text-cyan-400 hover:text-cyan-300"
+              >
+                {authMode === 'signin' ? 'Create account' : 'Sign in'}
+              </button>
+            </div>
+
+            {authError && (
+              <div className="mb-4 p-3 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+                {authError}
+              </div>
+            )}
+
+            <form
+              onSubmit={authMode === 'signin' ? handleSignIn : handleSignUp}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  className="w-full bg-[#050a14] border border-gray-700 rounded px-3 py-2 text-white focus:border-cyan-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Password</label>
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  className="w-full bg-[#050a14] border border-gray-700 rounded px-3 py-2 text-white focus:border-cyan-500 focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-bold hover:from-cyan-400 hover:to-blue-500 transition"
+              >
+                {authMode === 'signin' ? 'Sign In' : 'Create Account'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

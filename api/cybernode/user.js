@@ -6,8 +6,8 @@ export default async function handler(req, res) {
   }
 
   const supabase = createClient(
-    req.env.CYBERNODE_SUPABASE_URL,
-    req.env.CYBERNODE_SUPABASE_SERVICE_ROLE_KEY
+    process.env.CYBERNODE_SUPABASE_URL,
+    process.env.CYBERNODE_SUPABASE_SERVICE_ROLE_KEY
   );
 
   const { wallet_address } = req.body || {};

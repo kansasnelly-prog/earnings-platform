@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react-swc';
 import path from "path";
 import fs from "fs";
 import { pathToFileURL } from "url";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Plugin to serve API routes during local development
 function apiRoutesPlugin(mode: string) {

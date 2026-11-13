@@ -242,6 +242,13 @@ export default function CyberNodeDashboard() {
   const usdValue = balanceGram * GRAM_USD_RATE;
   const progressToWithdraw = Math.min((balanceGram / MIN_WITHDRAWAL) * 100, 100);
 
+  const isAlreadyCheckedIn =
+    lastCheckIn ? new Date().toDateString() === new Date(lastCheckIn).toDateString() : false;
+  const checkInButtonClass = isAlreadyCheckedIn
+    ? 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed'
+    : 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20 cursor-pointer';
+  const checkInButtonLabel = isAlreadyCheckedIn ? '✓ Checked In' : '✓ Daily Check-in';
+
   return (
     <div className="min-h-screen bg-[#050a14] text-white p-4 md:p-6 font-mono selection:bg-cyan-500/30">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#0d1322] p-5 rounded-2xl border border-cyan-500/25 mb-6 shadow-[0_0_30px_rgba(6,182,212,0.15)]">
@@ -404,14 +411,10 @@ export default function CyberNodeDashboard() {
           <div className="flex gap-2">
             <button
               onClick={handleCheckIn}
-              disabled={lastCheckIn ? new Date().toDateString() === new Date(lastCheckIn).toDateString() : false}
-              className={`px-4 py-2 rounded-xl text-xs font-bold border transition ${
-                lastCheckIn ? new Date().toDateString() === new Date(lastCheckIn).toDateString()
-                  ? 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed'
-                  : 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20 cursor-pointer'
-              }`}
+              disabled={isAlreadyCheckedIn}
+              className={`px-4 py-2 rounded-xl text-xs font-bold border transition ${checkInButtonClass}`}
             >
-              {lastCheckIn ? new Date().toDateString() === new Date(lastCheckIn).toDateString() ? '✓ Checked In' : '✓ Daily Check-in'} : '✓ Daily Check-in'}
+              {checkInButtonLabel}
               <span className="ml-1 text-green-400">+{formatGram(0.01 + dailyStreak * 0.005)} GRAM</span>
               <span className="text-gray-500 ml-1">• {dailyStreak} Day Streak</span>
             </button>

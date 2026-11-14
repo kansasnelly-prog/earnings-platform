@@ -12,7 +12,9 @@
   },
   "rewrites": [
     { "source": "/api/cybernode/:path*", "destination": "/api/cybernode/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/cybernode", "destination": "/cybernode/index.html" },
+    { "source": "/cybernode/(.*)", "destination": "/cybernode/index.html" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

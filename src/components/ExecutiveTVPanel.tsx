@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, Wallet } from 'lucide-react';
 import './ExecutiveVisuals.css';
 
 const STREAM_CHANNELS: Record<string, { url: string; label: string; type: 'hls' | 'youtube' | 'mp4' }> = {
@@ -826,15 +826,15 @@ const ExecutiveTVPanel: React.FC = () => {
       <div className="mb-4 p-5 bg-gradient-to-br from-gray-800/80 to-gray-900/80 border border-yellow-500/30 rounded-xl">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-yellow-400" />
-            Executive Solana Vault
+            <Wallet className="w-4 h-4 text-cyan-400" />
+            TON Vault (Tonkeeper)
           </h3>
           <button
             type="button"
             onClick={() => setVaultCollapsed((prev: boolean) => !prev)}
             aria-expanded={!vaultCollapsed}
-            aria-label={vaultCollapsed ? 'Show Executive Solana Vault fields' : 'Hide Executive Solana Vault fields'}
-            className="shrink-0 px-3 py-1 bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-300 text-[11px] font-extrabold uppercase tracking-widest rounded-lg border border-yellow-500/50 transition-all"
+            aria-label={vaultCollapsed ? 'Show TON Vault fields' : 'Hide TON Vault fields'}
+            className="shrink-0 px-3 py-1 bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-300 text-[11px] font-extrabold uppercase tracking-widest rounded-lg border border-cyan-500/50 transition-all"
           >
             {vaultCollapsed ? 'Show' : 'Hide'}
           </button>
@@ -842,80 +842,77 @@ const ExecutiveTVPanel: React.FC = () => {
 
         {!vaultCollapsed && (
         <>
-        <div className="flex gap-2 mb-3">
-          <input
-            type="text"
-            value={walletAddress}
-            onChange={(e) => setWalletAddress(e.target.value)}
-            placeholder="Enter Solana wallet address"
-            className="flex-1 px-3 py-2 bg-black/40 border border-gray-700/50 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-yellow-500/50"
-          />
-          <button
-            onClick={handleWalletBind}
-            className="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold rounded-lg transition-colors"
-          >
-            Bind
-          </button>
+        <div className="mb-4 p-4 bg-black/30 rounded-lg border border-cyan-500/20">
+          <div className="flex items-center gap-3">
+            {address ? (
+              <>
+                <div className="flex-shrink-0 w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                  <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-widest">Connected</p>
+                  <p className="text-sm font-bold text-emerald-400 truncate max-w-[200px]" title={address}>
+                    {address}
+                  </p>
+                  <p className="text-[11px] text-gray-500">Tonkeeper Wallet</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex-shrink-0 w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-widest">Not Connected</p>
+                  <p className="text-sm text-gray-300">Connect your Tonkeeper wallet</p>
+                </div>
+              </>
+            )}
+          </div>
+          {tonBalance && address && (
+            <div className="mt-3 pt-3 border-t border-gray-700/50">
+              <p className="text-xs text-gray-400">TON Balance</p>
+              <p className="text-lg font-bold text-cyan-400">{tonBalance} TON</p>
+            </div>
+          )}
         </div>
 
-        <div className="flex gap-2">
+        <div className="mb-3 p-3 bg-black/30 rounded-lg border border-gray-700/50">
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Wallet Address</p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 text-xs font-mono text-gray-300 truncate">
+              {address ? (address.length > 20 ? address.slice(0, 10) + '...' + address.slice(-8) : address) : 'Not connected'}
+            </code>
+            <button
+              onClick={() => address && void refreshBalance()}
+              className="px-2 py-1 bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-400 text-[10px] font-bold rounded transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-3">
+          <label className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 block">Withdrawal Amount (TON)</label>
           <input
             type="number"
             value={withdrawalAmount}
             onChange={(e) => setWithdrawalAmount(e.target.value)}
-            placeholder="Withdrawal amount"
-            step="0.1"
+            placeholder="0.0"
+            step="0.01"
             min="0"
-            className="flex-1 px-3 py-2 bg-black/40 border border-gray-700/50 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-yellow-500/50"
+            className="w-full px-3 py-2 bg-black/40 border border-gray-700/50 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
           />
-          <button
-            onClick={handleWithdrawal}
-            disabled={balance < 1}
-            className="flex-1 py-2 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 disabled:from-gray-700 disabled:to-gray-700 text-white text-xs font-bold rounded-lg transition-all"
-            title={watchSeconds >= WITHDRAW_UNLOCK_SECONDS ? 'Withdraw unlocked' : 'Withdraw unlocks after 1 hour of watching'}
-          >
-            12X Withdraw {watchSeconds >= WITHDRAW_UNLOCK_SECONDS ? '' : '🔒'}
-          </button>
         </div>
-        <div className="mt-3">
-          <button
-            onClick={async () => {
-              try {
-                const token = localStorage.getItem('supabase_jwt') || localStorage.getItem('sb-access-token');
-                const response = await fetch('/api/master-wallet/aggregator', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({ action: 'aggregate' }),
-                });
-                const result = await response.json();
-                setWithdrawStatus(`Aggregated: $${result.totals?.total?.toFixed(2) || 0} | Master cut: $${result.masterCut?.toFixed(2) || 0}`);
-              } catch (e) {
-                setWithdrawStatus('Aggregation failed');
-              }
-            }}
-            className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-colors"
-          >
-            Aggregate All Earnings (12X)
-          </button>
-        </div>
-        {withdrawStatus && (
-          <div className="mt-2 text-center">
-            <p className="text-xs text-yellow-300">{withdrawStatus}</p>
-            <button
-              type="button"
-              onClick={() => safeCopyToClipboard(withdrawStatus)}
-              className="mt-2 px-3 py-1 bg-gray-800/70 hover:bg-gray-700/70 text-gray-200 text-[11px] font-bold rounded-lg border border-gray-600/40 transition-all"
-            >
-              Copy TX / Status
-            </button>
-            {copyStatus && (
-              <p className="mt-1 text-[11px] text-emerald-300">{copyStatus}</p>
-            )}
-          </div>
-        )}
+
+        <button
+          onClick={handleWithdrawal}
+          disabled={!address || tonBalance === null || tonBalance === '0' || tonBalance === '0.0000'}
+          className="w-full py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:from-gray-700 disabled:to-gray-700 text-white text-xs font-bold rounded-lg transition-all"
+          title={address ? 'Withdraw to Tonkeeper' : 'Connect your Tonkeeper wallet first'}
+        >
+          Withdraw to Tonkeeper {address ? '' : '🔒'}
+        </button>
         </>
         )}
       </div>

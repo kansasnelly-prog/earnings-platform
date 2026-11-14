@@ -5,6 +5,7 @@ import { toast } from '@/components/ui/use-toast';
 import TransactionHistory from './TransactionHistory';
 import { type WalletState } from '@/contexts/AppContext';
 import { sendTelegramNotification } from '@/utils/telegramHelper';
+import TonConnectButton from '@/components/TonConnectButton';
 
 const WALLET_TYPES = [
   { value: 'USDT-TRC20', label: 'USDT (TRC20)', network: 'Tron Network' },
@@ -117,13 +118,7 @@ const WalletSection: React.FC = () => {
           <h2 className="text-xl font-bold text-white">Wallet Management</h2>
           <p className="text-sm text-gray-500 mt-0.5">Manage your balance and withdrawal settings</p>
         </div>
-        <button
-          onClick={() => setShowBindForm(!showBindForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-indigo-500/25"
-        >
-          <Plus size={16} />
-          Bind Wallet
-        </button>
+        <TonConnectButton size="sm" variant="outline" />
       </div>
 
       {/* Balance Overview */}
@@ -302,81 +297,40 @@ const WalletSection: React.FC = () => {
         </div>
       )}
 
-      {/* Bind Wallet Form */}
-      {showBindForm && (
-        <div className="p-6 bg-indigo-500/5 border border-indigo-500/20 rounded-2xl">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Shield size={18} className="text-indigo-400" />
-            Bind New Wallet
-          </h3>
-          <form onSubmit={handleBind} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Wallet Network</label>
-              <div className="grid grid-cols-2 gap-2">
-                {WALLET_TYPES.map(wt => (
-                  <button
-                    key={wt.value}
-                    type="button"
-                    onClick={() => { setWalletType(wt.value); setErrors({}); }}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      walletType === wt.value
-                        ? 'bg-indigo-500/15 border-indigo-500/40 ring-1 ring-indigo-500/30'
-                        : 'bg-white/[0.02] border-white/[0.06] hover:border-white/10'
-                    }`}
-                  >
-                    <div className={`text-sm font-semibold ${walletType === wt.value ? 'text-indigo-300' : 'text-gray-300'}`}>
-                      {wt.label}
-                    </div>
-                    <div className="text-xs text-gray-500">{wt.network}</div>
-                  </button>
-                ))}
+      {/* TON Wallet Connection */}
+      <div className="p-6 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 border border-cyan-500/20 rounded-2xl">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center">
+            <Wallet size={20} className="text-cyan-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-white">Connect Wallet</h3>
+            <p className="text-xs text-gray-400">Non-custodial Tonkeeper connection</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <TonConnectButton size="lg" />
+
+          {!connected && (
+            <p className="text-[11px] text-gray-500 leading-relaxed">
+              Tonkeeper is a non-custodial wallet. Your keys never leave your device.
+              Connect to securely receive your platform earnings.
+            </p>
+          )}
+
+          {connected && address && (
+            <div className="p-3 bg-emerald-500/5 border border-emerald-500/15 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-emerald-400">
+                <CheckCircle size={16} />
+                <span>Connected: {address.slice(0, 6)}...{address.slice(-4)}</span>
               </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Wallet Address</label>
-              <input
-                type="text"
-                value={walletAddress}
-                onChange={e => { setWalletAddress(e.target.value); setErrors({}); }}
-                placeholder={walletType === 'USDT-TRC20' ? 'T...' : walletType === 'BTC' ? 'bc1...' : '0x...'}
-                className="w-full px-4 py-3 bg-[#1a2038] border border-indigo-500/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono text-sm"
-              />
-              {errors.address && (
-                <p className="flex items-center gap-1 text-red-400 text-xs mt-1.5">
-                  <AlertCircle size={12} /> {errors.address}
-                </p>
-              )}
-            </div>
-
-            <div className="p-3 bg-amber-500/5 border border-amber-500/15 rounded-lg">
-              <p className="text-xs text-amber-400/80 flex items-start gap-2">
-                <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
-                Please double-check your wallet address. Incorrect addresses may result in permanent loss of funds.
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => { setShowBindForm(false); setErrors({}); setWalletAddress(''); }}
-                className="flex-1 py-3 bg-white/5 border border-white/10 text-gray-300 font-semibold rounded-xl hover:bg-white/10 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {isLoading ? <><Loader2 size={16} className="animate-spin" /> Binding...</> : 'Confirm Binding'}
-              </button>
-            </div>
-          </form>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Primary Wallet */}
+      {/* Transaction History */}
       {primaryWallet ? (
         <div className="p-6 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-2xl">
           <div className="flex items-center justify-between mb-4">

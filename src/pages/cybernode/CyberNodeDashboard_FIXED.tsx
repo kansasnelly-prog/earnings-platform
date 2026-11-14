@@ -1,4 +1,10 @@
 import React, { useEffect, useState } from 'react';
+const GRAM_USD_RATE = 1.35;
+const MIN_WITHDRAWAL = 2.00;
+
+function formatGram(val: number): string {
+  return Number(val).toFixed(6);
+}
 
 const GRAM_USD_RATE = 1.35;
 const MIN_WITHDRAWAL = 2.00;

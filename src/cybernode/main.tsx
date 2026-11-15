@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import CyberNodeDashboard from '../pages/cybernode/CyberNodeDashboard_FIXED';
+import CyberNodeDashboard from '../pages/cybernode/CyberNodeDashboard';
 
 const rootElement = document.getElementById('root');
 

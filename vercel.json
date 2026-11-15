@@ -12,8 +12,8 @@
   },
   "rewrites": [
     { "source": "/api/cybernode/:path*", "destination": "/api/cybernode/:path*" },
-    { "source": "/cybernode", "destination": "/cybernode/index.html" },
-    { "source": "/cybernode/(.*)", "destination": "/cybernode/index.html" },
+    { "source": "/cybernode", "destination": "/index.html" },
+    { "source": "/cybernode/(.*)", "destination": "/index.html" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [

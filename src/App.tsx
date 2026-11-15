@@ -15,7 +15,7 @@ import SimpleAdminPanel from './components/admin/SimpleAdminPanel';
 import TikTok6AdminMatch from './components/admin/TikTok6AdminMatch';
 import ProtectedRoute from './components/ProtectedRoute';
 import NotFound from './pages/NotFound';
-import CyberNodeDashboard from './pages/cybernode/CyberNodeDashboard_FIXED';
+import CyberNodeDashboard from './pages/cybernode/CyberNodeDashboard';
 import { AuthProvider } from './contexts/SafeAuthProvider';
 import { CSNotificationProvider } from './contexts/CSNotificationContext';
 

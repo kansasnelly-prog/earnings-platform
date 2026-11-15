@@ -104,7 +104,8 @@ const CLAIM_SECTIONS = [
 
 const GRAM_USD_RATE = 1.35;
 const MIN_WITHDRAWAL = 2.00;
-const GAS_FEE = 0.002;
+const GRAM_USD_RATE = 1.35;
+const MIN_WITHDRAWAL = 2.00;
 
 function formatGram(val: number): string {
   return Number(val).toFixed(6);
@@ -115,15 +116,9 @@ export default function CyberNodeDashboard() {
   const [walletAddress, setWalletAddress] = useState('');
   const [balanceGram, setBalanceGram] = useState(0);
   const [miningSpeed, setMiningSpeed] = useState(0.051);
-  const [dailyStreak, setDailyStreak] = useState(0);
   const [isMining, setIsMining] = useState(false);
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [claims, setClaims] = useState<Record<string, { unclaimed_amount: number; last_claimed_at: string }>>({});
-  const [lastCheckIn, setLastCheckIn] = useState<string | null>(null);
   const [lastMinedAt, setLastMinedAt] = useState<string | null>(null);
-  const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tickInterval, setTickInterval] = useState<ReturnType<typeof setInterval> | null>(null);
   const [authUser, setAuthUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');

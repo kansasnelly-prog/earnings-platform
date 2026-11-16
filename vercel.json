@@ -4,17 +4,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "functions": {
-    "api/**/*.js": {
-      "includeFiles": "vercel-api/**",
-      "maxDuration": 30
-    }
-  },
   "rewrites": [
-    { "source": "/api/cybernode/:path*", "destination": "/api/cybernode/:path*" },
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/admin/:path*", "destination": "/index.html" },
     { "source": "/cybernode", "destination": "/index.html" },
-    { "source": "/cybernode/(.*)", "destination": "/index.html" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/cybernode/:path*", "destination": "/index.html" },
+    { "source": "/:path*", "destination": "/index.html" }
   ],
   "headers": [
     {
